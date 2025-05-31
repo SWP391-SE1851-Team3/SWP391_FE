@@ -1,0 +1,11 @@
+.home-page {
+  padding: 24px;
+  background: #fff;
+  min-height: 100vh;
+}
+
+.home-page h1.ant-typography {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #1890ff;
+}
