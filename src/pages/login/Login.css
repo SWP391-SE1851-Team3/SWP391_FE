@@ -1,0 +1,281 @@
+.login-container {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(46, 125, 50, 0.8)),
+        url("src/assets/logo.jpg") center/cover no-repeat;
+}
+
+.login-sidebar {
+    width: 45%;
+    background-color: rgba(46, 125, 50, 0.95); /* Tăng độ đậm của background */
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); /* Thêm đổ bóng */
+
+}
+.login-sidebar img {
+  border-radius: 50%;
+  height: 120px; /* Tăng kích thước logo */
+  width: 120px;
+  display: block; 
+  margin: 0 auto; 
+  margin-bottom: 25px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Thêm đổ bóng cho logo */
+  border: 4px solid rgba(255, 255, 255, 0.8); /* Thêm viền trắng */
+  transition: transform 0.3s ease; /* Hiệu ứng hover */
+  /* Thêm opacity ban đầu là 0 để tạo hiệu ứng fade in */
+  opacity: 0;
+  /* Thời gian animation nhanh hơn các phần tử khác */
+  animation: slideUp 0.5s ease forwards;
+  /* Logo sẽ xuất hiện đầu tiên */
+  animation-delay: 0s;
+}
+
+.login-sidebar img:hover {
+    transform: scale(1.05); /* Hiệu ứng phóng to khi hover */
+}
+
+.login-sidebar h1 {
+  text-align: center;
+  font-size: 28px; /* Tăng kích thước chữ */
+  font-weight: 700; /* Làm đậm chữ */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Thêm đổ bóng cho chữ */
+  margin-bottom: 25px;
+  color: white;
+}
+
+.login-sidebar p {
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: white;
+  max-width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0.9;
+}
+
+.features-list {
+    list-style: none;
+    padding: 0;
+    margin: 2px auto;
+    max-width: 90%;
+}
+
+.features-list li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 1rem;
+    padding: 4px 5px;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.features-list li:hover {
+    transform: translateX(10px); /* Hiệu ứng di chuyển khi hover */
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.login-form-container {
+    width: 55%;
+    background-color: white;
+    padding: 1px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Thêm các thuộc tính sau để căn giữa */
+    margin: auto;
+    height: 100vh; /* Chiều cao 100% viewport */
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Thêm justify-content */
+    margin-bottom: 40px;
+    width: 100%;
+}
+
+.logo-container img {
+    width: 60px;
+    height: 60px;
+    margin-right: 15px;
+}
+
+.logo-container span {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.login-form {
+    width: 100%;
+    max-width: 400px;
+    /* Thêm margin auto để căn giữa form */
+    margin: 0 auto;
+}
+
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.input-with-icon {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1px 16px 0px 14px;
+    width: fit-content;
+    position: relative;
+}
+
+.input-with-icon .icon {
+    margin-right: 8px;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: 7px 145px 7px 9px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.input-with-icon:focus-within {
+    border-color: #2e7d32;
+    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+}
+
+.input-with-icon .material-icons {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1px;
+  top: 60%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: #2e7d32;
+}
+
+.remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+
+.forgot-password {
+    color: #2e7d32;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 15px;
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-bottom: 20px;
+}
+
+.login-btn:hover {
+    background-color: #1b5e20;
+}
+
+.slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slideUp 0.5s ease forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Delay classes for staggered animation */
+.delay-1 {
+  animation-delay: 0.2s;
+}
+
+.delay-2 {
+  animation-delay: 0.4s;
+}
+
+.delay-3 {
+  animation-delay: 0.6s;
+}
+
+.delay-4 {
+  animation-delay: 0.8s;
+}
+
+.delay-5 {
+  animation-delay: 1s;
+}
+
+.delay-6 {
+  animation-delay: 1.2s;
+}
+
+@media (max-width: 900px) {
+    .login-container {
+        flex-direction: column;
+    }
+
+    .login-sidebar,
+    .login-form-container {
+        width: 100%;
+        padding: 30px 20px;
+    }
+
+    .login-sidebar {
+        order: 2;
+        text-align: center;
+    }
+
+    .features-list li {
+        justify-content: center;
+    }
+
+    .login-form-container {
+        order: 1;
+    }
+}
