@@ -1,4 +1,8 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from '../pages/login/index';
+// import Dashboard from '../pages/Dashboard'; // ví dụ route khác
+//HEllo hello
 import { Navigate, Routes, Route } from 'react-router-dom';
 import Login from '../pages/login';
 import Home from '../pages/home';
@@ -27,5 +31,4 @@ const AppRoutes = () => {
     </Routes>
   );
 };
-
 export default AppRoutes;
