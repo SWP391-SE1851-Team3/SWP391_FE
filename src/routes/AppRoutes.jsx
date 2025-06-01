@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from '../pages/login/index';
 // import Dashboard from '../pages/Dashboard'; // ví dụ route khác
-
+//HEllo hello
 const AppRoutes = () => {
   return (
     <Router>
