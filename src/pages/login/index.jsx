@@ -5,6 +5,11 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import './Login.css';
+import { Form, Input, Button, Checkbox, Typography, message } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import logo from "../../assets/images/logo.jpg";
+import { useNavigate } from 'react-router-dom';
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
 
@@ -12,6 +17,7 @@ const { Option } = Select;
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
   const [role, setRole] = useState(3);
 
   const getEndpoint = (role) => {
@@ -50,6 +56,35 @@ const Login = () => {
     } finally {
       setLoading(false);
     };
+  const [form] = Form.useForm(); // Thêm dòng này
+
+  const onFinish = async (values) => {
+    try {
+      setLoading(true);
+      // Giả lập API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      if (values.username === 'admin' && values.password === 'admin') {
+        localStorage.setItem('isAuthenticated', 'true');
+        // Thêm user info nếu cần
+        localStorage.setItem('user', JSON.stringify({
+          username: values.username,
+          role: 'admin'
+        }));
+        message.success('Đăng nhập thành công!');
+        // Đảm bảo navigate được gọi sau khi set localStorage
+        setTimeout(() => {
+          navigate('/home');
+        }, 1000);
+      } else {
+        message.error('Tên đăng nhập hoặc mật khẩu không đúng!');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      message.error('Có lỗi xảy ra khi đăng nhập!');
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div className="login-container">
@@ -80,6 +115,7 @@ const Login = () => {
             onFinish={onFinish}
             layout="vertical"
             autoComplete="off"
+            form={form} // Thêm dòng này
           >
             <Form.Item
               label="Tên đăng nhập"
