@@ -1,41 +1,50 @@
 import React, { useState } from 'react';
 import './Login.css';
-import { Form, Input, Button, Checkbox, Typography, message } from 'antd';
+import { Form, Input, Button, Checkbox, Typography, Select} from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const { Title, Paragraph } = Typography;
+const { Option } = Select;
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState(3);
+  const [form] = Form.useForm(); // ✅ Đặt ở đây
   const navigate = useNavigate();
-  const [form] = Form.useForm(); // Thêm dòng này
+
+  const getEndpoint = (role) => {
+    switch (role) {
+      case 1: return "http://localhost:8080/api/managers/login";
+      case 2: return "http://localhost:8080/api/SchoolNurses/login";
+      case 3: return "http://localhost:8080/api/parents/login";
+      default: return "";
+    }
+  };
+  const endpoint = getEndpoint(role);
 
   const onFinish = async (values) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      // Giả lập API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      if (values.username === 'admin' && values.password === 'admin') {
-        localStorage.setItem('isAuthenticated', 'true');
-        // Thêm user info nếu cần
-        localStorage.setItem('user', JSON.stringify({
-          username: values.username,
-          role: 'admin'
-        }));
-        message.success('Đăng nhập thành công!');
-        // Đảm bảo navigate được gọi sau khi set localStorage
-        setTimeout(() => {
-          navigate('/home');
-        }, 1000);
-      } else {
-        message.error('Tên đăng nhập hoặc mật khẩu không đúng!');
+      const response = await axios.post(endpoint, {
+        email: values.email,
+        password: values.password
+      });
+      const { email, role: userRole } = response.data;
+      localStorage.setItem('email', email);
+      localStorage.setItem('role', userRole);
+      alert('Đăng nhập thành công!');
+      if (userRole === 1) {
+        navigate('/manager');
+      } else if (userRole === 2) {
+        navigate('/school-nurse');
+      } else if (userRole === 3) {
+        navigate('/home');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      message.error('Có lỗi xảy ra khi đăng nhập!');
+      console.error('Đăng nhập thất bại:', error);
+      alert('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
     } finally {
       setLoading(false);
     }
@@ -45,8 +54,8 @@ const Login = () => {
     <div className="login-container">
       <div className="login-sidebar">
         <img src={logo} alt="Logo " />
-        <h1 level={2} className="slide-up" >Hệ Thống Y Tế Học Đường</h1>
-        <p   className="slide-up delay-1" >
+        <h1 className="slide-up">Hệ Thống Y Tế Học Đường</h1>
+        <p className="slide-up delay-1">
           Hệ thống quản lý sức khỏe toàn diện cho trường học, kết nối phụ huynh và đội ngũ y tế.
         </p>
         <ul className="features-list">
@@ -60,7 +69,7 @@ const Login = () => {
 
       <div className="login-form-container">
         <div className="logo-container">
-          <img src={logo} alt="Logo" /> 
+          <img src={logo} alt="Logo" />
           <span>Hệ thống Y tế Học đường</span>
         </div>
 
@@ -70,14 +79,14 @@ const Login = () => {
             onFinish={onFinish}
             layout="vertical"
             autoComplete="off"
-            form={form} // Thêm dòng này
+            form={form}
           >
             <Form.Item
-              label="Tên đăng nhập"
-              name="username"
-              rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+              label="Email"
+              name="email"
+              rules={[{ required: true, message: 'Vui lòng nhập email!' }]}
             >
-              <Input prefix={<UserOutlined />} placeholder="Tên đăng nhập" />
+              <Input prefix={<UserOutlined />} placeholder="Email" />
             </Form.Item>
 
             <Form.Item
@@ -86,6 +95,14 @@ const Login = () => {
               rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
             >
               <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
+            </Form.Item>
+
+            <Form.Item label="Đăng nhập với tư cách">
+              <Select value={role} onChange={(value) => setRole(value)}>
+                <Option value={1}>Quản lý</Option>
+                <Option value={2}>Nhân viên y tế</Option>
+                <Option value={3}>Phụ huynh</Option>
+              </Select>
             </Form.Item>
 
             <Form.Item>
