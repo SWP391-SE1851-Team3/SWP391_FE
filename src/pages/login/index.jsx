@@ -5,20 +5,15 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './Login.css';
-import { Form, Input, Button, Checkbox, Typography, message } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import logo from "../../assets/images/logo.jpg";
-import { useNavigate } from 'react-router-dom';
+
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
 
-
 const Login = () => {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
   const [role, setRole] = useState(3);
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
 
   const getEndpoint = (role) => {
     switch (role) {
@@ -29,69 +24,39 @@ const Login = () => {
     }
   };
   const endpoint = getEndpoint(role);
-  // Địa chỉ API đăng nhập
+
   const onFinish = async (values) => {
-    setLoading(true); // tác động vào api để hiển thị loading
+    setLoading(true);
     try {
-      const response = await axios.post(endpoint,
-        {
-          email: values.email,
-          password: values.password   
-        }
-      );
-      const { email, role: userRole } = response.data; // Giả sử backend trả về email và role
+      const response = await axios.post(endpoint, {
+        email: values.email,
+        password: values.password
+      });
+      const { email, role: userRole } = response.data;
       localStorage.setItem('email', email);
       localStorage.setItem('role', userRole);
       alert('Đăng nhập thành công!');
       if (userRole === 1) {
-        navigate('/Manager'); // Chuyển đến trang manager nếu là manager
+        navigate('/manager');
       } else if (userRole === 2) {
-        navigate('/SchoolNurse'); // Chuyển đến trang SchoolNurse nếu là nhân viên y tế
+        navigate('/school-nurse');
       } else if (userRole === 3) {
-        navigate('/Parent'); // Chuyển đến trang parent nếuh là phụ huynh
+        navigate('/home');
       }
     } catch (error) {
       console.error('Đăng nhập thất bại:', error);
       alert('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
     } finally {
       setLoading(false);
-    };
-  const [form] = Form.useForm(); // Thêm dòng này
-
-  const onFinish = async (values) => {
-    try {
-      setLoading(true);
-      // Giả lập API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      if (values.username === 'admin' && values.password === 'admin') {
-        localStorage.setItem('isAuthenticated', 'true');
-        // Thêm user info nếu cần
-        localStorage.setItem('user', JSON.stringify({
-          username: values.username,
-          role: 'admin'
-        }));
-        message.success('Đăng nhập thành công!');
-        // Đảm bảo navigate được gọi sau khi set localStorage
-        setTimeout(() => {
-          navigate('/home');
-        }, 1000);
-      } else {
-        message.error('Tên đăng nhập hoặc mật khẩu không đúng!');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      message.error('Có lỗi xảy ra khi đăng nhập!');
-    } finally {
-      setLoading(false);
     }
   };
+
   return (
     <div className="login-container">
       <div className="login-sidebar">
         <img src={logo} alt="Logo " />
-        <h1 level={2} className="slide-up" >Hệ Thống Y Tế Học Đường</h1>
-        <p className="slide-up delay-1" >
+        <h1 className="slide-up">Hệ Thống Y Tế Học Đường</h1>
+        <p className="slide-up delay-1">
           Hệ thống quản lý sức khỏe toàn diện cho trường học, kết nối phụ huynh và đội ngũ y tế.
         </p>
         <ul className="features-list">
@@ -115,14 +80,14 @@ const Login = () => {
             onFinish={onFinish}
             layout="vertical"
             autoComplete="off"
-            form={form} // Thêm dòng này
+            form={form}
           >
             <Form.Item
-              label="Tên đăng nhập"
+              label="Email"
               name="email"
-              rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+              rules={[{ required: true, message: 'Vui lòng nhập email!' }]}
             >
-              <Input prefix={<UserOutlined />} placeholder="Tên đăng nhập" />
+              <Input prefix={<UserOutlined />} placeholder="Email" />
             </Form.Item>
 
             <Form.Item
@@ -135,9 +100,9 @@ const Login = () => {
 
             <Form.Item label="Đăng nhập với tư cách">
               <Select value={role} onChange={(value) => setRole(value)}>
-                <Select.Option value={1}>Quản lý</Select.Option>
-                <Select.Option value={2}>Nhân viên y tế</Select.Option>
-                <Select.Option value={3}>Phụ huynh</Select.Option>
+                <Option value={1}>Quản lý</Option>
+                <Option value={2}>Nhân viên y tế</Option>
+                <Option value={3}>Phụ huynh</Option>
               </Select>
             </Form.Item>
 
