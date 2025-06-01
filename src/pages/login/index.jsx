@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import './Login.css';
-import { Form, Input, Button, Checkbox, Typography, Select} from 'antd';
+import './login.css';
+import { Select, Form, Input, Button, Checkbox, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
+const { Title, Paragraph } = Typography;
 const { Option } = Select;
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState(3);
-  const [form] = Form.useForm(); // ✅ Đặt ở đây
+  const [form] = Form.useForm();
   const navigate = useNavigate();
 
   const getEndpoint = (role) => {
