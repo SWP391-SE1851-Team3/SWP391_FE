@@ -4,12 +4,21 @@
   font-weight: bold;
   color: white;
   text-align: center;
+  display: flex;
+  /* bổ sung để căn chỉnh logo + text trên cùng 1 dòng */
+  align-items: center;
+  gap: 12px;
+  /* khoảng cách giữa logo và text */
 }
-.logo img{
-    width: 60px;
-    height: 60px;
-    margin-right: 15px;
+
+
+.logo img {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
 }
+
+
 .main-header {
   background: #fff;
   display: flex;
@@ -19,6 +28,7 @@
   box-shadow: 0 2px 8px #f0f1f2;
 }
 
+
 .user-info {
   display: flex;
   align-items: center;
@@ -26,12 +36,16 @@
   cursor: pointer;
 }
 
+
 .username {
   font-weight: 500;
 }
+
+
 .main-layout {
   min-height: 100vh;
 }
+
 
 .custom-header {
   display: flex;
@@ -39,16 +53,27 @@
   align-items: center;
   padding: 0 24px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   height: 64px;
+  flex-wrap: nowrap;
+  /* không xuống dòng */
 }
 
-.header-left,
-.header-center,
+
+.header-left {
+  margin-right: auto;
+  min-height: fit-content;
+}
+
+.header-center {
+  width: 100%;
+}
+
 .header-right {
   display: flex;
   align-items: center;
 }
+
 
 .logo {
   display: flex;
@@ -56,10 +81,12 @@
   gap: 12px;
 }
 
+
 .logo img {
   height: 40px;
   width: auto;
 }
+
 
 .logo span {
   font-size: 18px;
@@ -67,15 +94,43 @@
   color: #1890ff;
 }
 
-.custom-nav {
-  border-bottom: none;
+
+/* --- Phần menu giữa --- */
+.header-center {
+  flex: 1 1 auto;
+  /* chiếm không gian còn lại */
+  overflow-x: auto;
+  /* cho phép cuộn ngang */
+  white-space: nowrap;
+  /* không xuống dòng */
+  -webkit-overflow-scrolling: touch;
+  /* mượt trên mobile */
 }
 
+
+.custom-nav {
+  border-bottom: none;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap;
+  overflow: visible !important;
+}
+
+
+.custom-nav .ant-menu-item {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0 15px;
+}
+
+
+/* --- Phần bên phải --- */
 .user-section {
   display: flex;
   align-items: center;
   gap: 16px;
 }
+
 
 .notification-icon {
   font-size: 20px;
@@ -83,27 +138,33 @@
   color: #595959;
 }
 
+
 .user-avatar {
   cursor: pointer;
 }
+
 
 .user-name {
   margin: 0 8px;
   color: #262626;
 }
 
+
 .logout-btn {
   color: #595959;
 }
+
 
 .logout-btn:hover {
   color: #1890ff;
 }
 
+
 .site-content {
   padding: 24px;
   background: #f0f2f5;
 }
+
 
 .content-wrapper {
   max-width: 1200px;
@@ -114,10 +175,12 @@
   min-height: calc(100vh - 184px);
 }
 
+
 .site-footer {
   background: #001529;
   padding: 24px 50px;
 }
+
 
 .footer-content {
   max-width: 1200px;
@@ -125,43 +188,53 @@
   text-align: center;
 }
 
+
 .footer-links {
   margin-bottom: 16px;
 }
+
 
 .footer-links a {
   color: #fff;
   margin: 0 16px;
 }
 
+
 .footer-links a:hover {
   color: #1890ff;
 }
 
+
 .footer-copyright {
   color: rgba(255, 255, 255, 0.65);
 }
+
 
 @media (max-width: 768px) {
   .custom-header {
     padding: 0 12px;
   }
 
+
   .logo span {
     display: none;
   }
+
 
   .user-name {
     display: none;
   }
 
+
   .site-content {
     padding: 12px;
   }
 
+
   .content-wrapper {
     padding: 16px;
   }
+
 
   .site-footer {
     padding: 16px;

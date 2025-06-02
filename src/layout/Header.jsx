@@ -12,6 +12,9 @@ const ROLE_MENUS = {
     { key: 'home', label: 'Trang chủ', path: '/' },
     { key: 'health-records', label: 'Hồ sơ sức khỏe', path: '/health-records' },
     { key: 'medications', label: 'Gửi thuốc', path: '/medications' },
+    { key: 'health-check', label: 'Kiểm Tra Sức Khỏe', path: '/health-check' },
+    { key: 'vacciontion', label: 'Tiêm Chủng', path: '/vacciontion' },
+    { key: 'dashboard', label: 'Báo Cáo', path: '/dashboard' },
   ],
   NURSE: [
     { key: 'home', label: 'Trang chủ', path: '/' },
@@ -30,7 +33,7 @@ const ROLE_MENUS = {
 const HeaderLayout = ({
   userName = 'Người dùng',
   badgeCount = 0,
-  onLogout = () => {}
+  onLogout = () => { }
 }) => {
   // Get user role from localStorage
   const userRole = localStorage.getItem('userRole') || 'PARENT';
@@ -61,9 +64,9 @@ const HeaderLayout = ({
             <BellOutlined className="notification-icon" />
           </Badge>
           <span className="user-name">Chào, {userName} ({userRole})</span>
-          <Button 
+          <Button
             type="text"
-            icon={<LogoutOutlined />} 
+            icon={<LogoutOutlined />}
             className="logout-btn"
             onClick={onLogout}
           >
