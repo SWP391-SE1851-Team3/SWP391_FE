@@ -164,11 +164,7 @@ const StudentHealthRecord = () => {
                             ))}
                         </Select>
                     </Col>
-                    {/* <Col>
-                        <Button icon={<PlusOutlined />} onClick={handleAddNewStudent} type="primary">
-                            Thêm học sinh mới
-                        </Button>
-                    </Col> */}
+
                 </Row>
             </Card>
 
