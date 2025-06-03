@@ -1,0 +1,117 @@
+/* Health Record Component Styles */
+.health-record-container {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.health-record-title {
+    color: #059669;
+    font-weight: 500;
+}
+
+.health-record-form {
+    padding: 0;
+}
+
+.health-record-form .ant-form-item {
+    margin-bottom: 16px;
+}
+
+.health-record-form .ant-form-item-label>label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.health-record-form .required-field::after {
+    content: " *";
+    color: #ef4444;
+    margin-left: 4px;
+}
+
+.health-record-input-group {
+    display: flex;
+    align-items: center;
+}
+
+.health-record-input-group .ant-input,
+.health-record-input-group .ant-input-affix-wrapper {
+    flex: 1;
+}
+
+.health-record-help-icon {
+    margin-left: 8px;
+    color: #9ca3af;
+    cursor: help;
+}
+
+.health-record-help-icon:hover {
+    color: #059669;
+}
+
+.vision-section {
+    margin-bottom: 0;
+}
+
+.vision-eye-group {
+    margin-bottom: 8px;
+}
+
+.vision-eye-label {
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.health-record-textarea {
+    flex: 1;
+}
+
+.health-record-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.health-record-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.health-record-draft-btn {
+    border-color: #d1d5db;
+}
+
+.health-record-save-btn {
+    background-color: #059669;
+    border-color: #059669;
+}
+
+.health-record-save-btn:hover {
+    background-color: #047857;
+    border-color: #047857;
+}
+
+.health-record-history-btn {
+    color: #059669;
+}
+
+.health-record-history-btn:hover {
+    color: #047857;
+}
+
+/* Custom overrides for Ant Design components in health record */
+.health-record-form .ant-select-selector {
+    border-radius: 6px;
+}
+
+.health-record-form .ant-input {
+    border-radius: 6px;
+}
+
+.health-record-form .ant-input-affix-wrapper {
+    border-radius: 6px;
+}

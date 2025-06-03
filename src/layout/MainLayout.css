@@ -1,0 +1,341 @@
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 64px;
+  padding: 0;
+  margin: 0;
+}
+
+
+.logo img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+
+.logo span {
+  color: #1890ff;
+  font-size: 18px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+
+.main-header {
+  background: #fff;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 24px;
+  box-shadow: 0 2px 8px #f0f1f2;
+}
+
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+
+.username {
+  font-weight: 500;
+}
+
+
+.main-layout {
+  min-height: 100vh;
+}
+
+
+.custom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 64px;
+  flex-wrap: nowrap;
+  /* không xuống dòng */
+}
+
+
+.header-left {
+  margin-right: auto;
+  min-height: fit-content;
+}
+
+.header-center {
+  width: 100%;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
+.logo img {
+  height: 40px;
+  width: auto;
+}
+
+
+.logo span {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+
+/* --- Phần menu giữa --- */
+.header-center {
+  flex: 1 1 auto;
+  /* chiếm không gian còn lại */
+  overflow-x: auto;
+  /* cho phép cuộn ngang */
+  white-space: nowrap;
+  /* không xuống dòng */
+  -webkit-overflow-scrolling: touch;
+  /* mượt trên mobile */
+}
+
+
+.custom-nav {
+  border-bottom: none;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap;
+  overflow: visible !important;
+}
+
+
+.custom-nav .ant-menu-item {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0 15px;
+}
+
+
+/* --- Phần bên phải --- */
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+
+.notification-icon {
+  font-size: 20px;
+  cursor: pointer;
+  color: #595959;
+}
+
+
+.user-avatar {
+  cursor: pointer;
+}
+
+
+.user-name {
+  margin: 0 8px;
+  color: #262626;
+}
+
+
+.logout-btn {
+  color: #595959;
+}
+
+
+.logout-btn:hover {
+  color: #1890ff;
+}
+
+
+.site-content {
+  padding: 24px;
+  background: #f0f2f5;
+}
+
+
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  min-height: calc(100vh - 184px);
+}
+
+
+.site-footer {
+  background: #001529;
+  padding: 24px 50px;
+}
+
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+
+.footer-links {
+  margin-bottom: 16px;
+}
+
+
+.footer-links a {
+  color: #fff;
+  margin: 0 16px;
+}
+
+
+.footer-links a:hover {
+  color: #1890ff;
+}
+
+
+.footer-copyright {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+
+@media (max-width: 768px) {
+  .custom-header {
+    padding: 0 12px;
+  }
+
+
+  .logo span {
+    display: none;
+  }
+
+
+  .user-name {
+    display: none;
+  }
+
+
+  .site-content {
+    padding: 12px;
+  }
+
+
+  .content-wrapper {
+    padding: 16px;
+  }
+
+
+  .site-footer {
+    padding: 16px;
+  }
+}
+
+.header {
+  padding: 0;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 24px;
+  gap: 24px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+  border-radius: 4px;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.nav-menu {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+  margin-left: 40px;
+  border-bottom: none;
+}
+
+.nav-menu .ant-menu-item {
+  padding: 0 16px;
+  height: 64px;
+  line-height: 64px;
+}
+
+.nav-menu .ant-menu-item:hover {
+  color: #1890ff;
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.notification-badge {
+  cursor: pointer;
+}
+
+.notification-icon {
+  font-size: 20px;
+  color: #595959;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  background: #1890ff;
+}
+
+.username {
+  font-size: 14px;
+  color: #262626;
+}
+
+.logout-button {
+  color: #595959;
+  padding: 4px 8px;
+}
+
+.logout-button:hover {
+  color: #ff4d4f;
+}
