@@ -1,0 +1,109 @@
+.header {
+  padding: 0;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0px 0px 0px 10px;
+  gap: 4px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+  border-radius: 4px;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1890ff;
+  white-space: nowrap;
+}
+
+.nav-menu {
+  display: flex;
+  flex: 1;
+  justify-content: flex-start;
+  margin-left: 0;
+  padding-left: 0;
+  /* Xóa gap ở đây vì chúng ta sẽ kiểm soát spacing qua menu items */
+}
+
+/* Điều chỉnh khoảng cách giữa các menu items */
+.nav-menu .ant-menu-item {
+  padding: 0 16px; /* Tăng padding để tạo khoảng cách đều */
+  margin: 0; /* Đặt margin về 0 */
+  font-size: 16px;
+  color: #262626;
+  transition: color 0.3s ease;
+  position: relative; /* Thêm position relative để hỗ trợ việc căn chỉnh */
+}
+
+/* Thêm border right cho mỗi item để tạo phân cách đều */
+.nav-menu .ant-menu-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 16px; /* Chiều cao của đường phân cách */
+  width: 1px;
+  background-color: #e8e8e8;
+}
+
+/* Loại bỏ khoảng cách đặc biệt cho item đầu tiên */
+.nav-menu .ant-menu-item:first-child {
+  padding-left: 16px; /* Giữ padding giống các items khác */
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.username {
+  color: rgba(0, 0, 0, 0.85);
+  margin-right: 8px;
+}
+
+.notification-badge {
+  cursor: pointer;
+}
+
+.notification-icon {
+  font-size: 20px;
+}
+
+.logout-button {
+  color: #ff4d4f;
+}
+
+.logout-button:hover {
+  color: #ff7875;
+}

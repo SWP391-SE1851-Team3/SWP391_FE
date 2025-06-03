@@ -1,20 +1,20 @@
 import React from 'react';
 import { Layout } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
-import { BellOutlined, LogoutOutlined } from '@ant-design/icons';
-import { Menu, Avatar, Badge, Button } from 'antd';
+import { BellOutlined, LogoutOutlined, LoginOutlined } from '@ant-design/icons';
+import { Menu, Avatar, Badge, Button, message } from 'antd';
 const { Header } = Layout;
+import './Header.css';
 
-// Define menu items for different roles
 const ROLE_MENUS = {
   PARENT: [
     { key: 'home', label: 'Trang chủ', path: '/' },
     { key: 'health-records', label: 'Hồ sơ sức khỏe', path: '/health-records' },
     { key: 'medications', label: 'Gửi thuốc', path: '/medications' },
-    { key: 'health-check', label: 'Kiểm Tra Sức Khỏe', path: '/health-check' },
-    { key: 'vacciontion', label: 'Tiêm Chủng', path: '/vacciontion' },
-    { key: 'dashboard', label: 'Báo Cáo', path: '/dashboard' },
+    { key: 'health-check', label: 'Kiểm tra sức khỏe', path: '/health-check' },
+    { key: 'vaccination', label: 'Tiêm chủng', path: '/vaccination' },
+    { key: 'dashboard', label: 'Báo cáo', path: '/dashboard' },
   ],
   NURSE: [
     { key: 'home', label: 'Trang chủ', path: '/' },
@@ -30,48 +30,74 @@ const ROLE_MENUS = {
   ]
 };
 
-const HeaderLayout = ({
-  userName = 'Người dùng',
-  badgeCount = 0,
-  onLogout = () => { }
-}) => {
-  // Get user role from localStorage
+const HeaderLayout = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isAuthenticated = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole') || 'PARENT';
+  const userName = localStorage.getItem('email') || 'Người dùng';
   const menuItems = ROLE_MENUS[userRole];
 
-  return (
-    <Header className="custom-header">
-      <div className="header-left">
-        <div className="logo">
-          <img src={Logo} alt="Logo" />
-          <span>Hệ thống Y tế Học đường</span>
-        </div>
-      </div>
+  const handleLogout = () => {
+    localStorage.clear();
+    message.success('Đăng xuất thành công!');
+    navigate('/');
+  };
 
-      <div className="header-center">
-        <Menu mode="horizontal" className="custom-nav">
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  return (
+    <Header className="header">
+      <div className="header-container">
+        <div className="logo-section">
+          <img src={Logo} alt="Logo" className="logo-image" />
+          <span className="logo-text">Y tế Học đường</span>
+        </div>
+
+        <Menu
+          mode="horizontal"
+          selectedKeys={[location.pathname]}
+          className="nav-menu"
+        >
           {menuItems.map(item => (
-            <Menu.Item key={item.key}>
+            <Menu.Item key={item.path}>
               <Link to={item.path}>{item.label}</Link>
             </Menu.Item>
           ))}
         </Menu>
-      </div>
 
-      <div className="header-right">
-        <div className="user-section">
-          <Badge count={badgeCount} offset={[-5, 5]}>
-            <BellOutlined className="notification-icon" />
-          </Badge>
-          <span className="user-name">Chào, {userName} ({userRole})</span>
-          <Button
-            type="text"
-            icon={<LogoutOutlined />}
-            className="logout-btn"
-            onClick={onLogout}
-          >
-            Đăng xuất
-          </Button>
+        <div className="user-controls">
+          {isAuthenticated ? (
+            <>
+              <Badge count={0} className="notification-badge">
+                <BellOutlined className="notification-icon" />
+              </Badge>
+              <div className="user-info">
+                <Avatar size="small" className="user-avatar">
+                  {userName[0]}
+                </Avatar>
+                <span className="username">{userName}</span>
+              </div>
+              <Button
+                type="link"
+                icon={<LogoutOutlined />}
+                className="logout-button"
+                onClick={handleLogout}
+              >
+                Đăng xuất
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="primary"
+              icon={<LoginOutlined />}
+              onClick={handleLogin}
+            >
+              Đăng nhập
+            </Button>
+          )}
         </div>
       </div>
     </Header>

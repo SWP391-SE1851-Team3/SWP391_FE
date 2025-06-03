@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import './login.css';
-import { Select, Form, Input, Button, Checkbox, Typography } from 'antd';
+import { Select, Form, Input, Button, Checkbox, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
@@ -14,6 +14,7 @@ const Login = () => {
   const [role, setRole] = useState(3);
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const getEndpoint = (role) => {
     switch (role) {
@@ -35,14 +36,24 @@ const Login = () => {
       const { email, role: userRole } = response.data;
       localStorage.setItem('email', email);
       localStorage.setItem('role', userRole);
-      alert('Đăng nhập thành công!');
+      // Lưu token
+      localStorage.setItem('token', 'your-auth-token');
+      //Hiện message đăng nhập thành công 
+      message.success('Đăng nhập thành công!!!')
+
+      //Chuyển hướng đến các trang theo role
       if (userRole === 1) {
         navigate('/manager');
       } else if (userRole === 2) {
         navigate('/school-nurse');
       } else if (userRole === 3) {
-        navigate('/home');
+        navigate('/parent');
       }
+
+      // Redirect về trang user đã cố gắng truy cập trước đó
+      const from = location.state?.from || '/';
+      navigate(from, { replace: true });
+      
     } catch (error) {
       console.error('Đăng nhập thất bại:', error);
       alert('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
