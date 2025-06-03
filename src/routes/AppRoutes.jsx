@@ -1,36 +1,36 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from '../pages/login/index';
-// import Dashboard from '../pages/Dashboard'; // ví dụ route khác
-//HEllo hello
-import { Navigate, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Login from '../pages/login';
 import Home from '../pages/home';
 import MainLayout from '../layout/MainLayout';
 import PrivateRoute from './ProtectedRoute';
 import StudentHealthRecord from '../pages/parent/health-records';
-
+import ParentPage from '../pages/parent';
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
-
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <MainLayout />
-          </PrivateRoute>
-        }
-      >
+      
+      <Route element={<MainLayout />}>
+        {/* Public route - Homepage */}
+        <Route index element={<Home />} />
         <Route path="home" element={<Home />} />
-        <Route path="health-records" element={<StudentHealthRecord />} />
-
-
+        
+        {/* Protected routes */}
+        <Route path="parent" element={
+          <PrivateRoute>
+            <ParentPage />
+          </PrivateRoute>
+        } />
+        <Route path="health-records" element={
+          <PrivateRoute>
+            <StudentHealthRecord />
+          </PrivateRoute>
+        } />
       </Route>
     </Routes>
   );
 };
+
 export default AppRoutes;

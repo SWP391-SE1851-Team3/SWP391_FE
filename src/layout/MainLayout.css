@@ -1,21 +1,25 @@
 .logo {
-  height: 32px;
-  margin: 16px;
-  font-weight: bold;
-  color: white;
-  text-align: center;
   display: flex;
-  /* bổ sung để căn chỉnh logo + text trên cùng 1 dòng */
   align-items: center;
-  gap: 12px;
-  /* khoảng cách giữa logo và text */
+  gap: 8px;
+  height: 64px;
+  padding: 0;
+  margin: 0;
 }
 
 
 .logo img {
-  width: 60px;
-  height: 60px;
-  margin-right: 15px;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+
+.logo span {
+  color: #1890ff;
+  font-size: 18px;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
 
@@ -239,4 +243,99 @@
   .site-footer {
     padding: 16px;
   }
+}
+
+.header {
+  padding: 0;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 24px;
+  gap: 24px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-image {
+  height: 40px;
+  width: auto;
+  border-radius: 4px;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1890ff;
+}
+
+.nav-menu {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+  margin-left: 40px;
+  border-bottom: none;
+}
+
+.nav-menu .ant-menu-item {
+  padding: 0 16px;
+  height: 64px;
+  line-height: 64px;
+}
+
+.nav-menu .ant-menu-item:hover {
+  color: #1890ff;
+}
+
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.notification-badge {
+  cursor: pointer;
+}
+
+.notification-icon {
+  font-size: 20px;
+  color: #595959;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  background: #1890ff;
+}
+
+.username {
+  font-size: 14px;
+  color: #262626;
+}
+
+.logout-button {
+  color: #595959;
+  padding: 4px 8px;
+}
+
+.logout-button:hover {
+  color: #ff4d4f;
 }

@@ -1,12 +1,13 @@
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 const PrivateRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
   const location = useLocation();
+  const isAuthenticated = localStorage.getItem('token');
 
   if (!isAuthenticated) {
-    // Redirect to login with return url
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Save the attempted URL
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return children;
