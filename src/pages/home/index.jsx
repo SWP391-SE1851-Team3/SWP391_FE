@@ -2,6 +2,9 @@ import React from 'react';
 import { Typography, Card, Row, Col, Button, Carousel } from 'antd';
 import { MedicineBoxOutlined, TeamOutlined, CalendarOutlined, FileProtectOutlined } from '@ant-design/icons';
 import './Home.css';
+import anh_01 from '../../assets/images/anh_01.jpg';
+import anh_02 from '../../assets/images/anh_02.jpg';
+import anh_03 from '../../assets/images/anh_03.jpg';
 
 const { Title, Paragraph } = Typography;
 
@@ -17,10 +20,13 @@ function HomePage() {
 
       <Carousel autoplay className="carousel-section">
         <div>
-          <img src="/images/healthcare1.jpg" alt="Healthcare" />
+          <img src={anh_01} alt="Healthcare" />
         </div>
         <div>
-          <img src="/images/healthcare2.jpg" alt="Students" />
+          <img src={anh_02} alt="Students" />
+        </div>
+        <div>
+          <img src={anh_03} alt="Students" />
         </div>
       </Carousel>
 
