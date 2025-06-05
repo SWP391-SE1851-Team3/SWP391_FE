@@ -34,9 +34,16 @@ const Login = () => {
         password: values.password
       });
       const { email, role: userRole } = response.data;
+      
+      // Chuyển đổi role number thành string để map với ROLE_MENUS
+      let roleString = '';
+      if (userRole === 1) roleString = 'ADMIN';
+      else if (userRole === 2) roleString = 'NURSE';
+      else if (userRole === 3) roleString = 'PARENT';
+      
       localStorage.setItem('email', email);
-      localStorage.setItem('role', userRole);
-      // Lưu token
+      localStorage.setItem('role', userRole); // Lưu số role gốc
+      localStorage.setItem('roleString', roleString); // Lưu thêm role string
       localStorage.setItem('token', 'your-auth-token');
       //Hiện message đăng nhập thành công 
       message.success('Đăng nhập thành công!!!')
@@ -51,8 +58,8 @@ const Login = () => {
       }
 
       // Redirect về trang user đã cố gắng truy cập trước đó
-      const from = location.state?.from || '/';
-      navigate(from, { replace: true });
+      // const from = location.state?.from || '/';
+      // navigate(from, { replace: true });
       
     } catch (error) {
       console.error('Đăng nhập thất bại:', error);
