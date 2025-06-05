@@ -76,7 +76,7 @@ const StudentHealthRecord = () => {
                     rules={[{ required: true, message: 'Vui lòng nhập thông tin dị ứng!' }]}
                 >
                     <div className="health-record-input-group">
-                        <Input placeholder="Ví dụ: Dị ứng đậu phộng" />
+                        <Input placeholder="Ví dụ: Dị ứng đậu phộng" style={{ width: '100%' }} />
                         <QuestionCircleOutlined className="health-record-help-icon" />
                     </div>
                 </Form.Item>
@@ -144,10 +144,14 @@ const StudentHealthRecord = () => {
     );
 
     return (
-        <>
-            <Card title="Chọn học sinh để khai báo" style={{ marginBottom: '16px' }}>
-                <Row gutter={16}>
-                    <Col flex="auto">
+        <div className="health-records-page">
+            <Card 
+                title="Chọn học sinh để khai báo" 
+                className="health-record-container"
+                style={{ marginBottom: '24px' }}
+            >
+                <Row gutter={[16, 16]} style={{ width: '100%' }}>
+                    <Col span={24}>
                         <Select
                             value={selectedStudentId}
                             placeholder="Chọn học sinh"
@@ -164,12 +168,11 @@ const StudentHealthRecord = () => {
                             ))}
                         </Select>
                     </Col>
-
                 </Row>
             </Card>
 
             {(selectedStudentId || isNew) && renderForm()}
-        </>
+        </div>
     );
 };
 
