@@ -1,0 +1,242 @@
+.medical-management-app {
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.app-title {
+  color: #2c5530;
+  margin: 0 !important;
+  font-weight: 600;
+}
+
+.create-btn {
+  background-color: #52c41a;
+  border-color: #52c41a;
+  height: 40px;
+  padding: 0 20px;
+  font-weight: 500;
+}
+
+.create-btn:hover {
+  background-color: #73d13d;
+  border-color: #73d13d;
+}
+
+.events-card {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.events-card .ant-card-head-title {
+  color: #2c5530;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.filters-section {
+  margin-bottom: 16px;
+  padding: 16px;
+  background-color: #fafafa;
+  border-radius: 6px;
+}
+
+.events-table .ant-table-thead > tr > th {
+  background-color: #f0f7f0;
+  color: #2c5530;
+  font-weight: 600;
+  border-bottom: 2px solid #e6f7e6;
+}
+
+.events-table .ant-table-tbody > tr:hover > td {
+  background-color: #f6ffed;
+}
+
+.pagination-section {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.supplies-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.supplies-card .ant-card-head-title {
+  color: #2c5530;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.supplies-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.supplies-grid {
+  margin-top: 16px;
+}
+
+.supply-card {
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+.supply-card:hover {
+  border-color: #52c41a;
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.15);
+}
+
+.low-stock-card {
+  border-color: #ff4d4f;
+  background-color: #fff2f0;
+}
+
+.low-stock-card:hover {
+  border-color: #ff4d4f;
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.15);
+}
+
+.supply-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.supply-header h5 {
+  margin: 0 !important;
+  color: #2c5530;
+}
+
+.supply-quantity {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.quantity {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c5530;
+  margin-right: 8px;
+}
+
+.unit {
+  color: #666;
+  font-size: 14px;
+}
+
+.low-stock .quantity {
+  color: #ff4d4f;
+}
+
+.supply-status {
+  margin-bottom: 12px;
+}
+
+.supply-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.supply-actions .ant-btn-link {
+  padding: 0;
+  height: auto;
+  color: #52c41a;
+}
+
+.supply-actions .ant-btn-link:hover {
+  color: #73d13d;
+}
+
+.low-stock {
+  color: #ff4d4f !important;
+  font-weight: 600;
+}
+
+/* Custom ant design overrides */
+.ant-tag {
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.ant-btn-primary {
+  border-radius: 6px;
+}
+
+.ant-input {
+  border-radius: 6px;
+}
+
+.ant-select .ant-select-selector {
+  border-radius: 6px;
+}
+
+.ant-card {
+  border-radius: 8px;
+}
+
+.ant-pagination .ant-pagination-item-active {
+  background-color: #52c41a;
+  border-color: #52c41a;
+}
+
+.ant-pagination .ant-pagination-item-active a {
+  color: white;
+}
+
+.ant-pagination .ant-pagination-item:hover {
+  border-color: #52c41a;
+}
+
+.ant-pagination .ant-pagination-item:hover a {
+  color: #52c41a;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .medical-management-app {
+    padding: 16px;
+  }
+  
+  .app-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .filters-section .ant-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .supplies-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .supplies-grid .ant-col {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 1200px) {
+  .supplies-grid .ant-col {
+    width: 50% !important;
+  }
+}
