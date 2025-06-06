@@ -6,6 +6,7 @@ import MainLayout from '../layout/MainLayout';
 import PrivateRoute from './ProtectedRoute';
 import StudentHealthRecord from '../pages/parent/health-records';
 import ParentPage from '../pages/parent';
+import MedicineForm from '../pages/parent/medicine-submission';
 
 const AppRoutes = () => {
   return (
@@ -26,6 +27,11 @@ const AppRoutes = () => {
         <Route path="health-records" element={
           <PrivateRoute>
             <StudentHealthRecord />
+          </PrivateRoute>
+        } />
+        <Route path="medications" element={
+          <PrivateRoute>
+            <MedicineForm />
           </PrivateRoute>
         } />
       </Route>
