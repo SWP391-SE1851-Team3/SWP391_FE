@@ -177,8 +177,7 @@ button.ant-btn-dashed:hover {
 /* Container to align buttons in the same row */
 .button-container {
   display: flex;
-  justify-content: flex-start;
-  gap: 10px; /* Space between buttons */
+  gap: 16px; /* khoảng cách giữa 2 nút */
   margin-top: 20px;
 }
 
@@ -393,4 +392,34 @@ button.ant-btn-dashed:hover {
 
 .btn-text:hover {
   text-decoration: underline;
+}
+
+.preview-btn {
+  background-color: white;
+  border: 1px solid #4CAF50;
+  color: #4CAF50;
+  border-radius: 8px;
+  height: 40px;
+  font-weight: 500;
+}
+
+.preview-btn:hover {
+  background-color: #e8f5e9;
+  border-color: #388e3c;
+  color: #2e7d32;
+}
+
+/* Nút gửi thuốc: nền xanh lá */
+.submit-btn {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+  border-radius: 8px;
+  height: 40px;
+  font-weight: 500;
+}
+
+.submit-btn:hover {
+  background-color: #388e3c;
+  border-color: #388e3c;
 }
