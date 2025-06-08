@@ -9,13 +9,13 @@
 }
 
 .header-container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 64px;
-  padding: 0px 0px 0px 10px;
+  padding: 0px 10px 0px 10px;
   gap: 4px;
 }
 
@@ -42,9 +42,10 @@
 .nav-menu {
   display: flex;
   flex: 1;
-  justify-content: flex-start;
+  justify-content: space-between;
   margin-left: 0;
   padding-left: 0;
+  width: auto;
   /* Xóa gap ở đây vì chúng ta sẽ kiểm soát spacing qua menu items */
 }
 
@@ -79,6 +80,7 @@
   display: flex;
   align-items: center;
   gap: 20px;
+  
 }
 
 .user-info {
