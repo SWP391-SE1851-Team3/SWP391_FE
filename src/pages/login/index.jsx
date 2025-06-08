@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import './login.css';
-import { Select, Form, Input, Button, Checkbox, Typography, message } from 'antd';
+import { Select, Form, Input, Button, Checkbox, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
-import axios from 'axios';
+import { loginByRole } from '../../api/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const { Title, Paragraph } = Typography;
 const { Option } = Select;
+
+// Định nghĩa các endpoint API ở đầu file
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -16,51 +17,38 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const getEndpoint = (role) => {
-    switch (role) {
-      case 1: return "http://localhost:8080/api/managers/login";
-      case 2: return "http://localhost:8080/api/SchoolNurses/login";
-      case 3: return "http://localhost:8080/api/parents/login";
-      default: return "";
-    }
-  };
-  const endpoint = getEndpoint(role);
-
-  const onFinish = async (values) => {
+ const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await axios.post(endpoint, {
-        email: values.email,
-        password: values.password
-      });
-      const { email, role: userRole } = response.data;
-      localStorage.setItem('email', email);
-      localStorage.setItem('role', userRole);
-      // Lưu token
-      localStorage.setItem('token', 'your-auth-token');
-      //Hiện message đăng nhập thành công 
-      message.success('Đăng nhập thành công!!!')
-
-      //Chuyển hướng đến các trang theo role
-      if (userRole === 1) {
-        navigate('/manager');
-      } else if (userRole === 2) {
-        navigate('/school-nurse');
-      } else if (userRole === 3) {
-        navigate('/parent');
-      }
-
-      // Redirect về trang user đã cố gắng truy cập trước đó
-      const from = location.state?.from || '/';
-      navigate(from, { replace: true });
-      
+        const response = await loginByRole(role, values.email, values.password);
+        console.log('Response from API:', response.data);
+        const { email, role: userRole, parentId } = response.data;
+        if (parentId) {
+            localStorage.setItem('email', email);
+            localStorage.setItem('role', userRole);
+            localStorage.setItem('parentId', parentId);
+            localStorage.setItem('token', 'your-auth-token');
+            message.success('Đăng nhập thành công!!!');
+        } else {
+            message.error('Lỗi: Không tìm thấy parentId');
+        }
+        if (userRole === 1) {
+            navigate('/manager');
+        } else if (userRole === 2) {
+            navigate('/school-nurse');
+        } else if (userRole === 3) {
+            navigate('/parent');
+        }
+        const from = location.state?.from || '/';
+        navigate(from, { replace: true });
     } catch (error) {
-      console.error('Đăng nhập thất bại:', error);
-      alert('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
+        console.error('Đăng nhập thất bại:', error);
+        alert('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
 
   return (
     <div className="login-container">
