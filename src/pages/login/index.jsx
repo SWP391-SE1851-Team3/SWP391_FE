@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import './login.css';
-import { Select, Form, Input, Button, Checkbox, message } from 'antd';
+import { Select, Form, Input, Button, Checkbox, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
-import { loginByRole } from '../../api/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { loginByRole } from '../../api/auth'; // <-- import hàm loginByRole
 
+const { Title, Paragraph } = Typography;
 const { Option } = Select;
-
-// Định nghĩa các endpoint API ở đầu file
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -17,38 +16,47 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
- const onFinish = async (values) => {
+  const onFinish = async (values) => {
     setLoading(true);
     try {
-        const response = await loginByRole(role, values.email, values.password);
-        console.log('Response from API:', response.data);
-        const { email, role: userRole, parentId } = response.data;
+      const response = await loginByRole(role, values.email, values.password); // <-- sử dụng hàm loginByRole
+      const { email, role: userRole, parentId } = response.data;
+      
+      // Chuyển đổi role number thành string để map với ROLE_MENUS
+      let roleString = '';
+      if (userRole === 1) roleString = 'ADMIN';
+      else if (userRole === 2) roleString = 'NURSE';
+      else if (userRole === 3) roleString = 'PARENT';
+      
+      localStorage.setItem('email', email);
+      localStorage.setItem('role', userRole); // Lưu số role gốc
+      localStorage.setItem('roleString', roleString); // Lưu thêm role string
+      localStorage.setItem('token', 'your-auth-token');
+      // Nếu là phụ huynh thì lưu thêm parentId
         if (parentId) {
-            localStorage.setItem('email', email);
-            localStorage.setItem('role', userRole);
             localStorage.setItem('parentId', parentId);
-            localStorage.setItem('token', 'your-auth-token');
-            message.success('Đăng nhập thành công!!!');
-        } else {
-            message.error('Lỗi: Không tìm thấy parentId');
         }
-        if (userRole === 1) {
-            navigate('/manager');
-        } else if (userRole === 2) {
-            navigate('/school-nurse');
-        } else if (userRole === 3) {
-            navigate('/parent');
-        }
-        const from = location.state?.from || '/';
-        navigate(from, { replace: true });
-    } catch (error) {
-        console.error('Đăng nhập thất bại:', error);
-        alert('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
-    } finally {
-        setLoading(false);
-    }
-};
+      //Hiện message đăng nhập thành công 
+      message.success('Đăng nhập thành công!!!')
 
+      //Chuyển hướng đến các trang theo role
+      if (userRole === 1) {
+        navigate('/manager');
+      } else if (userRole === 2) {
+        navigate('/school-nurse');
+      } else if (userRole === 3) {
+        navigate('/parent');
+      }
+
+      
+      
+    } catch (error) {
+      console.error('Đăng nhập thất bại:', error);
+      alert('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login-container">
