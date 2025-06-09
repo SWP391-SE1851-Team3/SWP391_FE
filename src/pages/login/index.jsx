@@ -93,6 +93,7 @@ const Login = () => {
               label="Email"
               name="email"
               rules={[{ required: true, message: 'Vui lòng nhập email!' }]}
+              
             >
               <Input prefix={<UserOutlined />} placeholder="Email" />
             </Form.Item>
