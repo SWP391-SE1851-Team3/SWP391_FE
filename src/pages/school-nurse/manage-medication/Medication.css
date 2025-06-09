@@ -1,0 +1,198 @@
+.medication-management {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #f0f4f0;
+  min-height: 100vh;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.page-title {
+  color: #2d5a2d !important;
+  font-weight: 600;
+  margin: 0;
+  border-bottom: 3px solid #4CAF50;
+  display: inline-block;
+  padding-bottom: 8px;
+}
+
+.main-card {
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: none;
+}
+
+.filter-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #e8f5e8;
+}
+
+.search-input {
+  border-radius: 6px;
+}
+
+.filter-btn {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+  border-radius: 6px;
+}
+
+.filter-btn:hover {
+  background-color: #45a049 !important;
+  border-color: #45a049 !important;
+}
+
+.medication-table {
+  background: white;
+  border-radius: 8px;
+}
+
+.medication-table .ant-table-thead > tr > th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #4CAF50;
+  font-weight: 600;
+  color: #2d5a2d;
+}
+
+.medication-table .ant-table-tbody > tr:hover > td {
+  background-color: #f0f9f0;
+}
+
+.ant-tag {
+  border-radius: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.schedule-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: none;
+}
+
+.schedule-card .ant-card-head {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #4CAF50;
+}
+
+.schedule-card .ant-card-head-title {
+  color: #2d5a2d;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.medication-timeline {
+  margin-top: 16px;
+}
+
+.timeline-content {
+  padding: 12px 0;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.timeline-time {
+  color: #2d5a2d;
+  font-size: 16px;
+}
+
+.timeline-status .status-icon.success {
+  color: #4CAF50;
+}
+
+.timeline-status .status-icon.pending {
+  color: #ff9800;
+}
+
+.timeline-status .status-text.success {
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.timeline-status .status-text.pending {
+  color: #666;
+  font-weight: 500;
+}
+
+.timeline-body {
+  margin-left: 0;
+}
+
+.ant-timeline-item-tail {
+  border-left: 2px solid #e8f5e8;
+}
+
+.ant-timeline-item-head {
+  background-color: white;
+  border: 2px solid #4CAF50;
+}
+
+/* Custom button styles */
+.ant-btn-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.ant-btn-primary:hover {
+  background-color: #45a049 !important;
+  border-color: #45a049 !important;
+}
+
+/* Custom select styles */
+.ant-select-selector {
+  border-radius: 6px !important;
+}
+
+.ant-select-focused .ant-select-selector {
+  border-color: #4CAF50 !important;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
+}
+
+/* Custom input focus */
+.ant-input:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .medication-management {
+    padding: 16px;
+  }
+  
+  .filter-section .ant-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .filter-section .ant-col {
+    width: 100%;
+  }
+  
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
