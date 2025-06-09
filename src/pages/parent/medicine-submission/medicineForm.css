@@ -1,0 +1,425 @@
+/* General container styling */
+/* .medicine-form-container {
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Title */
+.form-title {
+  text-align: center;
+  color: #4CAF50;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.form-subtitle {
+  color: #333;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* Card styling */
+.student-select-card, .medicine-form-card {
+  margin-bottom: 20px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Form item label styling */
+.form-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.required-star {
+  color: #FF5733;
+  margin-left: 5px;
+}
+
+/* Button styling */
+button.ant-btn-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+button.ant-btn-primary:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+}
+
+button.ant-btn-dashed {
+  border: 1px dashed #4CAF50;
+  color: #4CAF50;
+}
+
+button.ant-btn-dashed:hover {
+  background-color: #e9f5e9;
+}
+
+/* Row and Column styling */
+.ant-row {
+  margin-bottom: 16px;
+}
+
+.ant-col {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.ant-input, .ant-select-selector, .ant-input-affix-wrapper, .ant-textarea {
+  height: 36px;
+  border-radius: 6px;
+}
+
+.ant-select-selector {
+  padding: 5px 12px;
+  height: 36px;
+}
+
+/* Textarea specific styling */
+.ant-textarea {
+  border-radius: 6px;
+  height: auto;
+}
+
+/* Adding spacing between form items */
+.ant-form-item {
+  margin-bottom: 15px;
+}
+
+.ant-form-item-control-input {
+  display: flex;
+  align-items: center;
+}
+
+.ant-input, .ant-select, .ant-textarea {
+  width: 100%;
+  font-size: 14px;
+  padding: 0px;
+}
+
+/* Styling for input fields */
+input, select, textarea {
+  font-size: 14px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+input::placeholder, select::placeholder, textarea::placeholder {
+  color: #888;
+  font-style: italic;
+}
+
+/* Hover and active states */
+button:hover {
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+/* Responsive layout */
+@media screen and (max-width: 768px) {
+  .medicine-form-container {
+    width: 95%;
+  }
+
+  .ant-col {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .ant-row {
+    flex-direction: column;
+  }
+
+  .ant-col span {
+    margin-bottom: 10px;
+  }
+
+  /* Button styling for "Gửi thuốc" */
+button.ant-btn-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+button.ant-btn-primary:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+}
+
+/* Styling for "Thêm thuốc mới" button */
+button.ant-btn-dashed {
+  border: 1px dashed #4CAF50;
+  color: #4CAF50;
+  padding: 6px 12px; /* Make the button smaller */
+  font-size: 14px;
+  height: auto;
+}
+
+button.ant-btn-dashed:hover {
+  background-color: #e9f5e9;
+}
+
+/* Container to align buttons in the same row */
+.button-container {
+  display: flex;
+  gap: 16px; /* khoảng cách giữa 2 nút */
+  margin-top: 20px;
+}
+
+} */
+/* Medication Status Section */
+.medication-status-section {
+  padding: 20px;
+  background-color: #f4f9f4; /* Light background for the section */
+  border-radius: 8px;
+}
+
+/* Medication Card Styling */
+.ant-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  padding: 20px;
+}
+
+/* Title inside the card */
+.ant-card .ant-card-head {
+  border-bottom: none; /* Remove border under the card title */
+}
+
+.ant-card-body {
+  padding: 15px;
+}
+
+/* Medicine Name Styling */
+.ant-card .ant-card-meta-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #4CAF50; /* Green color for the title */
+}
+
+/* Text inside the card */
+.ant-card-body p {
+  font-size: 14px;
+  color: #555; /* Dark text for general information */
+  margin-bottom: 5px;
+}
+
+/* Medication status Tag */
+.ant-tag {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 16px;
+}
+
+.ant-tag-yellow {
+  background-color: #f7d046; /* Yellow for "Chờ xác nhận" */
+  color: #6a4b02;
+}
+
+.ant-tag-green {
+  background-color: #8bc34a; /* Green for "Đã xác nhận" */
+  color: #ffffff;
+}
+
+.ant-tag-red {
+  background-color: #f44336; /* Red for "Hủy yêu cầu" */
+  color: #ffffff;
+}
+
+/* Action Buttons (Eye and Delete) */
+.ant-card-actions {
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.ant-card-actions .ant-btn {
+  color: #4CAF50;
+  font-size: 16px;
+}
+
+.ant-btn:hover {
+  opacity: 0.8;
+}
+
+/* General Button Styling */
+.ant-btn-dashed {
+  border: 1px dashed #4CAF50;
+  color: #4CAF50;
+  font-size: 14px;
+}
+
+.ant-btn-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+}
+
+.ant-btn-primary:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+}
+
+/* Medication Card Details Layout */
+.card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-info p {
+  margin: 5px 0;
+}
+
+/* Container for the entire section */
+.section-card {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* List of medication status items */
+.status-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Individual item styling */
+.status-item {
+  background-color: #fff;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Header with title and status */
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-info h3 {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.status-date {
+  font-size: 14px;
+  color: #666;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.status-badge.pending {
+  background-color: #ffbf00;
+  color: white;
+}
+
+.status-badge.approved {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-badge.rejected {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Medication details */
+.status-details {
+  margin-top: 10px;
+}
+
+.status-details p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Actions buttons */
+.status-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 15px;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.material-icons {
+  font-size: 18px;
+  margin-right: 5px;
+}
+
+.btn-text:hover {
+  text-decoration: underline;
+}
+
+.preview-btn {
+  background-color: white;
+  border: 1px solid #4CAF50;
+  color: #4CAF50;
+  border-radius: 8px;
+  height: 40px;
+  font-weight: 500;
+}
+
+.preview-btn:hover {
+  background-color: #e8f5e9;
+  border-color: #388e3c;
+  color: #2e7d32;
+}
+
+/* Nút gửi thuốc: nền xanh lá */
+.submit-btn {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+  border-radius: 8px;
+  height: 40px;
+  font-weight: 500;
+}
+
+.submit-btn:hover {
+  background-color: #388e3c;
+  border-color: #388e3c;
+}
