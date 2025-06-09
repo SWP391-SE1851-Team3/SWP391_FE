@@ -36,10 +36,24 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.events-card .ant-card-head-title {
-  color: #2c5530;
-  font-weight: 600;
-  font-size: 18px;
+.events-card .ant-card-head,
+.supplies-card .ant-card-head {
+  background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%) !important;
+  border-radius: 12px !important;
+  padding: 24px 24px !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.2) !important;
+  border: 1.5px solid #389e0d !important;
+  width: 100% !important;
+}
+
+.events-card .ant-card-head-title,
+.supplies-card .ant-card-head-title {
+  font-size: 24px !important;
+  font-weight: bold !important;
+  color: #fff !important;
+  text-align: left !important;
+  padding: 0 !important;
 }
 
 .filters-section {
