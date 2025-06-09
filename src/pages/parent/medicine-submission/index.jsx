@@ -158,15 +158,14 @@ function MedicineForm() {
             ))}
 
             {/* Button container */}
-            <div className="button-container">
-              <Button type="dashed" onClick={addMedication}>
-                Thêm thuốc mới
-              </Button>
-
-              <Button type="primary" htmlType="submit">
-                Gửi thuốc
-              </Button>
-            </div>
+<div className="button-container">
+  <Button className="preview-btn" onClick={addMedication}>
+    Thêm thuốc mới
+  </Button>
+  <Button className="submit-btn" htmlType="submit">
+    Gửi thuốc
+  </Button>
+</div>
           </div>
         )}
       </Form>
