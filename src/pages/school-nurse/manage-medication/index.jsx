@@ -152,7 +152,7 @@ const MedicationManagement = () => {
         return <Tag color="red">Đã từ chối</Tag>;
       default:
         return <Tag>{status}</Tag>;
-    }
+    } 
   };
 
   const getActionButtons = (record) => {
@@ -221,6 +221,8 @@ const MedicationManagement = () => {
       'uncompleted': 'chuyển sang chưa hoàn thành',
       'pending': 'chuyển về chờ xử lý'
     };
+
+    //Xác nhận chuyển trạng thái ==================================================
     Modal.confirm({
       title: 'Xác nhận thay đổi trạng thái',
       content: `Bạn có chắc chắn muốn ${statusTextMap[newStatus] || 'thay đổi trạng thái'}?`,
@@ -237,6 +239,7 @@ const MedicationManagement = () => {
         );
       }
     });
+    //========================================================================
   };
 
   const handleViewDetails = (record) => {
@@ -245,16 +248,17 @@ const MedicationManagement = () => {
   };
 
   return (
+
     <div className="medical-management-app">
+    
       <div className="app-header">
         <Title level={2} className="app-title">Quản lý Phiếu Gửi Thuốc</Title>
       </div>
 
-      {/* Danh sách phiếu gửi thuốc */}
+      {/*============================ Danh sách phiếu gửi thuốc========================================= */}
       <Card
         className="main-card"
         title="Danh sách phiếu gửi thuốc"
-        
       >
         <div className="filters-section filter-section">
           <Row gutter={16} justify="center" align="middle" wrap={false}>
