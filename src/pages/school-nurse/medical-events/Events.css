@@ -44,9 +44,31 @@
 
 .filters-section {
   margin-bottom: 16px;
-  padding: 16px;
+  padding: 16px 10px;
   background-color: #fafafa;
   border-radius: 6px;
+}
+
+.custom-filters-section {
+  background: #fafbfa;
+  border-radius: 12px;
+  padding: 24px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-filters-section .ant-row {
+  width: auto;
+  flex-wrap: nowrap !important;
+  justify-content: center;
+  gap: 16px;
+}
+
+.custom-filters-section .ant-col {
+  display: flex;
+  align-items: center;
 }
 
 .events-table .ant-table-thead > tr > th {
