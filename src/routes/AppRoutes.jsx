@@ -9,6 +9,7 @@ import ParentPage from '../pages/parent';
 import MedicalEvents from '../pages/school-nurse/medical-events';
 import NursePage from '../pages/school-nurse';
 import ManageMedication from '../pages/school-nurse/manage-medication';
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -30,6 +31,7 @@ const AppRoutes = () => {
             <StudentHealthRecord />
           </PrivateRoute>
         } />
+        
         <Route path="school-nurse" element={
           <PrivateRoute>
             <NursePage />
