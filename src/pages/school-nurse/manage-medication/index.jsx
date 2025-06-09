@@ -12,19 +12,19 @@ import {
   Row,
   Col,
   Pagination,
-  Checkbox
+  Avatar
 } from 'antd';
 import {
   SearchOutlined,
-  FilterOutlined,
   EyeOutlined,
   CheckOutlined,
   CloseOutlined,
-  ClockCircleOutlined
+  CalendarOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import './Medication.css';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Option } = Select;
 
 const MedicationManagement = () => {
@@ -90,8 +90,22 @@ const MedicationManagement = () => {
       medication: 'Vitamin C - 1 viên sau bữa chiều',
       status: 'completed',
       color: 'green'
+    },
+    {
+      time: '16:00 PM',
+      student: 'Phạm Văn D',
+      medication: 'Kháng sinh - 1 viên sau bữa tối',
+      status: 'uncompleted',
+      color: 'red'
     }
   ];
+
+  const today = new Date().toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 
   const getStatusTag = (status) => {
     switch (status) {
@@ -155,32 +169,31 @@ const MedicationManagement = () => {
   ];
 
   return (
-    <div className="medication-management">
-      <div className="header">
-        <Title level={2} className="page-title">
-          Quản lý Phiếu Gửi Thuốc
-        </Title>
+    <div className="medical-management-app">
+      <div className="app-header">
+        <Title level={2} className="app-title">Quản lý Phiếu Gửi Thuốc</Title>
       </div>
 
-      <Card className="main-card">
-        {/* Search and Filter Section */}
-        <div className="filter-section">
-          <Row gutter={16} align="middle">
-            <Col flex="auto">
+      {/* Danh sách phiếu gửi thuốc */}
+      <Card className="main-card" title="Danh sách phiếu gửi thuốc">
+        <div className="filters-section filter-section">
+          <Row gutter={16} justify="center" align="middle" wrap={false}>
+            <Col>
               <Input
-                placeholder="Tìm kiếm theo tên học sinh hoặc tên thuốc"
+                placeholder="Tìm kiếm sự kiện..."
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 className="search-input"
+                style={{ minWidth: 220 }}
               />
             </Col>
             <Col>
               <Select
-                placeholder="Tất cả trạng thái"
-                style={{ width: 200 }}
+                placeholder="Tất cả loại ..."
                 value={statusFilter}
                 onChange={setStatusFilter}
+                style={{ minWidth: 170 }}
                 allowClear
               >
                 <Option value="pending">Chờ xác nhận</Option>
@@ -190,10 +203,10 @@ const MedicationManagement = () => {
             </Col>
             <Col>
               <Select
-                placeholder="Tất cả lớp"
-                style={{ width: 150 }}
+                placeholder="Tất cả trạng thái..."
                 value={classFilter}
                 onChange={setClassFilter}
+                style={{ minWidth: 170 }}
                 allowClear
               >
                 <Option value="1A">Lớp 1A</Option>
@@ -202,24 +215,17 @@ const MedicationManagement = () => {
                 <Option value="2B">Lớp 2B</Option>
               </Select>
             </Col>
-            <Col>
-              <Button icon={<FilterOutlined />} className="filter-btn">
-                Lọc
-              </Button>
-            </Col>
           </Row>
         </div>
 
-        {/* Main Table */}
         <Table
           columns={columns}
           dataSource={data}
           pagination={false}
-          className="medication-table"
+          className="events-table"
         />
 
-        {/* Pagination */}
-        <div className="pagination-wrapper">
+        <div className="pagination-section">
           <Pagination
             current={1}
             total={4}
@@ -230,36 +236,44 @@ const MedicationManagement = () => {
         </div>
       </Card>
 
-      {/* Today's Schedule */}
-      <Card className="schedule-card" title="Lịch phát thuốc hôm nay">
+      {/* Lịch phát thuốc hôm nay */}
+      <Card className="supplies-card" title={null} style={{ marginBottom: 24 }}>
+        <div className="header-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div className="header-title">Lịch phát thuốc hôm nay</div>
+              <Space className="header-subtitle">
+                <CalendarOutlined />
+                <span>{today}</span>
+              </Space>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div className="user-info">
+                <div style={{ fontSize: '12px', opacity: 0.8 }}>Đang đăng nhập</div>
+                <div style={{ fontWeight: 'bold' }}>Y tá trực</div>
+              </div>
+              <Avatar 
+                size={48} 
+                icon={<UserOutlined />} 
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+              />
+            </div>
+          </div>
+        </div>
         <Timeline className="medication-timeline">
-          {timelineData.map((item, index) => (
-            <Timeline.Item
-              key={index}
-              dot={<ClockCircleOutlined />}
-              color={item.color}
-            >
-              <div className="timeline-content">
+          {timelineData.map((item, idx) => (
+            <Timeline.Item key={idx} dot={
+              <span className="timeline-time-badge">{item.time}</span>
+            } color="transparent">
+              <div className={`timeline-card ${item.status === 'completed' ? 'completed' : 'uncompleted'}`}>
                 <div className="timeline-header">
-                  <Text strong className="timeline-time">{item.time}</Text>
-                  <div className="timeline-status">
-                    {item.status === 'completed' ? (
-                      <Space>
-                        <CheckOutlined className="status-icon success" />
-                        <Text className="status-text success">Đánh dấu hoàn thành</Text>
-                      </Space>
-                    ) : (
-                      <Space>
-                        <ClockCircleOutlined className="status-icon pending" />
-                        <Text className="status-text pending">Đã hoàn thành</Text>
-                      </Space>
-                    )}
-                  </div>
+                  <span className="timeline-student">Phát thuốc cho {item.student}</span>
+                  <span className="timeline-status">
+                    {item.status === 'completed' ? 'Đã hoàn thành' : 'Chờ thực hiện'}
+                  </span>
                 </div>
                 <div className="timeline-body">
-                  <Text strong>Phát thuốc cho {item.student}</Text>
-                  <br />
-                  <Text type="secondary">{item.medication}</Text>
+                  <div className="timeline-medication">{item.medication}</div>
                 </div>
               </div>
             </Timeline.Item>

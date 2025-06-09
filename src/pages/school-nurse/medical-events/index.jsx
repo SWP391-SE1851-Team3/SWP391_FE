@@ -202,22 +202,24 @@ const App = () => {
 
       {/* Sự kiện gần đây */}
       <Card className="events-card" title="Sự kiện gần đây">
-        <div className="filters-section">
-          <Row gutter={16} align="middle">
-            <Col span={8}>
+        <div className="filters-section custom-filters-section">
+          <Row gutter={16} justify="center" align="middle" wrap={false}>
+            <Col>
               <Input
                 placeholder="Tìm kiếm sự kiện..."
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
+                style={{ minWidth: 220 }}
               />
             </Col>
-            <Col span={6}>
+            <Col>
               <Select
                 placeholder="Tất cả loại sự kiện"
                 value={statusFilter}
                 onChange={setStatusFilter}
-                style={{ width: '100%' }}
+                style={{ minWidth: 170 }}
+                allowClear
               >
                 <Option value="">Tất cả loại sự kiện</Option>
                 <Option value="fever">Sốt</Option>
@@ -225,12 +227,13 @@ const App = () => {
                 <Option value="toothache">Tê răng</Option>
               </Select>
             </Col>
-            <Col span={6}>
+            <Col>
               <Select
                 placeholder="Tất cả trạng thái"
                 value={stateFilter}
                 onChange={setStateFilter}
-                style={{ width: '100%' }}
+                style={{ minWidth: 170 }}
+                allowClear
               >
                 <Option value="">Tất cả trạng thái</Option>
                 <Option value="completed">Đã xử lý</Option>
