@@ -50,7 +50,7 @@ const AppRoutes = () => {
           <PrivateRoute>
             <ParentVaccineConfirmation />
           </PrivateRoute>
-
+        } />
         <Route path="school-nurse" element={
           <PrivateRoute>
             <NursePage />
