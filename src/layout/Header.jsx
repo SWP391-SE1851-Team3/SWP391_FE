@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
@@ -57,6 +57,17 @@ const HeaderLayout = () => {
     navigate('/login');
   };
 
+  useEffect(() => {
+    if (["NURSE", "ADMIN"].includes(roleString)) {
+      document.body.classList.add("nurse-admin-layout");
+    } else {
+      document.body.classList.remove("nurse-admin-layout");
+    }
+    return () => {
+      document.body.classList.remove("nurse-admin-layout");
+    };
+  }, [roleString]);
+
   return (
     <Header className="header">
       <div className="header-container">
@@ -66,9 +77,9 @@ const HeaderLayout = () => {
         </div>
 
         <Menu
-          mode="horizontal"
+          mode={["NURSE", "ADMIN"].includes(roleString) ? "vertical" : "horizontal"}
           selectedKeys={[location.pathname]}
-          className="nav-menu"
+          className={`nav-menu${["NURSE", "ADMIN"].includes(roleString) ? " vertical-menu" : ""}`}
         >
           {menuItems.map(item => (
             <Menu.Item key={item.path}>
