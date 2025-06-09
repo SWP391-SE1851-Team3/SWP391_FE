@@ -12,7 +12,8 @@ import {
   Row,
   Col,
   Pagination,
-  Avatar
+  Avatar,
+  Modal
 } from 'antd';
 import {
   SearchOutlined,
@@ -20,7 +21,10 @@ import {
   CheckOutlined,
   CloseOutlined,
   CalendarOutlined,
-  UserOutlined
+  UserOutlined,
+  CheckCircleTwoTone,
+  CloseCircleTwoTone,
+  ClockCircleTwoTone
 } from '@ant-design/icons';
 import './Medication.css';
 
@@ -31,10 +35,9 @@ const MedicationManagement = () => {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
-
-  // Sample data for the table
-  const data = [
+  const [data, setData] = useState([
     {
+      id: 1,
       key: '1',
       student: 'Nguyễn Văn A - Lớp 1A',
       medication: 'Paracetamol',
@@ -43,6 +46,7 @@ const MedicationManagement = () => {
       actions: ['view', 'confirm', 'cancel']
     },
     {
+      id: 2,
       key: '2',
       student: 'Nguyễn Thị B - Lớp 2B',
       medication: 'Vitamin C',
@@ -51,6 +55,7 @@ const MedicationManagement = () => {
       actions: ['view', 'confirm', 'cancel']
     },
     {
+      id: 3,
       key: '3',
       student: 'Trần Văn C - Lớp 1B',
       medication: 'Thuốc nhỏ mắt',
@@ -59,6 +64,7 @@ const MedicationManagement = () => {
       actions: ['view']
     },
     {
+      id: 4,
       key: '4',
       student: 'Lê Thị D - Lớp 2A',
       medication: 'Thuốc ho',
@@ -66,39 +72,41 @@ const MedicationManagement = () => {
       time: '10:15 AM, 23/05/2025',
       actions: ['view']
     }
-  ];
-
-  // Timeline data for today's schedule
-  const timelineData = [
+  ]);
+  const [timelineData, setTimelineData] = useState([
     {
+      id: 1,
       time: '12:00 PM',
       student: 'Nguyễn Văn A',
       medication: 'Paracetamol - 1 viên sau bữa trua',
-      status: 'completed',
-      color: 'green'
+      status: 'pending',
+      color: 'orange'
     },
     {
+      id: 2,
       time: '09:00 AM',
       student: 'Trần Văn C',
       medication: 'Thuốc nhỏ mắt - 1 giọt mỗi mắt sau bữa sáng',
-      status: 'completed',
-      color: 'gray'
+      status: 'pending',
+      color: 'orange'
     },
     {
+      id: 3,
       time: '15:00 PM',
       student: 'Nguyễn Thị B',
       medication: 'Vitamin C - 1 viên sau bữa chiều',
-      status: 'completed',
-      color: 'green'
+      status: 'pending',
+      color: 'orange'
     },
     {
+      id: 4,
       time: '16:00 PM',
       student: 'Phạm Văn D',
       medication: 'Kháng sinh - 1 viên sau bữa tối',
-      status: 'uncompleted',
-      color: 'red'
+      status: 'pending',
+      color: 'orange'
     }
-  ];
+  ]);
 
   const today = new Date().toLocaleDateString('vi-VN', {
     weekday: 'long',
@@ -120,19 +128,27 @@ const MedicationManagement = () => {
     }
   };
 
-  const getActionButtons = (record) => {
-    return (
-      <Space>
-        <Button icon={<EyeOutlined />} size="small" />
-        {record.actions.includes('confirm') && (
-          <Button icon={<CheckOutlined />} size="small" type="primary" />
-        )}
-        {record.actions.includes('cancel') && (
-          <Button icon={<CloseOutlined />} size="small" danger />
-        )}
-      </Space>
-    );
-  };
+  const getActionButtons = (record) => (
+    <Space>
+      <Button icon={<EyeOutlined />} size="small" />
+      {record.actions.includes('confirm') && (
+        <Button
+          icon={<CheckOutlined style={{ color: '#52c41a' }} />}
+          size="small"
+          type="primary"
+          onClick={() => handleUpdateStatus(record.id, 'confirmed')}
+        />
+      )}
+      {record.actions.includes('cancel') && (
+        <Button
+          icon={<CloseOutlined />}
+          size="small"
+          danger
+          onClick={() => handleUpdateStatus(record.id, 'expired')}
+        />
+      )}
+    </Space>
+  );
 
   const columns = [
     {
@@ -167,6 +183,30 @@ const MedicationManagement = () => {
       render: (_, record) => getActionButtons(record)
     }
   ];
+
+  const handleUpdateStatus = (id, newStatus) => {
+    const statusTextMap = {
+      'confirmed': 'xác nhận hoàn thành',
+      'expired': 'từ chối phiếu',
+      'completed': 'xác nhận hoàn thành',
+      'uncompleted': 'chuyển sang chưa hoàn thành',
+      'pending': 'chuyển về chờ xử lý'
+    };
+    Modal.confirm({
+      title: 'Xác nhận thay đổi trạng thái',
+      content: `Bạn có chắc chắn muốn ${statusTextMap[newStatus] || 'thay đổi trạng thái'}?`,
+      okText: 'Đồng ý',
+      cancelText: 'Hủy',
+      onOk: () => {
+        setData(prev =>
+          prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
+        );
+        setTimelineData(prev =>
+          prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
+        );
+      }
+    });
+  };
 
   return (
     <div className="medical-management-app">
@@ -261,23 +301,70 @@ const MedicationManagement = () => {
           </div>
         </div>
         <Timeline className="medication-timeline">
-          {timelineData.map((item, idx) => (
-            <Timeline.Item key={idx} dot={
-              <span className="timeline-time-badge">{item.time}</span>
-            } color="transparent">
-              <div className={`timeline-card ${item.status === 'completed' ? 'completed' : 'uncompleted'}`}>
-                <div className="timeline-header">
-                  <span className="timeline-student">Phát thuốc cho {item.student}</span>
-                  <span className="timeline-status">
-                    {item.status === 'completed' ? 'Đã hoàn thành' : 'Chờ thực hiện'}
-                  </span>
+          {timelineData.map((item, idx) => {
+            let cardClass = 'timeline-card ';
+            if (item.status === 'completed') cardClass += 'completed';
+            else if (item.status === 'uncompleted') cardClass += 'uncompleted';
+            else cardClass += 'pending';
+
+            let statusText = '';
+            if (item.status === 'completed') statusText = 'Đã hoàn thành';
+            else if (item.status === 'uncompleted') statusText = 'Chưa hoàn thành';
+            else statusText = 'Chờ xử lý';
+
+            return (
+              <Timeline.Item key={idx} dot={
+                <span className="timeline-time-badge">{item.time}</span>
+              } color="transparent">
+                <div className={cardClass}>
+                  <div className="timeline-header">
+                    <span className="timeline-student">Phát thuốc cho {item.student}</span>
+                    <span className="timeline-status">
+                      {item.status === 'completed' && <CheckCircleTwoTone twoToneColor="#52c41a" style={{marginRight: 4}} />}
+                      {item.status === 'uncompleted' && <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{marginRight: 4}} />}
+                      {item.status === 'pending' && <ClockCircleTwoTone twoToneColor="#faad14" style={{marginRight: 4}} />}
+                      {statusText}
+                    </span>
+                    <div className="timeline-actions">
+                      {item.status === 'pending' && (
+                        <>
+                          <Button
+                            size="small"
+                            type="primary"
+                            icon={<CheckOutlined />}
+                            onClick={() => handleUpdateStatus(item.id, 'completed')}
+                          />
+                          <Button
+                            size="small"
+                            danger
+                            icon={<CloseOutlined />}
+                            onClick={() => handleUpdateStatus(item.id, 'uncompleted')}
+                          />
+                        </>
+                      )}
+                      {item.status === 'completed' && (
+                        <Button
+                          size="small"
+                          icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
+                          onClick={() => handleUpdateStatus(item.id, 'pending')}
+                        />
+                      )}
+                      {item.status === 'uncompleted' && (
+                        <Button
+                          size="small"
+                          icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
+                          onClick={() => handleUpdateStatus(item.id, 'pending')}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div className="timeline-body">
+                    <div className="timeline-medication">{item.medication}</div>
+                  </div>
                 </div>
-                <div className="timeline-body">
-                  <div className="timeline-medication">{item.medication}</div>
-                </div>
-              </div>
-            </Timeline.Item>
-          ))}
+              </Timeline.Item>
+            );
+          })}
         </Timeline>
       </Card>
     </div>

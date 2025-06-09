@@ -35,6 +35,7 @@ const AppRoutes = () => {
             <StudentHealthRecord />
           </PrivateRoute>
         } />
+
         <Route path="medications" element={
           <PrivateRoute>
             <MedicineForm />
@@ -49,6 +50,7 @@ const AppRoutes = () => {
           <PrivateRoute>
             <ParentVaccineConfirmation />
           </PrivateRoute>
+
         <Route path="school-nurse" element={
           <PrivateRoute>
             <NursePage />
