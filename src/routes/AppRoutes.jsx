@@ -7,6 +7,8 @@ import PrivateRoute from './ProtectedRoute';
 import StudentHealthRecord from '../pages/parent/health-records';
 import ParentPage from '../pages/parent';
 import MedicineForm from '../pages/parent/medicine-submission';
+import HealthCheckNotification from '../pages/parent/health-check';
+import ParentVaccineConfirmation from '../pages/parent/vaccination';
 
 const AppRoutes = () => {
   return (
@@ -32,6 +34,16 @@ const AppRoutes = () => {
         <Route path="medications" element={
           <PrivateRoute>
             <MedicineForm />
+          </PrivateRoute>
+        } />
+        <Route path="health-check" element={
+          <PrivateRoute>
+            <HealthCheckNotification />
+          </PrivateRoute>
+        } />
+        <Route path="vaccination" element={
+          <PrivateRoute>
+            <ParentVaccineConfirmation />
           </PrivateRoute>
         } />
       </Route>
