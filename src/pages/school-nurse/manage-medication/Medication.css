@@ -1,0 +1,499 @@
+/* Responsive styles */
+@media (min-width: 768px) {
+  .user-info {
+    display: block;
+  }
+}
+
+.user-info {
+  display: none;
+  text-align: right;
+}
+
+/* Medication Management Styles */
+.medical-management-app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #f0f9ff;
+  min-height: 100vh;
+}
+
+/* Header */
+.app-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.app-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #389e0d;
+  margin: 0;
+  border-bottom: 3px solid #4CAF50;
+  display: inline-block;
+  padding-bottom: 8px;
+}
+
+/* Card chính */
+.main-card {
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.main-card .ant-card-head {
+  background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%) !important;
+  border-radius: 12px !important;
+  padding: 24px 24px  !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.2) !important;
+  border: 1.5px solid #389e0d !important;
+  width: 100%;
+}
+
+.main-card .ant-card-head-title {
+  font-size: 24px !important;
+  font-weight: bold !important;
+  color: #fff !important;
+  text-align: left !important;
+  padding: 0 !important;
+}
+
+/* Bộ lọc */
+.filters-section {
+  background: #fafbfa;
+  border-radius: 12px;
+  padding: 24px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.main-card .filter-section {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+}
+
+.search-input {
+  border-radius: 6px;
+}
+
+/* Table */
+.events-table .ant-table-thead > tr > th {
+  background: #f6ffed;
+  color: #389e0d;
+  font-weight: 600;
+}
+
+.events-table .ant-table-tbody > tr > td {
+  background: #fff;
+}
+
+/* Pagination */
+.pagination-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* Lịch phát thuốc hôm nay */
+.header-card {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%);
+  border-radius: 10px;
+  padding: 20px 24px 16px 24px;
+  margin-bottom: 18px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.12);
+  border: 1.5px solid #389e0d;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #fff;
+}
+
+.header-subtitle {
+  font-size: 15px;
+  opacity: 0.95;
+  color: #fff;
+  margin-bottom: 0;
+}
+
+.user-info {
+  text-align: right;
+  color: #fff;
+}
+
+.ant-avatar {
+  background-color: rgba(255,255,255,0.18) !important;
+}
+
+/* Timeline thuốc */
+.medication-timeline {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+}
+.medication-timeline .ant-timeline-item {
+  padding-bottom: 0;
+}
+.medication-timeline .ant-timeline-item-content {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+.medication-timeline .timeline-card {
+  background: #143a0a;
+  border-radius: 10px;
+  padding: 18px 20px 14px 20px;
+  margin-bottom: 14px;
+  color: #fff;
+  border: 1px solid #1e4d13;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.medication-timeline .timeline-card.pending {
+  background: #0a374d;
+  border-color: #bfa940;
+}
+.medication-timeline .timeline-card.processing {
+  background: #4d3c0a;
+  border-color: #bfa940;
+}
+.medication-timeline .timeline-card.completed {
+  margin-left: 10px;
+  background: #143a0a;
+  border-color: #389e0d;
+}
+.medication-timeline .timeline-card.uncompleted, .medication-timeline .timeline-card.failed {
+  background: #4d0a0a;
+  border-color: #e74c3c;
+}
+.medication-timeline .timeline-card.completed .timeline-status {
+  background: #1e4d13;
+  color: #b7eb8f;
+  border: 1px solid #389e0d;
+}
+.medication-timeline .timeline-card.uncompleted .timeline-status, .medication-timeline .timeline-card.failed .timeline-status {
+  background: #4d0a0a;
+  color: #ffb3b3;
+  border: 1px solid #e74c3c;
+}
+.medication-timeline .timeline-card .timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.medication-timeline .timeline-time-badge {
+  background: #52c41a;
+  color: #fff;
+  font-weight: bold;
+  font-size: 13px;
+  border-radius: 17px;
+  padding: 6px 22px;
+  margin-right: 38px;
+  display: inline-block;
+  min-width: 100px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  
+}
+.medication-timeline .timeline-card.pending .timeline-time-badge,
+.medication-timeline .timeline-card.processing .timeline-time-badge {
+  background: #bfa940;
+  
+}
+.medication-timeline .timeline-card .timeline-status {
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 2px 12px;
+  display: inline-block;
+  margin-left: 8px;
+}
+.medication-timeline .timeline-body {
+  margin-top: 2px;
+
+}
+.medication-timeline .timeline-student {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+}
+.medication-timeline .timeline-medication {
+  font-size: 15px;
+  color: #b7eb8f;
+  margin-bottom: 2px;
+}
+.medication-timeline .timeline-note {
+  font-size: 13px;
+  color: #e6ffe6;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+/* Dấu trong Timeline */
+.medication-timeline .ant-timeline-item-head {
+  background-color: #52c41a !important; /* Màu xanh */
+  color: white !important;
+  border-radius: 10px;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .stats-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .medication-management {
+    padding: 16px;
+  }
+  
+  .filter-section .ant-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .filter-section .ant-col {
+    width: 100%;
+  }
+  
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+.supplies-card {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  box-sizing: border-box;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 4px 0;
+  gap: 16px;
+}
+.timeline-header .timeline-student {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  margin-right: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.timeline-header .timeline-status {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 4px 16px;
+  margin-left: 0;
+  background: rgba(255,255,255,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  min-width: 140px;
+  justify-content: center;
+  color: #fff;
+  transition: background 0.2s;
+}
+.timeline-header .timeline-status svg {
+  margin-right: 6px;
+  font-size: 20px;
+}
+.timeline-header .timeline-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
+.timeline-header button {
+  border-radius: 50%;
+  min-width: 40px;
+  min-height: 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.10);
+  margin-left: 0;
+  border: none;
+  background: #fff;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+.timeline-header button[danger] {
+  background: #fff;
+  color: #ff4d4f;
+  border: 1.5px solid #ff4d4f;
+}
+.timeline-header button:hover {
+  filter: none;
+  background: #e6f7ff;
+  box-shadow: 0 4px 16px rgba(22, 119, 255, 0.15);
+}
+.medication-timeline .timeline-card {
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-radius: 14px;
+  transition: box-shadow 0.2s;
+}
+.medication-timeline .timeline-card:hover {
+  box-shadow: 0 8px 24px rgba(82, 196, 26, 0.18);
+}
+
+/* Modal Detail Styles */
+.ant-modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ant-modal-header {
+  background-color: #f0f2f5;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.ant-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.ant-modal-body {
+  padding: 24px;
+}
+
+.ant-modal-body p {
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #555;
+}
+
+.ant-modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.ant-modal-body p strong {
+  font-weight: 600;
+  color: #333;
+  display: inline-block;
+  min-width: 120px; /* Adjust as needed */
+}
+
+.ant-modal-body .ant-tag {
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* Animation Effects */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.main-card {
+  animation: fadeInUp 0.6s ease-out;
+  will-change: transform, opacity;
+}
+
+.supplies-card {
+  animation: fadeInUp 0.6s ease-out;
+  will-change: transform, opacity;
+}
+
+.timeline-card {
+  animation: fadeInUp 0.4s ease-out;
+  will-change: transform, opacity;
+}
+
+/* Hover Effects */
+.main-card:hover,
+.supplies-card:hover {
+  transform: translateY(-5px);
+  transition: transform 0.3s ease;
+}
+
+.timeline-card:hover {
+  transform: translateX(5px);
+  transition: transform 0.3s ease;
+}
+
+/* Button Hover Effect */
+.ant-btn:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* Status Animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.timeline-status {
+  animation: pulse 0.5s ease-in-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #45a049 0%, #388e3c 100%);
+}

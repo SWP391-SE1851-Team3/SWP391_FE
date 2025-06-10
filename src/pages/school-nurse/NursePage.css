@@ -1,16 +1,9 @@
 .home-page {
   padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
   background: #fff;
   min-height: 100vh;
-  width: 100%; /* Thêm width 100% */
-  max-width: none; /* Loại bỏ max-width nếu có */
-}
-
-/* Nếu bạn muốn giới hạn chiều rộng của nội dung bên trong, thêm một container mới */
-.content-container {
-  max-width: 100%; /* hoặc giá trị phù hợp với thiết kế của bạn */
-  margin: 0 auto;
-  width: 100%;
 }
 
 .home-page h1.ant-typography {

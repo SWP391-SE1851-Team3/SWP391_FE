@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
@@ -18,9 +18,10 @@ const ROLE_MENUS = {
   ],
   NURSE: [
     { key: 'home', label: 'Trang chủ', path: '/' },
-    { key: 'student-list', label: 'Danh sách học sinh', path: '/students' },
-    { key: 'health-management', label: 'Quản lý sức khỏe', path: '/health-management' },
-    { key: 'medicine-approval', label: 'Duyệt thuốc', path: '/medicine-approval' },
+    { key: 'manage-medication', label: 'Quản lí thuốc', path: '/manage-medication' },
+    { key: 'medical-events', label: 'Sự kiện y tế ', path: '/medical-events' },
+    { key: 'manage-vaccination', label: 'Tiêm Chủng', path: '/manage-vaccination' },
+    { key: 'manage-health-check', label: 'Kiểm tra y tế', path: '/manage-health-check' },
   ],
   ADMIN: [
     { key: 'home', label: 'Trang chủ', path: '/' },
@@ -30,14 +31,22 @@ const ROLE_MENUS = {
   ]
 };
 
+const getMenuByRole = (roleString) => {
+  if (!ROLE_MENUS[roleString]) {
+    console.warn(`Invalid role: ${roleString}, defaulting to PARENT menu`);
+    return ROLE_MENUS.PARENT;
+  }
+  return ROLE_MENUS[roleString];
+};
+
 const HeaderLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('token');
-  const userRole = localStorage.getItem('userRole') || 'PARENT';
+  const roleString = localStorage.getItem('roleString') || 'PARENT';
+  const menuItems = getMenuByRole(roleString);
   const userName = localStorage.getItem('email') || 'Người dùng';
-  const menuItems = ROLE_MENUS[userRole];
-
+  
   const handleLogout = () => {
     localStorage.clear();
     message.success('Đăng xuất thành công!');
@@ -48,6 +57,17 @@ const HeaderLayout = () => {
     navigate('/login');
   };
 
+  useEffect(() => {
+    if (["NURSE", "ADMIN"].includes(roleString)) {
+      document.body.classList.add("nurse-admin-layout");
+    } else {
+      document.body.classList.remove("nurse-admin-layout");
+    }
+    return () => {
+      document.body.classList.remove("nurse-admin-layout");
+    };
+  }, [roleString]);
+
   return (
     <Header className="header">
       <div className="header-container">
@@ -57,9 +77,9 @@ const HeaderLayout = () => {
         </div>
 
         <Menu
-          mode="horizontal"
+          mode={["NURSE", "ADMIN"].includes(roleString) ? "vertical" : "horizontal"}
           selectedKeys={[location.pathname]}
-          className="nav-menu"
+          className={`nav-menu${["NURSE", "ADMIN"].includes(roleString) ? " vertical-menu" : ""}`}
         >
           {menuItems.map(item => (
             <Menu.Item key={item.path}>

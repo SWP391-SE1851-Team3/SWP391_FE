@@ -3,8 +3,8 @@ import './login.css';
 import { Select, Form, Input, Button, Checkbox, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
-import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { loginByRole } from '../../api/auth'; // <-- import hàm loginByRole
 
 const { Title, Paragraph } = Typography;
 const { Option } = Select;
@@ -16,28 +16,26 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const getEndpoint = (role) => {
-    switch (role) {
-      case 1: return "http://localhost:8080/api/managers/login";
-      case 2: return "http://localhost:8080/api/SchoolNurses/login";
-      case 3: return "http://localhost:8080/api/parents/login";
-      default: return "";
-    }
-  };
-  const endpoint = getEndpoint(role);
-
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await axios.post(endpoint, {
-        email: values.email,
-        password: values.password
-      });
-      const { email, role: userRole } = response.data;
+      const response = await loginByRole(role, values.email, values.password); // <-- sử dụng hàm loginByRole
+      const { email, role: userRole, parentId } = response.data;
+      
+      // Chuyển đổi role number thành string để map với ROLE_MENUS
+      let roleString = '';
+      if (userRole === 1) roleString = 'ADMIN';
+      else if (userRole === 2) roleString = 'NURSE';
+      else if (userRole === 3) roleString = 'PARENT';
+      
       localStorage.setItem('email', email);
-      localStorage.setItem('role', userRole);
-      // Lưu token
+      localStorage.setItem('role', userRole); // Lưu số role gốc
+      localStorage.setItem('roleString', roleString); // Lưu thêm role string
       localStorage.setItem('token', 'your-auth-token');
+      // Nếu là phụ huynh thì lưu thêm parentId
+        if (parentId) {
+            localStorage.setItem('parentId', parentId);
+        }
       //Hiện message đăng nhập thành công 
       message.success('Đăng nhập thành công!!!')
 
@@ -50,9 +48,7 @@ const Login = () => {
         navigate('/parent');
       }
 
-      // Redirect về trang user đã cố gắng truy cập trước đó
-      const from = location.state?.from || '/';
-      navigate(from, { replace: true });
+      
       
     } catch (error) {
       console.error('Đăng nhập thất bại:', error);
@@ -97,6 +93,7 @@ const Login = () => {
               label="Email"
               name="email"
               rules={[{ required: true, message: 'Vui lòng nhập email!' }]}
+              
             >
               <Input prefix={<UserOutlined />} placeholder="Email" />
             </Form.Item>
