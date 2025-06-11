@@ -42,6 +42,24 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.main-card .ant-card-head {
+  background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%) !important;
+  border-radius: 12px !important;
+  padding: 24px 24px  !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.2) !important;
+  border: 1.5px solid #389e0d !important;
+  width: 100%;
+}
+
+.main-card .ant-card-head-title {
+  font-size: 24px !important;
+  font-weight: bold !important;
+  color: #fff !important;
+  text-align: left !important;
+  padding: 0 !important;
+}
+
 /* Bộ lọc */
 .filters-section {
   background: #fafbfa;
@@ -187,7 +205,7 @@
   color: #fff;
   font-weight: bold;
   font-size: 13px;
-  border-radius: 7px;
+  border-radius: 17px;
   padding: 6px 22px;
   margin-right: 38px;
   display: inline-block;
@@ -195,6 +213,7 @@
   text-align: center;
   position: relative;
   z-index: 2;
+  
 }
 .medication-timeline .timeline-card.pending .timeline-time-badge,
 .medication-timeline .timeline-card.processing .timeline-time-badge {
@@ -211,6 +230,7 @@
 }
 .medication-timeline .timeline-body {
   margin-top: 2px;
+
 }
 .medication-timeline .timeline-student {
   font-size: 17px;
@@ -227,6 +247,17 @@
   color: #e6ffe6;
   opacity: 0.85;
   margin-top: 2px;
+}
+
+/* Dấu trong Timeline */
+.medication-timeline .ant-timeline-item-head {
+  background-color: #52c41a !important; /* Màu xanh */
+  color: white !important;
+  border-radius: 10px;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Responsive */
@@ -324,10 +355,7 @@
   background: #fff;
   transition: box-shadow 0.2s, background 0.2s;
 }
-.timeline-header button[type='primary'] {
-  background: #1677ff;
-  color: #fff;
-}
+
 .timeline-header button[danger] {
   background: #fff;
   color: #ff4d4f;
@@ -346,4 +374,126 @@
 }
 .medication-timeline .timeline-card:hover {
   box-shadow: 0 8px 24px rgba(82, 196, 26, 0.18);
+}
+
+/* Modal Detail Styles */
+.ant-modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ant-modal-header {
+  background-color: #f0f2f5;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.ant-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.ant-modal-body {
+  padding: 24px;
+}
+
+.ant-modal-body p {
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #555;
+}
+
+.ant-modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.ant-modal-body p strong {
+  font-weight: 600;
+  color: #333;
+  display: inline-block;
+  min-width: 120px; /* Adjust as needed */
+}
+
+.ant-modal-body .ant-tag {
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* Animation Effects */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.main-card {
+  animation: fadeInUp 0.6s ease-out;
+  will-change: transform, opacity;
+}
+
+.supplies-card {
+  animation: fadeInUp 0.6s ease-out;
+  will-change: transform, opacity;
+}
+
+.timeline-card {
+  animation: fadeInUp 0.4s ease-out;
+  will-change: transform, opacity;
+}
+
+/* Hover Effects */
+.main-card:hover,
+.supplies-card:hover {
+  transform: translateY(-5px);
+  transition: transform 0.3s ease;
+}
+
+.timeline-card:hover {
+  transform: translateX(5px);
+  transition: transform 0.3s ease;
+}
+
+/* Button Hover Effect */
+.ant-btn:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+/* Status Animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.timeline-status {
+  animation: pulse 0.5s ease-in-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #45a049 0%, #388e3c 100%);
 }

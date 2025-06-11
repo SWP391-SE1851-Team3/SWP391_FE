@@ -115,13 +115,15 @@
 .login-form {
     width: 100%;
     max-width: 400px;
-    /* Thêm margin auto để căn giữa form */
     margin: 0 auto;
+    padding: 20px;
 }
-
 
 .form-group {
     margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .form-group label {
@@ -253,6 +255,22 @@
 
 .delay-6 {
   animation-delay: 1.2s;
+}
+
+/* Căn chỉnh label và input cho form login */
+.ant-form-item-label > label {
+  font-weight: 600;
+  font-size: 15px;
+  color: #333;
+}
+
+.ant-input-affix-wrapper {
+  height: 42px;
+  align-items: center;
+}
+
+.ant-input-affix-wrapper input {
+  font-size: 15px;
 }
 
 @media (max-width: 900px) {

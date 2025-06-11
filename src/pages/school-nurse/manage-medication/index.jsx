@@ -35,10 +35,12 @@ const MedicationManagement = () => {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const [data, setData] = useState([
     {
-      id: 1,
       key: '1',
+      id: 1,
       student: 'Nguyễn Văn A - Lớp 1A',
       medication: 'Paracetamol',
       status: 'pending',
@@ -46,8 +48,8 @@ const MedicationManagement = () => {
       actions: ['view', 'confirm', 'cancel']
     },
     {
-      id: 2,
       key: '2',
+      id: 2,
       student: 'Nguyễn Thị B - Lớp 2B',
       medication: 'Vitamin C',
       status: 'pending',
@@ -55,8 +57,8 @@ const MedicationManagement = () => {
       actions: ['view', 'confirm', 'cancel']
     },
     {
-      id: 3,
       key: '3',
+      id: 3,
       student: 'Trần Văn C - Lớp 1B',
       medication: 'Thuốc nhỏ mắt',
       status: 'confirmed',
@@ -64,8 +66,8 @@ const MedicationManagement = () => {
       actions: ['view']
     },
     {
-      id: 4,
       key: '4',
+      id: 4,
       student: 'Lê Thị D - Lớp 2A',
       medication: 'Thuốc ho',
       status: 'expired',
@@ -75,38 +77,63 @@ const MedicationManagement = () => {
   ]);
   const [timelineData, setTimelineData] = useState([
     {
-      id: 1,
       time: '12:00 PM',
       student: 'Nguyễn Văn A',
       medication: 'Paracetamol - 1 viên sau bữa trua',
       status: 'pending',
-      color: 'orange'
+      color: 'orange',
+      id: 1
     },
     {
-      id: 2,
       time: '09:00 AM',
       student: 'Trần Văn C',
       medication: 'Thuốc nhỏ mắt - 1 giọt mỗi mắt sau bữa sáng',
       status: 'pending',
-      color: 'orange'
+      color: 'orange',
+      id: 3
     },
     {
-      id: 3,
       time: '15:00 PM',
       student: 'Nguyễn Thị B',
       medication: 'Vitamin C - 1 viên sau bữa chiều',
       status: 'pending',
-      color: 'orange'
+      color: 'orange',
+      id: 2
     },
     {
-      id: 4,
       time: '16:00 PM',
       student: 'Phạm Văn D',
       medication: 'Kháng sinh - 1 viên sau bữa tối',
       status: 'pending',
-      color: 'orange'
+      color: 'orange',
+      id: 5
     }
   ]);
+
+  // Filtered data for the table
+  const getFilteredData = () => {
+    let filtered = data;
+
+    if (searchText) {
+      filtered = filtered.filter(
+        (item) =>
+          item.student.toLowerCase().includes(searchText.toLowerCase()) ||
+          item.medication.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    if (statusFilter) {
+      filtered = filtered.filter((item) => item.status === statusFilter);
+    }
+
+    if (classFilter) {
+      filtered = filtered.filter((item) => item.student.includes(classFilter));
+    }
+
+    return filtered;
+  };
+
+  const displayedData = getFilteredData();
 
   const today = new Date().toLocaleDateString('vi-VN', {
     weekday: 'long',
@@ -125,30 +152,32 @@ const MedicationManagement = () => {
         return <Tag color="red">Đã từ chối</Tag>;
       default:
         return <Tag>{status}</Tag>;
-    }
+    } 
   };
 
-  const getActionButtons = (record) => (
-    <Space>
-      <Button icon={<EyeOutlined />} size="small" />
-      {record.actions.includes('confirm') && (
-        <Button
-          icon={<CheckOutlined style={{ color: '#52c41a' }} />}
-          size="small"
-          type="primary"
-          onClick={() => handleUpdateStatus(record.id, 'confirmed')}
-        />
-      )}
-      {record.actions.includes('cancel') && (
-        <Button
-          icon={<CloseOutlined />}
-          size="small"
-          danger
-          onClick={() => handleUpdateStatus(record.id, 'expired')}
-        />
-      )}
-    </Space>
-  );
+  const getActionButtons = (record) => {
+    return (
+      <Space>
+        <Button icon={<EyeOutlined />} size="small" onClick={() => handleViewDetails(record)} />
+        {record.actions.includes('confirm') && (
+          <Button
+            icon={<CheckOutlined  />}
+            size="small"
+            type="primary"
+            onClick={() => handleUpdateStatus(record.id, 'confirmed')}
+          />
+        )}
+        {record.actions.includes('cancel') && (
+          <Button
+            icon={<CloseOutlined />}
+            size="small"
+            danger
+            onClick={() => handleUpdateStatus(record.id, 'expired')}
+          />
+        )}
+      </Space>
+    );
+  };
 
   const columns = [
     {
@@ -192,6 +221,8 @@ const MedicationManagement = () => {
       'uncompleted': 'chuyển sang chưa hoàn thành',
       'pending': 'chuyển về chờ xử lý'
     };
+
+    //Xác nhận chuyển trạng thái ==================================================
     Modal.confirm({
       title: 'Xác nhận thay đổi trạng thái',
       content: `Bạn có chắc chắn muốn ${statusTextMap[newStatus] || 'thay đổi trạng thái'}?`,
@@ -202,25 +233,38 @@ const MedicationManagement = () => {
           prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
         );
         setTimelineData(prev =>
-          prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
+          prev.map(item => {
+            return item.id === id ? { ...item, status: newStatus } : item;
+          })
         );
       }
     });
+    //========================================================================
+  };
+
+  const handleViewDetails = (record) => {
+    setSelectedRecord(record);
+    setIsModalVisible(true);
   };
 
   return (
+
     <div className="medical-management-app">
+    
       <div className="app-header">
         <Title level={2} className="app-title">Quản lý Phiếu Gửi Thuốc</Title>
       </div>
 
-      {/* Danh sách phiếu gửi thuốc */}
-      <Card className="main-card" title="Danh sách phiếu gửi thuốc">
+      {/*============================ Danh sách phiếu gửi thuốc========================================= */}
+      <Card
+        className="main-card"
+        title="Danh sách phiếu gửi thuốc"
+      >
         <div className="filters-section filter-section">
           <Row gutter={16} justify="center" align="middle" wrap={false}>
             <Col>
               <Input
-                placeholder="Tìm kiếm sự kiện..."
+                placeholder="Tìm kiếm phiếu gửi thuốc..."
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -236,6 +280,7 @@ const MedicationManagement = () => {
                 style={{ minWidth: 170 }}
                 allowClear
               >
+                <Option value="">Tất cả loại</Option>
                 <Option value="pending">Chờ xác nhận</Option>
                 <Option value="confirmed">Đã xác nhận</Option>
                 <Option value="expired">Đã từ chối</Option>
@@ -249,6 +294,7 @@ const MedicationManagement = () => {
                 style={{ minWidth: 170 }}
                 allowClear
               >
+                <Option value="">Tất cả trạng thái</Option>
                 <Option value="1A">Lớp 1A</Option>
                 <Option value="1B">Lớp 1B</Option>
                 <Option value="2A">Lớp 2A</Option>
@@ -260,7 +306,7 @@ const MedicationManagement = () => {
 
         <Table
           columns={columns}
-          dataSource={data}
+          dataSource={displayedData}
           pagination={false}
           className="events-table"
         />
@@ -268,7 +314,7 @@ const MedicationManagement = () => {
         <div className="pagination-section">
           <Pagination
             current={1}
-            total={4}
+            total={displayedData.length}
             pageSize={10}
             showSizeChanger={false}
             showQuickJumper={false}
@@ -287,17 +333,7 @@ const MedicationManagement = () => {
                 <span>{today}</span>
               </Space>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div className="user-info">
-                <div style={{ fontSize: '12px', opacity: 0.8 }}>Đang đăng nhập</div>
-                <div style={{ fontWeight: 'bold' }}>Y tá trực</div>
-              </div>
-              <Avatar 
-                size={48} 
-                icon={<UserOutlined />} 
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
-              />
-            </div>
+            
           </div>
         </div>
         <Timeline className="medication-timeline">
@@ -331,7 +367,7 @@ const MedicationManagement = () => {
                           <Button
                             size="small"
                             type="primary"
-                            icon={<CheckOutlined />}
+                            icon={<CheckOutlined style={{ color: '#52c41a' }} />}
                             onClick={() => handleUpdateStatus(item.id, 'completed')}
                           />
                           <Button
@@ -367,6 +403,23 @@ const MedicationManagement = () => {
           })}
         </Timeline>
       </Card>
+
+      <Modal
+        title="Chi tiết phiếu gửi thuốc"
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        {selectedRecord && (
+          <div>
+            <p><strong>Học sinh:</strong> {selectedRecord.student}</p>
+            <p><strong>Tên thuốc:</strong> {selectedRecord.medication}</p>
+            <p><strong>Trạng thái:</strong> {getStatusTag(selectedRecord.status)}</p>
+            <p><strong>Thời gian gửi:</strong> {selectedRecord.time}</p>
+            {/* Add more details as needed */}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
