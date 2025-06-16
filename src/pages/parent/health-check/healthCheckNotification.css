@@ -1,86 +1,96 @@
-.notification-container {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #ffffff;
-  padding: 30px 25px;
-  max-width: 650px;
-  margin: 40px auto;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  color: #2e2e2e;
+.health-record-container {
+  width: 100%;
+  max-width: none;
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-h2 {
+.health-record-container h2 {
+  color: #1890ff;
   text-align: center;
-  color: #1e3a8a;
-  margin-bottom: 25px;
+  margin-bottom: 24px;
   font-size: 24px;
 }
 
-.student-info,
-.health-check-info,
-.agreement-section,
-.contact-info {
-  margin-bottom: 20px;
+.health-record-container > div {
+  margin-bottom: 18px;
 }
 
-.student-info p,
-.health-check-info p,
-.contact-info p {
+.health-record-container label {
   font-size: 16px;
-  margin: 6px 0;
+  color: #333;
 }
 
-strong {
-  color: #1e293b;
+.health-record-container input[type="radio"] {
+  margin-right: 8px;
 }
 
-.agreement-section label {
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-}
-
-.agreement-section input {
-  margin-right: 10px;
-  transform: scale(1.2);
+.health-record-container textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 15px;
 }
 
 .submit-btn {
-  background-color: #059669;
-  color: #ffffff;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
+  display: block;
   width: 100%;
-  transition: background-color 0.3s ease;
+  max-width: 200px;
+  margin: 24px auto;
+  padding: 12px 24px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
 }
 
 .submit-btn:hover {
-  background-color: #059669;
+  background-color: #40a9ff;
 }
 
-.contact-info a {
-  color: #059669;
-  text-decoration: none;
+.history-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e8e8e8;
 }
 
-.agreement-section label {
-  display: block;
+.history-section h3 {
+  color: #333;
+  margin-bottom: 16px;
+  font-size: 20px;
+}
+
+.history-item {
+  background-color: #f5f5f5;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #e8e8e8;
+}
+
+.history-item p {
   margin: 8px 0;
+  color: #333;
 }
 
-.reason-input {
-  margin-top: 10px;
+.history-item strong {
+  color: #666;
+  margin-right: 8px;
 }
 
-.reason-input textarea {
-  width: 100%;
-  padding: 10px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  resize: vertical;
-  min-height: 80px;
+@media screen and (max-width: 768px) {
+  .health-record-container {
+    padding: 16px;
+  }
+  .submit-btn {
+    max-width: 100%;
+  }
 }

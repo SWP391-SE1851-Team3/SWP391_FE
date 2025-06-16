@@ -14,7 +14,6 @@ const ROLE_MENUS = {
     { key: 'medications', label: 'Gửi thuốc', path: '/medications' },
     { key: 'health-check', label: 'Kiểm tra sức khỏe', path: '/health-check' },
     { key: 'vaccination', label: 'Tiêm chủng', path: '/vaccination' },
-    { key: 'dashboard', label: 'Báo cáo', path: '/dashboard' },
   ],
   NURSE: [
     { key: 'home', label: 'Trang chủ', path: '/' },

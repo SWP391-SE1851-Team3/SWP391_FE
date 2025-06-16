@@ -5,6 +5,24 @@ const ParentVaccineConfirmation = () => {
   const [consent, setConsent] = useState('');
   const [reason, setReason] = useState('');
 
+  // Lịch sử tiêm chủng mẫu
+  const [vaccineHistory] = useState([
+    {
+      id: 1,
+      date: '15/06/2024',
+      vaccine: 'Viêm gan B',
+      location: 'Trạm y tế phường',
+      result: 'Không có phản ứng phụ',
+    },
+    {
+      id: 2,
+      date: '10/01/2023',
+      vaccine: 'Cúm mùa',
+      location: 'Bệnh viện Nhi',
+      result: 'Sốt nhẹ sau tiêm',
+    },
+  ]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (consent === '') {
@@ -25,7 +43,7 @@ const ParentVaccineConfirmation = () => {
   };
 
   return (
-    <div className="confirmation-container">
+    <div className="vaccine-record-container">
       <h2>Xác nhận tiêm vắc xin cho học sinh</h2>
       <div className="student-info">
         <p><strong>Họ tên:</strong> Nguyễn Văn A</p>
@@ -73,6 +91,25 @@ const ParentVaccineConfirmation = () => {
 
         <button type="submit" className="submit-btn">Gửi xác nhận</button>
       </form>
+
+      {/* Lịch sử tiêm chủng */}
+      <div className="history-section">
+        <h3>Lịch sử tiêm chủng</h3>
+        {vaccineHistory.length > 0 ? (
+          <ul>
+            {vaccineHistory.map((item) => (
+              <li key={item.id} className="history-item">
+                <p><strong>Ngày tiêm:</strong> {item.date}</p>
+                <p><strong>Vắc xin:</strong> {item.vaccine}</p>
+                <p><strong>Địa điểm:</strong> {item.location}</p>
+                <p><strong>Kết quả:</strong> {item.result}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Chưa có lịch sử tiêm chủng.</p>
+        )}
+      </div>
     </div>
   );
 };
