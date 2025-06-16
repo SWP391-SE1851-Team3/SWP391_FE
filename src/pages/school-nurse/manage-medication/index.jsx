@@ -13,7 +13,8 @@ import {
   Col,
   Pagination,
   Avatar,
-  Modal
+  Modal,
+  Form
 } from 'antd';
 import {
   SearchOutlined,
@@ -32,11 +33,18 @@ const { Title } = Typography;
 const { Option } = Select;
 
 const MedicationManagement = () => {
+  const [currentPage1, setCurrentPage1] = useState(1);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [rejectForm] = Form.useForm();
+  const [rejectingId, setRejectingId] = useState(null);
+  const [timelineRejectModalVisible, setTimelineRejectModalVisible] = useState(false);
+  const [timelineRejectForm] = Form.useForm();
+  const [timelineRejectingId, setTimelineRejectingId] = useState(null);
   const [data, setData] = useState([
     {
       key: '1',
@@ -45,7 +53,8 @@ const MedicationManagement = () => {
       medication: 'Paracetamol',
       status: 'pending',
       time: '09:40 AM, 24/05/2025',
-      actions: ['view', 'confirm', 'cancel']
+      actions: ['view', 'confirm', 'cancel'],
+      rejectReason: ''
     },
     {
       key: '2',
@@ -222,7 +231,18 @@ const MedicationManagement = () => {
       'pending': 'chuyển về chờ xử lý'
     };
 
-    //Xác nhận chuyển trạng thái ==================================================
+    if (newStatus === 'expired') {
+      setRejectingId(id);
+      setRejectModalVisible(true);
+      return;
+    }
+
+    if (newStatus === 'uncompleted') {
+      setTimelineRejectingId(id);
+      setTimelineRejectModalVisible(true);
+      return;
+    }
+
     Modal.confirm({
       title: 'Xác nhận thay đổi trạng thái',
       content: `Bạn có chắc chắn muốn ${statusTextMap[newStatus] || 'thay đổi trạng thái'}?`,
@@ -239,7 +259,41 @@ const MedicationManagement = () => {
         );
       }
     });
-    //========================================================================
+  };
+
+  const handleReject = () => {
+    rejectForm.validateFields().then(values => {
+      setData(prev =>
+        prev.map(item => 
+          item.id === rejectingId 
+            ? { ...item, status: 'expired', rejectReason: values.reason } 
+            : item
+        )
+      );
+      setTimelineData(prev =>
+        prev.map(item => 
+          item.id === rejectingId 
+            ? { ...item, status: 'expired' } 
+            : item
+        )
+      );
+      setRejectModalVisible(false);
+      rejectForm.resetFields();
+    });
+  };
+
+  const handleTimelineReject = () => {
+    timelineRejectForm.validateFields().then(values => {
+      setTimelineData(prev =>
+        prev.map(item => 
+          item.id === timelineRejectingId 
+            ? { ...item, status: 'uncompleted', rejectReason: values.reason } 
+            : item
+        )
+      );
+      setTimelineRejectModalVisible(false);
+      timelineRejectForm.resetFields();
+    });
   };
 
   const handleViewDetails = (record) => {
@@ -313,9 +367,10 @@ const MedicationManagement = () => {
 
         <div className="pagination-section">
           <Pagination
-            current={1}
+            current={currentPage1}
             total={displayedData.length}
             pageSize={10}
+            onChange={(page) => setCurrentPage1(page)}
             showSizeChanger={false}
             showQuickJumper={false}
           />
@@ -378,19 +433,19 @@ const MedicationManagement = () => {
                           />
                         </>
                       )}
-                      {item.status === 'completed' && (
-                        <Button
-                          size="small"
-                          icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
-                          onClick={() => handleUpdateStatus(item.id, 'pending')}
-                        />
-                      )}
-                      {item.status === 'uncompleted' && (
-                        <Button
-                          size="small"
-                          icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
-                          onClick={() => handleUpdateStatus(item.id, 'pending')}
-                        />
+                      {(item.status === 'completed' || item.status === 'uncompleted') && (
+                        <>
+                          <Button
+                            size="small"
+                            icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
+                            onClick={() => handleUpdateStatus(item.id, 'pending')}
+                          />
+                          <Button
+                            size="small"
+                            icon={<EyeOutlined />}
+                            onClick={() => handleViewDetails(item)}
+                          />
+                        </>
                       )}
                     </div>
                   </div>
@@ -416,9 +471,58 @@ const MedicationManagement = () => {
             <p><strong>Tên thuốc:</strong> {selectedRecord.medication}</p>
             <p><strong>Trạng thái:</strong> {getStatusTag(selectedRecord.status)}</p>
             <p><strong>Thời gian gửi:</strong> {selectedRecord.time}</p>
-            {/* Add more details as needed */}
+            {selectedRecord.status === 'expired' && selectedRecord.rejectReason && (
+              <p><strong>Lý do từ chối:</strong> {selectedRecord.rejectReason}</p>
+            )}
+            {selectedRecord.status === 'uncompleted' && selectedRecord.rejectReason && (
+              <p><strong>Lý do từ chối:</strong> {selectedRecord.rejectReason}</p>
+            )}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title="Xác nhận từ chối phiếu"
+        open={rejectModalVisible}
+        onOk={handleReject}
+        onCancel={() => {
+          setRejectModalVisible(false);
+          rejectForm.resetFields();
+        }}
+        okText="Xác nhận"
+        cancelText="Hủy"
+      >
+        <Form form={rejectForm}>
+          <Form.Item
+            name="reason"
+            label="Lý do từ chối"
+            rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phiếu..." />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Xác nhận từ chối phát thuốc"
+        open={timelineRejectModalVisible}
+        onOk={handleTimelineReject}
+        onCancel={() => {
+          setTimelineRejectModalVisible(false);
+          timelineRejectForm.resetFields();
+        }}
+        okText="Xác nhận"
+        cancelText="Hủy"
+      >
+        <Form form={timelineRejectForm}>
+          <Form.Item
+            name="reason"
+            label="Lý do từ chối"
+            rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phát thuốc..." />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

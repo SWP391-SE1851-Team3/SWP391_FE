@@ -11,9 +11,8 @@ import HealthCheckNotification from '../pages/parent/health-check';
 import ParentVaccineConfirmation from '../pages/parent/vaccination';
 import MedicalEvents from '../pages/school-nurse/medical-events';
 import NursePage from '../pages/school-nurse';
-
 import ManageMedication from '../pages/school-nurse/manage-medication';
-
+import ManageVaccination from '../pages/school-nurse/manage-vaccination';
 const AppRoutes = () => {
   return (
     <Routes>
@@ -65,6 +64,11 @@ const AppRoutes = () => {
         <Route path='manage-medication' element={
           <PrivateRoute>
             <ManageMedication />
+          </PrivateRoute>
+        } />
+        <Route path='manage-vaccination' element={
+          <PrivateRoute>
+            <ManageVaccination />
           </PrivateRoute>
         } />
       </Route>

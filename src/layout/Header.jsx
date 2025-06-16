@@ -77,16 +77,15 @@ const HeaderLayout = () => {
         </div>
 
         <Menu
-          mode={["NURSE", "ADMIN"].includes(roleString) ? "vertical" : "horizontal"}
-          selectedKeys={[location.pathname]}
-          className={`nav-menu${["NURSE", "ADMIN"].includes(roleString) ? " vertical-menu" : ""}`}
-        >
-          {menuItems.map(item => (
-            <Menu.Item key={item.path}>
-              <Link to={item.path}>{item.label}</Link>
-            </Menu.Item>
-          ))}
-        </Menu>
+  mode={["NURSE", "ADMIN"].includes(roleString) ? "vertical" : "horizontal"}
+  selectedKeys={[location.pathname]}
+  className={`nav-menu${["NURSE", "ADMIN"].includes(roleString) ? " vertical-menu" : ""}`}
+  items={menuItems.map(item => ({
+    key: item.path,
+    label: <Link to={item.path}>{item.label}</Link>
+  }))}
+/>
+
 
         <div className="user-controls">
           {isAuthenticated ? (
