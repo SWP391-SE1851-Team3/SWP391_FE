@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
 import { BellOutlined, LogoutOutlined, LoginOutlined } from '@ant-design/icons';
 import { Menu, Avatar, Badge, Button, message } from 'antd';
+import { useVaccination } from '../context/VaccinationContext';
 const { Header } = Layout;
 import './Header.css';
 
@@ -45,7 +46,8 @@ const HeaderLayout = () => {
   const roleString = localStorage.getItem('roleString') || 'PARENT';
   const menuItems = getMenuByRole(roleString);
   const userName = localStorage.getItem('email') || 'Người dùng';
-  
+  const { newVaccinationCount } = useVaccination();
+
   const handleLogout = () => {
     localStorage.clear();
     message.success('Đăng xuất thành công!');
@@ -82,7 +84,12 @@ const HeaderLayout = () => {
         >
           {menuItems.map(item => (
             <Menu.Item key={item.path}>
-              <Link to={item.path}>{item.label}</Link>
+              <Link to={item.path}>
+                {item.label}
+                {item.key === 'vaccination' && newVaccinationCount > 0 && (
+                  <Badge dot style={{ marginLeft: 6, backgroundColor: 'red' }} />
+                )}
+              </Link>
             </Menu.Item>
           ))}
         </Menu>
@@ -90,9 +97,6 @@ const HeaderLayout = () => {
         <div className="user-controls">
           {isAuthenticated ? (
             <>
-              <Badge count={0} className="notification-badge">
-                <BellOutlined className="notification-icon" />
-              </Badge>
               <div className="user-info">
                 <Avatar size="small" className="user-avatar">
                   {userName[0]}
