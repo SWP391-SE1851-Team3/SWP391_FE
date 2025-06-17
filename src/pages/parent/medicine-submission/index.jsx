@@ -1,411 +1,399 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Form, 
-  Select, 
-  Input, 
-  Button, 
-  Typography, 
-  Row, 
-  Col, 
-  Modal, 
+import {
+  Form,
+  Select,
+  Input,
+  Button,
+  Typography,
+  Upload,
   message,
   Spin,
-  Upload
+  Row,
+  Col,
+  Modal
 } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
-import MedicationService from '../../../api/medicalSubmission';
+import {
+  UploadOutlined,
+  PlusOutlined,
+  MinusCircleOutlined
+} from '@ant-design/icons';
+import {
+  getStudentHealthProfiles,
+  submitMedicationForm,
+  getMedicationSubmissionsByParentId,
+  getMedicationSubmissionDetails
+} from '../../../api/medicalSubmission';
 import './medicineForm.css';
 
-const { Title } = Typography;
-const { TextArea } = Input;
 const { Option } = Select;
+const { TextArea } = Input;
+
+// Status text and color mapping (customize if your API khác)
+const statusColors = {
+  pending: '#FFCB05', // vàng
+  approved: '#4CAF50',
+  rejected: '#F44336'
+};
+const statusText = {
+  pending: 'Chờ xác nhận',
+  approved: 'Đã xác nhận',
+  rejected: 'Đã từ chối'
+};
 
 const MedicineForm = () => {
-  const [form] = Form.useForm();
   const [students, setStudents] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [medicationDetails, setMedicationDetails] = useState([{ 
-    medicationName: '', 
-    dosage: '', 
-    timesToUse: '', 
-    notes: '',
-    medicineImage: ''
-  }]);
   const [loading, setLoading] = useState(false);
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
-  
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
   const parentId = localStorage.getItem('parentId');
-  const usageTimes = ['Sáng', 'Trưa', 'Chiều', 'Tối'];
+  const [form] = Form.useForm();
 
-  // Load initial data
+  // Lịch sử
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [detailModal, setDetailModal] = useState({ open: false, data: null });
+
+  // Load danh sách học sinh
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        // Load children list
-        const childrenRes = await MedicationService.getChildrenByParent(parentId);
-        if (childrenRes.success) {
-          setStudents(childrenRes.data);
-        }
-        
-        // Load submissions
-        const submissionsRes = await MedicationService.getSubmissionsByParent(parentId);
-        if (submissionsRes.success) {
-          setSubmissions(submissionsRes.data);
-        }
-      } catch (error) {
-        console.error('Data loading error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (parentId) {
-      loadData();
-    } else {
-      message.error('Vui lòng đăng nhập lại');
+    if (!parentId) {
+      message.error('Vui lòng đăng nhập!');
+      return;
     }
+    setLoading(true);
+    getStudentHealthProfiles(parentId)
+      .then(res => {
+        setStudents(res.data || []);
+      })
+      .catch(() => message.error('Không tải được danh sách học sinh'))
+      .finally(() => setLoading(false));
   }, [parentId]);
 
-  // Handle student selection
-  const handleStudentChange = (studentId) => {
-    const student = students.find(s => s.studentID === studentId);
-    setSelectedStudent(student);
-    form.setFieldsValue({ studentId });
-    setMedicationDetails([{ medicationName: '', dosage: '', timesToUse: '', notes: '', medicineImage: '' }]);
-  };
-
-  // Add new medication field
-  const addMedication = () => {
-    setMedicationDetails([...medicationDetails, { 
-      medicationName: '', 
-      dosage: '', 
-      timesToUse: '', 
-      notes: '',
-      medicineImage: ''
-    }]);
-  };
-
-  // Update medication field
-  const updateMedication = (index, field, value) => {
-    const updated = [...medicationDetails];
-    updated[index][field] = value;
-    setMedicationDetails(updated);
-  };
-
-  // Remove medication field
-  const removeMedication = (index) => {
-    if (medicationDetails.length <= 1) {
-      message.warning('Cần ít nhất 1 loại thuốc');
+  // Load lịch sử đơn thuốc khi đổi học sinh
+  useEffect(() => {
+    if (!selectedStudentId || !parentId) {
+      setHistory([]);
       return;
     }
-    const updated = medicationDetails.filter((_, i) => i !== index);
-    setMedicationDetails(updated);
-  };
+    setHistoryLoading(true);
+    getMedicationSubmissionsByParentId(parentId)
+      .then(res => {
+        const filtered = (res.data || []).filter(
+          item => item.studentId === selectedStudentId
+        );
+        setHistory(filtered);
+      })
+      .catch(() => setHistory([]))
+      .finally(() => setHistoryLoading(false));
+  }, [selectedStudentId, parentId]);
 
-  const handleImageChange = (index, info) => {
-    if (info.file.status === 'removed') {
-      const updated = [...medicationDetails];
-      updated[index].medicineImage = '';
-      setMedicationDetails(updated);
-      return;
-    }
-    const file = info.file.originFileObj;
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const updated = [...medicationDetails];
-        updated[index].medicineImage = e.target.result;
-        setMedicationDetails(updated);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Submit medication form
-  const handleSubmit = async () => {
+  // Xem chi tiết đơn thuốc
+  const handleViewDetail = async (submissionId) => {
+    setHistoryLoading(true);
     try {
-      const values = await form.validateFields();
-      setLoading(true);
-      
-      const submissionData = {
-        parentId: Number(parentId),
-        studentId: selectedStudent.id,
-        medicineImage: medicationDetails.filter(m => m.medicineImage.trim() !== '')[0].medicineImage,
-        medicationDetails: medicationDetails.filter(m => m.medicationName.trim() !== '')
-      };
-      
-      const result = await MedicationService.submitMedication(submissionData);
-      
-      if (result.success) {
-        // Refresh submissions
-        const res = await MedicationService.getSubmissionsByParent(parentId);
-        if (res.success) {
-          setSubmissions(res.data);
-        }
-        
-        // Reset form
-        setMedicationDetails([{ medicationName: '', dosage: '', timesToUse: '', notes: '', medicineImage: '' }]);
-        setSelectedStudent(null);
-        form.resetFields();
+      const res = await getMedicationSubmissionDetails(submissionId);
+      setDetailModal({
+        open: true,
+        data: res.data
+      });
+    } catch {
+      setDetailModal({ open: false, data: null });
+    }
+    setHistoryLoading(false);
+  };
+
+  // Hủy yêu cầu (nếu có API thật thì thay alert)
+  const handleCancelRequest = (submissionId) => {
+    message.info(`Bạn vừa nhấn hủy yêu cầu đơn thuốc #${submissionId}. (Chức năng này cần bổ sung API nếu muốn thực sự hủy trên server)`);
+  };
+
+  const onFinish = async (values) => {
+    try {
+      const parentId = localStorage.getItem('parentId');
+      const studentId = selectedStudentId;
+
+      // Upload ảnh thuốc nếu có
+      let imageUrl = '';
+      if (values.medicineImage && values.medicineImage.fileList.length > 0) {
+        const file = values.medicineImage.file.originFileObj;
+        imageUrl = await fakeUploadImage(file);
       }
+
+      // Chuẩn hóa danh sách thuốc
+      const medicationDetails = values.medicines.map(item => ({
+        medicineName: item.medicineName,
+        dosage: item.dosage,
+        timeToUse: item.time,
+        note: item.note || ""
+      }));
+
+      const submitData = {
+        parentId: parseInt(parentId),
+        studentId: parseInt(studentId),
+        medicineImage: imageUrl,
+        medicationDetails: medicationDetails
+      };
+
+      await submitMedicationForm(submitData);
+      message.success("Gửi đơn thuốc thành công!");
+      form.resetFields();
+      // Reload history after submit
+      setHistoryLoading(true);
+      getMedicationSubmissionsByParentId(parentId)
+        .then(res => {
+          const filtered = (res.data || []).filter(
+            item => item.studentId === selectedStudentId
+          );
+          setHistory(filtered);
+        })
+        .catch(() => setHistory([]))
+        .finally(() => setHistoryLoading(false));
     } catch (error) {
-      console.error('Submission error:', error);
-    } finally {
-      setLoading(false);
+      message.error("Có lỗi xảy ra khi gửi đơn thuốc!");
     }
   };
 
-  // Cancel submission
-  const handleCancelSubmission = async (submissionId) => {
-    Modal.confirm({
-      title: 'Xác nhận hủy yêu cầu',
-      content: 'Bạn có chắc muốn hủy yêu cầu gửi thuốc này?',
-      okText: 'Xác nhận',
-      cancelText: 'Hủy',
-      onOk: async () => {
-        setLoading(true);
-        try {
-          const result = await MedicationService.cancelSubmission(submissionId);
-          if (result.success) {
-            // Refresh submissions
-            const res = await MedicationService.getSubmissionsByParent(parentId);
-            if (res.success) {
-              setSubmissions(res.data);
-            }
-          }
-        } catch (error) {
-          console.error('Cancellation error:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    });
-  };
-
-  // View submission details
-  const viewSubmissionDetails = (submission) => {
-    setSelectedSubmission(submission);
-    setDetailModalVisible(true);
+  // Hàm upload giả lập tạm thời
+  const fakeUploadImage = async (file) => {
+    // Ở đây bạn thay bằng logic upload ảnh thực tế về server (nếu backend đã hỗ trợ upload file)
+    console.log("Upload file:", file);
+    return "https://dummyimage.com/200x200/000/fff&text=Uploaded";
   };
 
   return (
     <div className="medicine-form-container">
+      <Typography.Title level={3}>Gửi Thuốc cho Học sinh</Typography.Title>
       <Spin spinning={loading}>
-        <Title level={3} className="form-title">Gửi Thuốc cho Học sinh</Title>
-        
-        <Form form={form} layout="vertical">
-          <Form.Item
-            label="Chọn học sinh"
-            name="studentId"
-            rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
+        <Form.Item label="Chọn học sinh" required>
+          <Select
+            value={selectedStudentId ?? undefined}
+            placeholder="Chọn học sinh"
+            style={{ width: '50%' }}
+            onChange={(value) => {
+              setSelectedStudentId(value);
+              form.resetFields();
+            }}
+            showSearch
+            optionFilterProp="children"
           >
-            <Select
-              placeholder="Chọn học sinh"
-              onChange={handleStudentChange}
-              allowClear
-              disabled={loading}
-            >
-              {students.map(student => (
-                <Option key={student.studentID} value={student.studentID}>
-                  {student.fullName}
+            {students
+              .filter((s) => s.studentID != null)
+              .map((s) => (
+                <Option key={s.studentID} value={s.studentID}>
+                  {s.fullName}
                 </Option>
               ))}
-            </Select>
-          </Form.Item>
+          </Select>
+        </Form.Item>
 
-          {selectedStudent && (
-            <>
-              <Title level={5} className="section-title">
-                Thông tin thuốc cho {selectedStudent.fullName}
-              </Title>
+        {selectedStudentId && (
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            initialValues={{ medicines: [{}] }}
+          >
+            <Typography.Title level={4}>
+              Thông tin thuốc cho {students.find(s => s.studentID === selectedStudentId)?.fullName}
+            </Typography.Title>
 
-              {medicationDetails.map((med, index) => (
-                <div key={index} className="medication-item">
-                  <Row gutter={16}>
-                    <Col xs={24} sm={8}>
+            <Form.List name="medicines">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }) => (
+                    <div key={key} style={{ border: '1px solid #ddd', padding: 16, marginBottom: 16, borderRadius: 8 }}>
+                      <Row gutter={16}>
+                        <Col span={8}>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'medicineName']}
+                            label="Tên thuốc"
+                            rules={[{ required: true, message: 'Vui lòng nhập tên thuốc' }]}
+                          >
+                            <Input placeholder="Ví dụ: Paracetamol" />
+                          </Form.Item>
+                        </Col>
+
+                        <Col span={8}>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'dosage']}
+                            label="Liều lượng"
+                            rules={[{ required: true, message: 'Vui lòng nhập liều lượng' }]}
+                          >
+                            <Input placeholder="Ví dụ: 1 viên/ngày" />
+                          </Form.Item>
+                        </Col>
+
+                        <Col span={7}>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'time']}
+                            label="Thời gian"
+                            rules={[{ required: true, message: 'Chọn thời gian uống' }]}
+                          >
+                            <Select placeholder="Chọn thời gian">
+                              <Option value="sang">Sáng</Option>
+                              <Option value="trua">Trưa</Option>
+                              <Option value="chieu">Chiều</Option>
+                              <Option value="toi">Tối</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+
+                        <Col span={1}>
+                          <Button
+                            danger
+                            type="link"
+                            onClick={() => remove(name)}
+                            style={{ marginTop: 32 }}
+                            icon={<MinusCircleOutlined />}
+                          />
+                        </Col>
+                      </Row>
+
                       <Form.Item
-                        label="Tên thuốc"
-                        required
-                        rules={[{ required: true, message: 'Nhập tên thuốc' }]}
+                        {...restField}
+                        name={[name, 'note']}
+                        label="Ghi chú"
                       >
-                        <Input
-                          value={med.medicationName}
-                          onChange={(e) => updateMedication(index, 'medicationName', e.target.value)}
-                          placeholder="Ví dụ: Paracetamol"
-                        />
+                        <TextArea rows={2} placeholder="Ghi chú đặc biệt..." />
                       </Form.Item>
-                    </Col>
+                    </div>
+                  ))}
 
-                    <Col xs={24} sm={8}>
-                      <Form.Item
-                        label="Liều lượng"
-                        required
-                        rules={[{ required: true, message: 'Nhập liều lượng' }]}
-                      >
-                        <Input
-                          value={med.dosage}
-                          onChange={(e) => updateMedication(index, 'dosage', e.target.value)}
-                          placeholder="Ví dụ: 1 viên/ngày"
-                        />
-                      </Form.Item>
-                    </Col>
-
-                    <Col xs={24} sm={8}>
-                      <Form.Item
-                        label="Thời gian"
-                        required
-                        rules={[{ required: true, message: 'Chọn thời gian' }]}
-                      >
-                        <Select
-                          value={med.timesToUse}
-                          onChange={(value) => updateMedication(index, 'timesToUse', value)}
-                          placeholder="Chọn thời gian"
-                        >
-                          {usageTimes.map(time => (
-                            <Option key={time} value={time}>{time}</Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-                    </Col>
-
-                    <Col xs={24}>
-                      <Form.Item label="Ghi chú">
-                        <TextArea
-                          value={med.notes}
-                          onChange={(e) => updateMedication(index, 'notes', e.target.value)}
-                          rows={2}
-                          placeholder="Ghi chú đặc biệt..."
-                        />
-                      </Form.Item>
-                    </Col>
-
-                    <Col xs={24} sm={8}>
-                      <Form.Item label="Ảnh thuốc (không bắt buộc)">
-                        <Upload
-                          beforeUpload={() => false}
-                          onChange={(info) => handleImageChange(index, info)}
-                          showUploadList={false}
-                          accept="image/*"
-                        >
-                          <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
-                        </Upload>
-                        {med.medicineImage && (
-                          <img src={med.medicineImage} alt="medicine" style={{maxWidth: 100, marginTop: 8}} />
-                        )}
-                      </Form.Item>
-                    </Col>
-
-                    <Col xs={24} style={{ textAlign: 'right' }}>
-                      <Button 
-                        danger 
-                        onClick={() => removeMedication(index)}
-                        disabled={medicationDetails.length <= 1}
-                      >
-                        Xóa
-                      </Button>
-                    </Col>
-                  </Row>
-                </div>
-              ))}
-
-              <div className="form-actions">
-                <Button type="dashed" onClick={addMedication}>
-                  Thêm thuốc
-                </Button>
-                <Button 
-                  type="primary" 
-                  onClick={handleSubmit}
-                  disabled={!selectedStudent}
-                >
-                  Gửi thuốc
-                </Button>
-              </div>
-            </>
-          )}
-        </Form>
-
-        <div className="submissions-section">
-          <Title level={4} className="section-title">Lịch sử gửi thuốc</Title>
-          
-          {submissions.length === 0 ? (
-            <p>Chưa có yêu cầu gửi thuốc nào</p>
-          ) : (
-            <div className="submission-list">
-              {submissions.map(sub => (
-                <div key={sub.id} className={`submission-item ${sub.status.toLowerCase()}`}>
-                  <div className="submission-header">
-                    <span className="student-name">{sub.studentName}</span>
-                    <span className="submission-date">{sub.submissionDate}</span>
-                    <span className={`status-badge ${sub.status.toLowerCase()}`}>
-                      {sub.status}
-                    </span>
-                  </div>
-                  
-                  <div className="submission-actions">
-                    <Button type="link" onClick={() => viewSubmissionDetails(sub)}>
-                      Xem chi tiết
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      block
+                      icon={<PlusOutlined />}
+                    >
+                      Thêm thuốc
                     </Button>
-                    
-                    {sub.status === 'PENDING' && (
-                      <Button 
-                        type="link" 
-                        danger
-                        onClick={() => handleCancelSubmission(sub.id)}
+                  </Form.Item>
+                </>
+              )}
+            </Form.List>
+
+            <Form.Item name="medicineImage" label="Ảnh thuốc (chỉ upload 1 lần)">
+              <Upload maxCount={1}>
+                <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+              </Upload>
+            </Form.Item>
+
+            <Button type="primary" htmlType="submit">Gửi thuốc</Button>
+          </Form>
+        )}
+
+        {/* Lịch sử đơn thuốc - giao diện giống ảnh bạn gửi */}
+        {selectedStudentId && (
+          <div style={{ marginTop: 36 }}>
+            <h2 style={{ textAlign: 'center', fontWeight: 700, fontSize: 32, marginBottom: 24 }}>
+              Trạng thái phiếu gửi thuốc
+            </h2>
+            {historyLoading ? (
+              <div style={{ textAlign: 'center', padding: 36 }}>
+                <Spin />
+              </div>
+            ) : (
+              <>
+                {history.map(item => (
+                  <div
+                    key={item.submissionId}
+                    style={{
+                      background: '#fff',
+                      borderRadius: 12,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                      padding: 24,
+                      margin: '0 auto 24px auto',
+                      maxWidth: 900,
+                      minWidth: 340,
+                      position: 'relative'
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, fontSize: 24 }}>
+                      Học sinh: {
+                        students?.find(s => s.studentID === item.studentId)?.fullName ||
+                        item.studentName ||
+                        '---'
+                      }
+                    </div>
+                    <div style={{ margin: '12px 0', color: '#555' }}>
+                      Gửi ngày: {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : '---'}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+                      <a
+                        href="#"
+                        onClick={e => { e.preventDefault(); handleViewDetail(item.submissionId); }}
+                        style={{ color: '#1677ff', fontWeight: 500 }}
+                      >
+                        Xem chi tiết
+                      </a>
+                      <a
+                        href="#"
+                        onClick={e => { e.preventDefault(); handleCancelRequest(item.submissionId); }}
+                        style={{ color: '#1677ff', fontWeight: 500 }}
                       >
                         Hủy yêu cầu
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Submission Detail Modal */}
-        <Modal
-          title="Chi tiết yêu cầu gửi thuốc"
-          visible={detailModalVisible}
-          onCancel={() => setDetailModalVisible(false)}
-          footer={null}
-          width={700}
-        >
-          {selectedSubmission && (
-            <div className="submission-detail">
-              <div className="detail-row">
-                <span className="detail-label">Học sinh:</span>
-                <span>{selectedSubmission.studentName}</span>
-              </div>
-              
-              <div className="detail-row">
-                <span className="detail-label">Ngày gửi:</span>
-                <span>{selectedSubmission.submissionDate}</span>
-              </div>
-              
-              <div className="detail-row">
-                <span className="detail-label">Trạng thái:</span>
-                <span className={`status-text ${selectedSubmission.status.toLowerCase()}`}>
-                  {selectedSubmission.status}
-                </span>
-              </div>
-              
-              <div className="medications-list">
-                <h4>Danh sách thuốc:</h4>
-                {selectedSubmission.medicationDetails.map((med, idx) => (
-                  <div key={idx} className="medication-detail">
-                    <p><strong>Tên thuốc:</strong> {med.medicationName}</p>
-                    <p><strong>Liều lượng:</strong> {med.dosage}</p>
-                    <p><strong>Thời gian:</strong> {med.timesToUse}</p>
-                    {med.notes && <p><strong>Ghi chú:</strong> {med.notes}</p>}
+                      </a>
+                    </div>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: 32,
+                        top: 32,
+                        background: statusColors[item.status || 'pending'],
+                        color: '#fff',
+                        borderRadius: 18,
+                        padding: '6px 20px',
+                        fontWeight: 600,
+                        fontSize: 16
+                      }}
+                    >
+                      {statusText[item.status || 'pending']}
+                    </span>
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-        </Modal>
+                {!historyLoading && history.length === 0 && (
+                  <div style={{ textAlign: 'center', color: '#888', margin: '32px 0' }}>
+                    Chưa có đơn thuốc nào.
+                  </div>
+                )}
+              </>
+            )}
+
+            <Modal
+              open={detailModal.open}
+              onCancel={() => setDetailModal({ open: false, data: null })}
+              title="Chi tiết đơn thuốc"
+              footer={null}
+            >
+              {detailModal.data ? (
+                <div>
+                  {detailModal.data.medicineImage && (
+                    <img
+                      src={detailModal.data.medicineImage}
+                      alt="Ảnh thuốc"
+                      style={{ maxWidth: 200, marginBottom: 8 }}
+                    />
+                  )}
+                  <div>
+                    <b>Danh sách thuốc:</b>
+                    <ul>
+                      {(detailModal.data.medicationDetails || []).map((med, idx) => (
+                        <li key={idx}>
+                          <b>{med.medicineName}</b> - {med.dosage} - {med.timeToUse} <br />
+                          <i>{med.note}</i>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div>Không có dữ liệu chi tiết.</div>
+              )}
+            </Modal>
+          </div>
+        )}
       </Spin>
     </div>
   );
