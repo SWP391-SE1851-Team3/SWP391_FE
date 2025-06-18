@@ -145,7 +145,7 @@ const App = () => {
         let color = 'default';
         let text = 'Chờ xử lí';
         
-        const currentStatus = status?.toUpperCase() || record.processingStatus?.toUpperCase() || 'CANCELLED';
+        const currentStatus = status?.toUpperCase() || record.processingStatus?.toUpperCase() || 'PENDING';
         console.log('Current status:', currentStatus); // Debug log
         
         switch (currentStatus) {
@@ -157,7 +157,7 @@ const App = () => {
             color = 'success';
             text = 'Hoàn thành';
             break;
-          case 'CANCELLED':
+          case 'PENDING': 
             color = 'error';
             text = 'Chờ xử lí';
             break;
@@ -349,7 +349,7 @@ const App = () => {
           eventTypeId: selectedEventType.eventTypeId,
           note: values?.note || '',
           result: values?.result || '',
-          processingStatus: 'CANCELLED'
+          processingStatus: 'PENDING'
         };
 
         console.log("📤 Final Payload gửi lên API:", eventData);
@@ -705,6 +705,14 @@ const App = () => {
           status: event.processingStatus || 'PROCESSING',
           processingStatus: event.processingStatus || 'PROCESSING'
         }));
+
+        // Sort events by time in descending order (newest first)
+        transformedEvents.sort((a, b) => {
+          const timeA = moment(a.time);
+          const timeB = moment(b.time);
+          return timeB - timeA;
+        });
+
         console.log('Transformed Events:', transformedEvents); // Debug log
         setEvents(transformedEvents);
       } catch (error) {
@@ -790,7 +798,7 @@ const App = () => {
                 <Option value="">Tất cả trạng thái</Option>
                 <Option value="PROCESSING">Đang xử lý</Option>
                 <Option value="COMPLETED">Hoàn thành</Option>
-                <Option value="CANCELLED">Chờ xử lý</Option>
+                <Option value="PENDING">Chờ xử lý</Option>
                 <Option value="DELETED">Đã xóa</Option>
               </Select>
             </Col>
@@ -986,12 +994,12 @@ const App = () => {
                     (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                 >
+                  <Option value="Lớp 1B">Lớp 1B</Option>
+                  <Option value="Lớp 2A">Lớp 2A</Option>
                   <Option value="Lớp 3C">Lớp 3C</Option>
                   <Option value="Lớp 4B">Lớp 4B</Option>
-                  <Option value="Lớp 4C">Lớp 4C</Option>
                   <Option value="Lớp 5A">Lớp 5A</Option>
-                  <Option value="Lớp 5B">Lớp 5B</Option>
-                  <Option value="Lớp 2D">Lớp 2D</Option>
+                  
                 </Select>
               </Form.Item>
             </Col>
@@ -1103,15 +1111,16 @@ const App = () => {
                 <Switch />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            {/* <Col span={12}>
               <Form.Item
                 name="hasParentBeenInformed"
                 label="Đã thông báo phụ huynh"
                 valuePropName="checked"
+                initialValue={false}
               >
                 <Switch />
               </Form.Item>
-            </Col>
+            </Col> */}
           </Row>
 
           <Form.Item
@@ -1166,12 +1175,12 @@ const App = () => {
               <Tag color={
                 selectedEvent.processingStatus === 'COMPLETED' ? 'success' :
                 selectedEvent.processingStatus === 'PROCESSING' ? 'processing' :
-                selectedEvent.processingStatus === 'CANCELLED' ? 'error' :
+                selectedEvent.processingStatus === 'PENDING' ? 'error' :
                 selectedEvent.processingStatus === 'DELETED' ? 'default' : 'default'
               }>
-                {selectedEvent.processingStatus === 'COMPLETED' ? 'Đã hoàn thành' :
+                {selectedEvent.processingStatus === 'COMPLETED' ? 'Hoàn thành' :
                  selectedEvent.processingStatus === 'PROCESSING' ? 'Đang xử lý' :
-                 selectedEvent.processingStatus === 'CANCELLED' ? 'Đã hủy' :
+                 selectedEvent.processingStatus === 'PENDING' ? 'Chờ xử lí' :
                  selectedEvent.processingStatus === 'DELETED' ? 'Đã xóa' : 'Chưa xử lý'}
               </Tag>
             </div>
@@ -1344,7 +1353,7 @@ const App = () => {
                 <Select placeholder="Chọn trạng thái">
                   <Option value="PROCESSING">Đang xử lý</Option>
                   <Option value="COMPLETED">Hoàn thành</Option>
-                  <Option value="CANCELLED">Chờ xử lí</Option>
+                  <Option value="PENDING">Chờ xử lí</Option>
                   <Option value="DELETED">Đã xóa</Option>
                 </Select>
               </Form.Item>
