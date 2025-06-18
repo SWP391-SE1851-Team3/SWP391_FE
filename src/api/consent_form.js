@@ -12,7 +12,3 @@ export const submitConsentForm = (formData) => {
   return axios.post('http://localhost:8080/api/Consent_forms/consent-forms/parent-confirm', formData);
 };
 
-
-
-
-

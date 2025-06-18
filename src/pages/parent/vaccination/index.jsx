@@ -55,10 +55,13 @@ const ParentVaccineConfirmation = () => {
 
       const consentData = {
         consent_form_id: data.consent_form_id || data.id,
-        fullnameOfParent: data.fullnameOfParent || "Chưa có dữ liệu",
+        fullNameOfParent: data.fullNameOfParent || "Chưa có dữ liệu",
         fullNameOfStudent: data.fullNameOfStudent || "Chưa có dữ liệu",
         className: data.className || "Chưa có dữ liệu",
-        vaccineName: data.name || "Chưa có dữ liệu",
+        vaccineName: data.vaccineName || "Chưa có dữ liệu",
+        scheduledDate: data.scheduledDate || "Chưa có dữ liệu",
+        location: data.location || "Chưa có dữ liệu",
+
         vaccineHistory: data.vaccineHistory || [],
         isAgree: data.isAgree ?? null,
         reason: data.reason || "",
@@ -73,6 +76,7 @@ const ParentVaccineConfirmation = () => {
         hasAllergy: consentData.hasAllergy
       });
 
+      
     } catch (error) {
       console.error("Lỗi khi lấy consent form:", error);
       message.error("Không thể lấy thông tin chi tiết");
@@ -149,12 +153,13 @@ const ParentVaccineConfirmation = () => {
           {/* Thông tin chi tiết học sinh */}
           <div className="student-info">
             <h2>Thông tin học sinh</h2>
-            <p><strong>Họ tên phụ huynh:</strong> {consentForm.fullnameOfParent}</p>
+            <p><strong>Họ tên phụ huynh:</strong> {consentForm.fullNameOfParent}</p>
             <p><strong>Họ tên học sinh:</strong> {consentForm.fullNameOfStudent}</p>
             <p><strong>Lớp:</strong> {consentForm.className}</p>
             <p><strong>Vắc xin đăng ký:</strong> {consentForm.vaccineName}</p>
+            <p><strong>Ngày tiêm dự kiến:</strong> {consentForm.scheduledDate}</p>
+            <p><strong>Địa điểm tiêm:</strong> {consentForm.location}</p>
           </div>
-
           {/* Form xác nhận */}
           <Form
             form={form}
@@ -204,7 +209,7 @@ const ParentVaccineConfirmation = () => {
             {/* Thông tin tổng quan lặp lại cho dễ xem */}
             <div className="student-summary" style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
               <p><strong>Học sinh:</strong> {consentForm.fullNameOfStudent} - Lớp {consentForm.className}</p>
-              <p><strong>Phụ huynh:</strong> {consentForm.fullnameOfParent}</p>
+              <p><strong>Phụ huynh:</strong> {consentForm.fullNameOfParent}</p>
               <p><strong>Vắc xin đăng ký:</strong> {consentForm.vaccineName}</p>
               <p>
                 <strong>Trạng thái:</strong> {
