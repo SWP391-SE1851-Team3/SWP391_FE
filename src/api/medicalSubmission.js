@@ -18,9 +18,13 @@ export const submitMedicationForm = async (data) => {
   }
 };
 
-export const getMedicationSubmissionsByParentId = (parentId) => {
-  return axios.get(`http://localhost:8080/api/medication-submission/submissions/${parentId}`);
-};
+// export const getMedicationSubmissionsByParentId = (parentId) => {
+//   return axios.get(`http://localhost:8080/api/medication-submission/submissions/${parentId}`);
+// };
+
+export function getMedicationSubmissionsByParentId(parentId) {
+  return axios.get(`http://localhost:8080/api/medication-submission/submissions-info/parent/${parentId}`);
+}
 
 // Lấy chi tiết đơn thuốc theo submissionId
 export const getMedicationSubmissionDetails = (submissionId) => {
