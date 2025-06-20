@@ -1,29 +1,28 @@
 import React, { useEffect } from 'react';
-import { Layout } from 'antd';
+import { Layout, Menu, Avatar, Badge, Button, message } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
-import { BellOutlined, LogoutOutlined, LoginOutlined } from '@ant-design/icons';
-import { Menu, Avatar, Badge, Button, message } from 'antd';
+import { LogoutOutlined, LoginOutlined } from '@ant-design/icons';
+import { useVaccination } from '../context/VaccinationContext';
 const { Header } = Layout;
 import './Header.css';
 
 const ROLE_MENUS = {
-  PARENT: [
+  1: [
     { key: 'home', label: 'Trang chủ', path: '/' },
     { key: 'health-records', label: 'Hồ sơ sức khỏe', path: '/health-records' },
     { key: 'medications', label: 'Gửi thuốc', path: '/medications' },
     { key: 'health-check', label: 'Kiểm tra sức khỏe', path: '/health-check' },
     { key: 'vaccination', label: 'Tiêm chủng', path: '/vaccination' },
-    { key: 'dashboard', label: 'Báo cáo', path: '/dashboard' },
   ],
-  NURSE: [
+  2: [
     { key: 'home', label: 'Trang chủ', path: '/' },
     { key: 'manage-medication', label: 'Quản lí thuốc', path: '/manage-medication' },
     { key: 'medical-events', label: 'Sự kiện y tế ', path: '/medical-events' },
     { key: 'manage-vaccination', label: 'Tiêm Chủng', path: '/manage-vaccination' },
     { key: 'manage-health-check', label: 'Kiểm tra y tế', path: '/manage-health-check' },
   ],
-  ADMIN: [
+  3: [
     { key: 'home', label: 'Trang chủ', path: '/' },
     { key: 'user-management', label: 'Quản lý người dùng', path: '/users' },
     { key: 'school-management', label: 'Quản lý trường học', path: '/schools' },
@@ -31,22 +30,25 @@ const ROLE_MENUS = {
   ]
 };
 
-const getMenuByRole = (roleString) => {
-  if (!ROLE_MENUS[roleString]) {
-    console.warn(`Invalid role: ${roleString}, defaulting to PARENT menu`);
-    return ROLE_MENUS.PARENT;
+const getMenuByRole = (role) => {
+  const numericRole = Number(role);
+  if (!ROLE_MENUS[numericRole]) {
+    console.warn(`Invalid role: ${role}, defaulting to PARENT menu`);
+    return ROLE_MENUS[1];
   }
-  return ROLE_MENUS[roleString];
+  return ROLE_MENUS[numericRole];
 };
 
 const HeaderLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('token');
-  const roleString = localStorage.getItem('roleString') || 'PARENT';
-  const menuItems = getMenuByRole(roleString);
+  const role = Number(localStorage.getItem('role')) || 1;
+  const menuItems = getMenuByRole(role);
   const userName = localStorage.getItem('email') || 'Người dùng';
-  
+  const fullName = localStorage.getItem('fullname');
+  const { newVaccinationCount } = useVaccination();
+
   const handleLogout = () => {
     localStorage.clear();
     message.success('Đăng xuất thành công!');
@@ -58,7 +60,7 @@ const HeaderLayout = () => {
   };
 
   useEffect(() => {
-    if (["NURSE", "ADMIN"].includes(roleString)) {
+    if (role === 2 || role === 3) {
       document.body.classList.add("nurse-admin-layout");
     } else {
       document.body.classList.remove("nurse-admin-layout");
@@ -66,7 +68,7 @@ const HeaderLayout = () => {
     return () => {
       document.body.classList.remove("nurse-admin-layout");
     };
-  }, [roleString]);
+  }, [role]);
 
   return (
     <Header className="header">
@@ -77,27 +79,35 @@ const HeaderLayout = () => {
         </div>
 
         <Menu
-  mode={["NURSE", "ADMIN"].includes(roleString) ? "vertical" : "horizontal"}
-  selectedKeys={[location.pathname]}
-  className={`nav-menu${["NURSE", "ADMIN"].includes(roleString) ? " vertical-menu" : ""}`}
-  items={menuItems.map(item => ({
-    key: item.path,
-    label: <Link to={item.path}>{item.label}</Link>
-  }))}
-/>
-
+          mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
+          selectedKeys={[
+            menuItems.find(item => location.pathname.startsWith(item.path))?.path || '/'
+          ]}
+          className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
+        >
+          {menuItems.map(item => (
+            <Menu.Item key={item.path}>
+              <Link to={item.path}>
+                {item.label}
+                {item.key === 'vaccination' && newVaccinationCount > 0 && (
+                  <Badge dot style={{ marginLeft: 6, backgroundColor: 'red' }} />
+                )}
+              </Link>
+            </Menu.Item>
+          ))}
+        </Menu>
 
         <div className="user-controls">
           {isAuthenticated ? (
             <>
-              <Badge count={0} className="notification-badge">
-                <BellOutlined className="notification-icon" />
-              </Badge>
+              <div className="welcome-message">
+                {fullName ? `Xin chào, ${fullName}` : `Xin chào, ${userName}`}
+              </div>
               <div className="user-info">
                 <Avatar size="small" className="user-avatar">
-                  {userName[0]}
+                  {(fullName && fullName[0]) ? fullName[0].toUpperCase() : (userName ? (userName.split('@')[0][0]?.toUpperCase() || 'U') : 'U')}
                 </Avatar>
-                <span className="username">{userName}</span>
+                <span className="username">{fullName || userName}</span>
               </div>
               <Button
                 type="link"
