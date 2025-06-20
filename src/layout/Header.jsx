@@ -46,7 +46,7 @@ const HeaderLayout = () => {
   const menuItems = getMenuByRole(role);
   const userName = localStorage.getItem('email') || 'Người dùng';
   const fullName = localStorage.getItem('fullname');
-  
+
 
   const handleLogout = () => {
     localStorage.clear();
@@ -78,14 +78,22 @@ const HeaderLayout = () => {
         </div>
 
         <Menu
-          mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
+
+mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
+
           selectedKeys={[
             menuItems.find(item => location.pathname.startsWith(item.path))?.path || '/'
           ]}
           className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
         >
           {menuItems.map(item => (
-            
+
+            <Menu.Item key={item.path}>
+              <Link to={item.path}>
+                {item.label}
+              </Link>
+            </Menu.Item>
+
           ))}
         </Menu>
 
