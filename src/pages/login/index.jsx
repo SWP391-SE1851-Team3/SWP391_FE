@@ -20,7 +20,8 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await loginByRole(role, values.email, values.password); // <-- sử dụng hàm loginByRole
-      const { email, role: userRole, parentId } = response.data;
+      console.log('Login API response:', response.data); // Thêm log kiểm tra dữ liệu trả về
+      const { email, role: userRole, parentId, fullName, nurseId } = response.data;
       
       // Chuyển đổi role number thành string để map với ROLE_MENUS
       let roleString = '';
@@ -32,10 +33,19 @@ const Login = () => {
       localStorage.setItem('role', userRole); // Lưu số role gốc
       localStorage.setItem('roleString', roleString); // Lưu thêm role string
       localStorage.setItem('token', 'your-auth-token');
+      localStorage.setItem('fullname', fullName); 
+     // Lưu tên đầy đủ hoặc email nếu không có tên
       // Nếu là phụ huynh thì lưu thêm parentId
-        if (parentId) {
-            localStorage.setItem('parentId', parentId);
-        }
+      if (parentId) {
+        localStorage.setItem('parentId', parentId);
+      }
+      // Nếu là y tá thì lưu thêm nurseId, nurseName, fullName, nurseID
+      if (userRole === 2) {
+        if (nurseId) localStorage.setItem('nurseId', nurseId);
+
+        if (fullName) localStorage.setItem('fullName', fullName);
+
+      }
       //Hiện message đăng nhập thành công 
       message.success('Đăng nhập thành công!!!')
 

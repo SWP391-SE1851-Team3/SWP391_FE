@@ -97,6 +97,7 @@ const HeaderLayout = () => {
                 <Avatar size="small" className="user-avatar">
                   {userName[0]}
                 </Avatar>
+                <span className="welcome-message">Xin chào,</span>
                 <span className="username">{userName}</span>
               </div>
               <Button

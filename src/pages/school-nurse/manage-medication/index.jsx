@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   Input,
@@ -14,7 +14,8 @@ import {
   Pagination,
   Avatar,
   Modal,
-  Form
+  Form,
+  message
 } from 'antd';
 import {
   SearchOutlined,
@@ -27,6 +28,7 @@ import {
   CloseCircleTwoTone,
   ClockCircleTwoTone
 } from '@ant-design/icons';
+import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails } from '../../../api/medicalSubmissionNurse';
 import './Medication.css';
 
 const { Title } = Typography;
@@ -45,45 +47,8 @@ const MedicationManagement = () => {
   const [timelineRejectModalVisible, setTimelineRejectModalVisible] = useState(false);
   const [timelineRejectForm] = Form.useForm();
   const [timelineRejectingId, setTimelineRejectingId] = useState(null);
-  const [data, setData] = useState([
-    {
-      key: '1',
-      id: 1,
-      student: 'Nguyễn Văn A - Lớp 1A',
-      medication: 'Paracetamol',
-      status: 'pending',
-      time: '09:40 AM, 24/05/2025',
-      actions: ['view', 'confirm', 'cancel'],
-      rejectReason: ''
-    },
-    {
-      key: '2',
-      id: 2,
-      student: 'Nguyễn Thị B - Lớp 2B',
-      medication: 'Vitamin C',
-      status: 'pending',
-      time: '08:30 AM, 24/05/2025',
-      actions: ['view', 'confirm', 'cancel']
-    },
-    {
-      key: '3',
-      id: 3,
-      student: 'Trần Văn C - Lớp 1B',
-      medication: 'Thuốc nhỏ mắt',
-      status: 'confirmed',
-      time: '15:20 PM, 23/05/2025',
-      actions: ['view']
-    },
-    {
-      key: '4',
-      id: 4,
-      student: 'Lê Thị D - Lớp 2A',
-      medication: 'Thuốc ho',
-      status: 'expired',
-      time: '10:15 AM, 23/05/2025',
-      actions: ['view']
-    }
-  ]);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [timelineData, setTimelineData] = useState([
     {
       time: '12:00 PM',
@@ -118,6 +83,66 @@ const MedicationManagement = () => {
       id: 5
     }
   ]);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  useEffect(() => {
+    fetchMedicationSubmissions();
+  }, []);
+
+  const mapStatusToFE = (status) => {
+    switch (status) {
+      case 'APPROVED':
+        return 'confirmed';
+      case 'REJECTED':
+        return 'expired';
+      case 'ADMINISTERED':
+        return 'completed';
+      case 'PENDING':
+        return 'pending';
+      default:
+        return status?.toLowerCase?.() || status;
+    }
+  };
+
+  const mapStatusToBE = (status) => {
+    switch (status) {
+      case 'confirmed':
+        return 'APPROVED';
+      case 'expired':
+        return 'REJECTED';
+      case 'completed':
+        return 'ADMINISTERED';
+      case 'pending':
+        return 'PENDING';
+      default:
+        return status?.toUpperCase?.() || status;
+    }
+  };
+
+  const fetchMedicationSubmissions = async () => {
+    try {
+      setLoading(true);
+      const submissions = await getMedicationSubmissions();
+      const formattedData = submissions.map((submission, index) => ({
+        key: index.toString(),
+        id: index + 1,
+        student: submission.studentName,
+        medication: submission.medicationDetails.map(m => m.medicineName).join(', '),
+        status: mapStatusToFE(submission.status),
+        time: new Date(submission.submissionDate).toLocaleString('vi-VN'),
+        actions: mapStatusToFE(submission.status) === 'pending' ? ['view', 'confirm', 'cancel'] : ['view'],
+        rejectReason: '',
+        medicationDetails: submission.medicationDetails
+      }));
+      setData(formattedData);
+    } catch (error) {
+      message.error('Failed to fetch medication submissions');
+      console.error('Error fetching submissions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filtered data for the table
   const getFilteredData = () => {
@@ -159,9 +184,13 @@ const MedicationManagement = () => {
         return <Tag color="green">Đã xác nhận</Tag>;
       case 'expired':
         return <Tag color="red">Đã từ chối</Tag>;
+      case 'completed':
+        return <Tag color="blue">Đã phát thuốc</Tag>;
+      case 'uncompleted':
+        return <Tag color="volcano">Chưa phát thuốc</Tag>;
       default:
         return <Tag>{status}</Tag>;
-    } 
+    }
   };
 
   const getActionButtons = (record) => {
@@ -218,15 +247,54 @@ const MedicationManagement = () => {
       title: 'Hành động',
       key: 'actions',
       width: '20%',
-      render: (_, record) => getActionButtons(record)
+      render: (_, record) => (
+        <Space>
+          <Button 
+            icon={<EyeOutlined />} 
+            size="small" 
+            onClick={() => handleViewDetails(record)}
+          >
+            Xem chi tiết
+          </Button>
+          {record.status === 'pending' && (
+            <>
+              <Button
+                type="primary"
+                size="small"
+                icon={<CheckOutlined />}
+                onClick={() => handleUpdateStatus(record.id, 'confirmed')}
+              >
+                Xác nhận
+              </Button>
+              <Button
+                danger
+                size="small"
+                icon={<CloseOutlined />}
+                onClick={() => handleUpdateStatus(record.id, 'expired')}
+              >
+                Từ chối
+              </Button>
+            </>
+          )}
+          {(record.status === 'confirmed' || record.status === 'expired') && (
+            <Button
+              size="small"
+              icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
+              onClick={() => handleUpdateStatus(record.id, 'pending')}
+            >
+              Chuyển về chờ xử lý
+            </Button>
+          )}
+        </Space>
+      )
     }
   ];
 
-  const handleUpdateStatus = (id, newStatus) => {
+  const handleUpdateStatus = async (id, newStatus) => {
     const statusTextMap = {
       'confirmed': 'xác nhận hoàn thành',
       'expired': 'từ chối phiếu',
-      'completed': 'xác nhận hoàn thành',
+      'completed': 'xác nhận đã phát thuốc',
       'uncompleted': 'chuyển sang chưa hoàn thành',
       'pending': 'chuyển về chờ xử lý'
     };
@@ -248,35 +316,28 @@ const MedicationManagement = () => {
       content: `Bạn có chắc chắn muốn ${statusTextMap[newStatus] || 'thay đổi trạng thái'}?`,
       okText: 'Đồng ý',
       cancelText: 'Hủy',
-      onOk: () => {
-        setData(prev =>
-          prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
-        );
-        setTimelineData(prev =>
-          prev.map(item => {
-            return item.id === id ? { ...item, status: newStatus } : item;
-          })
-        );
+      onOk: async () => {
+        try {
+          await updateMedicationStatus(id, mapStatusToBE(newStatus));
+          message.success('Cập nhật trạng thái thành công');
+          fetchMedicationSubmissions();
+        } catch (error) {
+          message.error('Cập nhật trạng thái thất bại');
+          console.error('Error updating status:', error);
+        }
       }
     });
   };
 
   const handleReject = () => {
-    rejectForm.validateFields().then(values => {
-      setData(prev =>
-        prev.map(item => 
-          item.id === rejectingId 
-            ? { ...item, status: 'expired', rejectReason: values.reason } 
-            : item
-        )
-      );
-      setTimelineData(prev =>
-        prev.map(item => 
-          item.id === rejectingId 
-            ? { ...item, status: 'expired' } 
-            : item
-        )
-      );
+    rejectForm.validateFields().then(async values => {
+      try {
+        await updateMedicationStatus(rejectingId, mapStatusToBE('expired'), values.reason);
+        message.success('Đã từ chối phiếu thành công');
+        fetchMedicationSubmissions();
+      } catch (error) {
+        message.error('Từ chối phiếu thất bại');
+      }
       setRejectModalVisible(false);
       rejectForm.resetFields();
     });
@@ -296,20 +357,29 @@ const MedicationManagement = () => {
     });
   };
 
-  const handleViewDetails = (record) => {
+  const handleViewDetails = async (record) => {
     setSelectedRecord(record);
     setIsModalVisible(true);
+    setDetailData(null);
+    if (record && record.id) {
+      setDetailLoading(true);
+      try {
+        const details = await getMedicationSubmissionDetails(record.id);
+        setDetailData(details);
+      } catch (error) {
+        message.error('Không lấy được chi tiết phiếu gửi thuốc');
+      } finally {
+        setDetailLoading(false);
+      }
+    }
   };
 
   return (
-
     <div className="medical-management-app">
-    
       <div className="app-header">
         <Title level={2} className="app-title">Quản lý Phiếu Gửi Thuốc</Title>
       </div>
 
-      {/*============================ Danh sách phiếu gửi thuốc========================================= */}
       <Card
         className="main-card"
         title="Danh sách phiếu gửi thuốc"
@@ -363,6 +433,7 @@ const MedicationManagement = () => {
           dataSource={displayedData}
           pagination={false}
           className="events-table"
+          loading={loading}
         />
 
         <div className="pagination-section">
@@ -476,6 +547,22 @@ const MedicationManagement = () => {
             )}
             {selectedRecord.status === 'uncompleted' && selectedRecord.rejectReason && (
               <p><strong>Lý do từ chối:</strong> {selectedRecord.rejectReason}</p>
+            )}
+            {detailLoading && <p>Đang tải chi tiết...</p>}
+            {detailData && Array.isArray(detailData) && detailData.length > 0 && (
+              <div style={{marginTop: 16}}>
+                <strong>Chi tiết thuốc:</strong>
+                <ul>
+                  {detailData.map((item) => (
+                    <li key={item.medicationDetailId} style={{marginBottom: 8}}>
+                      <div><strong>Tên thuốc:</strong> {item.medicineName}</div>
+                      <div><strong>Liều dùng:</strong> {item.dosage}</div>
+                      <div><strong>Thời gian sử dụng:</strong> {item.timeToUse}</div>
+                      <div><strong>Ghi chú:</strong> {item.note}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         )}

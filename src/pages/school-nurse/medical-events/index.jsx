@@ -330,17 +330,23 @@ const App = () => {
           message.error('Vui lòng chọn loại sự kiện');
           return;
         }
-
         if (!selectedStudent) {
           message.error('Vui lòng chọn học sinh');
           return;
         }
-
+        // Lấy thông tin nurse từ localStorage
+        const nurseId = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
+        const nurseName = localStorage.getItem('nurseName') || localStorage.getItem('fullName') || localStorage.getItem('email') || '';
+        // Nếu có cập nhật bởi y tá khác, có thể lấy tương tự hoặc để trống
+        const updatedByNurseId = nurseId;
+        const updatedByNurseName = nurseName;
         const eventData = {
+          eventId: values?.eventId,
           studentId: selectedStudent.studentID,
           parentID: selectedStudent.parentID || 0,
           typeName: values?.typeName || '',
           isEmergency: values?.isEmergency || false,
+          emergency: values?.emergency || false,
           hasParentBeenInformed: values?.hasParentBeenInformed || false,
           temperature: values?.temperature || '',
           heartRate: values?.heartRate || '',
@@ -349,7 +355,11 @@ const App = () => {
           eventTypeId: selectedEventType.eventTypeId,
           note: values?.note || '',
           result: values?.result || '',
-          processingStatus: 'PENDING'
+          processingStatus: 'PENDING',
+          nurseId,
+          nurseName,
+          updatedByNurseId,
+          updatedByNurseName
         };
 
         console.log("📤 Final Payload gửi lên API:", eventData);
@@ -999,7 +1009,6 @@ const App = () => {
                   <Option value="Lớp 3C">Lớp 3C</Option>
                   <Option value="Lớp 4B">Lớp 4B</Option>
                   <Option value="Lớp 5A">Lớp 5A</Option>
-                  
                 </Select>
               </Form.Item>
             </Col>
@@ -1111,7 +1120,7 @@ const App = () => {
                 <Switch />
               </Form.Item>
             </Col>
-            {/* <Col span={12}>
+            <Col span={12}>
               <Form.Item
                 name="hasParentBeenInformed"
                 label="Đã thông báo phụ huynh"
@@ -1120,7 +1129,7 @@ const App = () => {
               >
                 <Switch />
               </Form.Item>
-            </Col> */}
+            </Col>
           </Row>
 
           <Form.Item
@@ -1128,6 +1137,13 @@ const App = () => {
             label="Phương pháp xử lý"
           >
             <Input placeholder="Nhập phương pháp xử lý" />
+          </Form.Item>
+
+          <Form.Item name="note" label="Ghi chú">
+            <TextArea rows={3} placeholder="Nhập ghi chú chi tiết về sự kiện y tế..." />
+          </Form.Item>
+          <Form.Item name="result" label="Kết quả xử lý">
+            <TextArea rows={3} placeholder="Nhập kết quả xử lý..." />
           </Form.Item>
         </Form>
       </Modal>
@@ -1142,6 +1158,10 @@ const App = () => {
       >
         {selectedEvent && (
           <div className="event-details">
+            <div className="detail-item">
+              <span className="label">ID Sự kiện:</span>
+              <span className="value">{selectedEvent.eventId}</span>
+            </div>
             <div className="detail-item">
               <span className="label">ID Học sinh:</span>
               <span className="value">{selectedEvent.studentId}</span>
@@ -1184,10 +1204,23 @@ const App = () => {
                  selectedEvent.processingStatus === 'DELETED' ? 'Đã xóa' : 'Chưa xử lý'}
               </Tag>
             </div>
+           
+            {selectedEvent.createdByNurseName && (
+              <div className="detail-item">
+                <span className="label">Người tạo sự kiện:</span>
+                <span className="value">{selectedEvent.createdByNurseName}</span>
+              </div>
+            )}
+            {selectedEvent.updatedByNurseName && (
+              <div className="detail-item">
+                <span className="label">Người cập nhật cuối:</span>
+                <span className="value">{selectedEvent.updatedByNurseName}</span>
+              </div>
+            )}
             <div className="detail-item">
               <span className="label">Khẩn cấp:</span>
-              <Tag color={selectedEvent.isEmergency ? 'red' : 'default'}>
-                {selectedEvent.isEmergency ? 'Có' : 'Không'}
+              <Tag color={selectedEvent.isEmergency || selectedEvent.emergency ? 'red' : 'default'}>
+                {(selectedEvent.isEmergency || selectedEvent.emergency) ? 'Có' : 'Không'}
               </Tag>
             </div>
             <div className="detail-item">
