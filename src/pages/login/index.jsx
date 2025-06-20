@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import './login.css';
-import { Select, Form, Input, Button, Checkbox, Typography, message } from 'antd';
+import { Form, Input, Button, Checkbox, Typography, message, Select } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
 import { useNavigate, useLocation } from 'react-router-dom';
-import { loginByRole } from '../../api/auth'; // <-- import hàm loginByRole
+import { loginByRole } from '../../api/auth';
 
 const { Title, Paragraph } = Typography;
-const { Option } = Select;
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState(3);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,40 +17,54 @@ const Login = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await loginByRole(role, values.email, values.password); // <-- sử dụng hàm loginByRole
-      const { email, role: userRole, parentId } = response.data;
-      
-      // Chuyển đổi role number thành string để map với ROLE_MENUS
-      let roleString = '';
-      if (userRole === 1) roleString = 'ADMIN';
-      else if (userRole === 2) roleString = 'NURSE';
-      else if (userRole === 3) roleString = 'PARENT';
-      
-      localStorage.setItem('email', email);
-      localStorage.setItem('role', userRole); // Lưu số role gốc
-      localStorage.setItem('roleString', roleString); // Lưu thêm role string
-      localStorage.setItem('token', 'your-auth-token');
-      // Nếu là phụ huynh thì lưu thêm parentId
-        if (parentId) {
-            localStorage.setItem('parentId', parentId);
-        }
-      //Hiện message đăng nhập thành công 
-      message.success('Đăng nhập thành công!!!')
+      const response = await loginByRole(values.role, values.email, values.password);
+      const data = response?.data;
 
-      //Chuyển hướng đến các trang theo role
-      if (userRole === 1) {
-        navigate('/manager');
-      } else if (userRole === 2) {
-        navigate('/school-nurse');
-      } else if (userRole === 3) {
-        navigate('/parent');
+      if (!data || typeof data.role !== 'number') {
+        message.error('Dữ liệu đăng nhập không hợp lệ!');
+        return;
       }
 
-      
-      
+      const {
+        email,
+        role: userRole,
+        parentId,
+        nurseId,
+        token
+      } = data;
+      const fullname = data.fullname || data.fullName;
+
+      // Lưu thông tin người dùng vào localStorage
+      localStorage.setItem('email', email);
+      localStorage.setItem('role', String(userRole));
+      localStorage.setItem('token', token || 'your-auth-token');
+      if (parentId) localStorage.setItem('parentId', parentId);
+      if (fullname) localStorage.setItem('fullname', fullname);
+      if (nurseId) localStorage.setItem('nurseId', nurseId);
+
+      message.success('Đăng nhập thành công!');
+
+      // Điều hướng theo vai trò
+      switch (userRole) {
+        case 1:
+          navigate('/parent');
+          window.location.reload();
+          break;
+        case 2:
+          navigate('/school-nurse');
+          window.location.reload();
+          break;
+        case 3:
+          navigate('/manager');
+          window.location.reload();
+          break;
+        default:
+          message.warning('Vai trò không hợp lệ!');
+          break;
+      }
     } catch (error) {
       console.error('Đăng nhập thất bại:', error);
-      alert('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
+      message.error('Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập.');
     } finally {
       setLoading(false);
     }
@@ -93,7 +105,6 @@ const Login = () => {
               label="Email"
               name="email"
               rules={[{ required: true, message: 'Vui lòng nhập email!' }]}
-              
             >
               <Input prefix={<UserOutlined />} placeholder="Email" />
             </Form.Item>
@@ -106,21 +117,33 @@ const Login = () => {
               <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
             </Form.Item>
 
-            <Form.Item label="Đăng nhập với tư cách">
-              <Select value={role} onChange={(value) => setRole(value)}>
-                <Option value={1}>Quản lý</Option>
-                <Option value={2}>Nhân viên y tế</Option>
-                <Option value={3}>Phụ huynh</Option>
+            <Form.Item
+              label="Vai trò"
+              name="role"
+              rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
+            >
+              <Select placeholder="Chọn vai trò">
+                <Select.Option value={1}>Phụ huynh</Select.Option>
+                <Select.Option value={2}>Nhân viên y tế</Select.Option>
+                <Select.Option value={3}>Quản lý</Select.Option>
               </Select>
             </Form.Item>
 
             <Form.Item>
               <Checkbox>Ghi nhớ đăng nhập</Checkbox>
-              <a href="#" className="forgot-password" style={{ float: 'right' }}>Quên mật khẩu?</a>
+              <a href="#" className="forgot-password" style={{ float: 'right' }}>
+                Quên mật khẩu?
+              </a>
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block className="login-btn">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                block
+                className="login-btn"
+              >
                 Đăng nhập
               </Button>
             </Form.Item>

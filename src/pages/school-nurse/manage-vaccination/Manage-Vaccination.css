@@ -1,0 +1,85 @@
+.vaccination-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #e6f7ff, #ffffff, #f6ffed);
+}
+
+.vaccination-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.vaccination-header {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.vaccination-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.vaccination-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.vaccination-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vaccination-header-icon {
+  background: linear-gradient(to right, #1890ff, #52c41a);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.vaccination-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vaccination-header-user {
+  text-align: right;
+}
+
+.vaccination-dashboard-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.vaccination-card-secondary {
+  color: #faad14;
+}
+
+.vaccination-card-success {
+  color: #52c41a;
+}
+
+.vaccination-card-processing {
+  color: #722ed1;
+}
+
+.vaccination-card-primary {
+  color: #1890ff;
+}
+
+.vaccination-card-bg {
+  background: #fafafa;
+}
+
+.vaccination-activity-icon {
+  color: #1890ff;
+}
+
+.vaccination-schedule-icon {
+  color: #52c41a;
+}
