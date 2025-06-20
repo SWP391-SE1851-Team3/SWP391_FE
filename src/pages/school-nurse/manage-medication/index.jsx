@@ -49,40 +49,7 @@ const MedicationManagement = () => {
   const [timelineRejectingId, setTimelineRejectingId] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [timelineData, setTimelineData] = useState([
-    {
-      time: '12:00 PM',
-      student: 'Nguyễn Văn A',
-      medication: 'Paracetamol - 1 viên sau bữa trua',
-      status: 'pending',
-      color: 'orange',
-      id: 1
-    },
-    {
-      time: '09:00 AM',
-      student: 'Trần Văn C',
-      medication: 'Thuốc nhỏ mắt - 1 giọt mỗi mắt sau bữa sáng',
-      status: 'pending',
-      color: 'orange',
-      id: 3
-    },
-    {
-      time: '15:00 PM',
-      student: 'Nguyễn Thị B',
-      medication: 'Vitamin C - 1 viên sau bữa chiều',
-      status: 'pending',
-      color: 'orange',
-      id: 2
-    },
-    {
-      time: '16:00 PM',
-      student: 'Phạm Văn D',
-      medication: 'Kháng sinh - 1 viên sau bữa tối',
-      status: 'pending',
-      color: 'orange',
-      id: 5
-    }
-  ]);
+  const [timelineData, setTimelineData] = useState([]);
   const [detailData, setDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -128,6 +95,7 @@ const MedicationManagement = () => {
         key: index.toString(),
         id: index + 1,
         student: submission.studentName,
+        className: submission.className || '',
         medication: submission.medicationDetails.map(m => m.medicineName).join(', '),
         status: mapStatusToFE(submission.status),
         time: new Date(submission.submissionDate).toLocaleString('vi-VN'),
@@ -136,6 +104,19 @@ const MedicationManagement = () => {
         medicationDetails: submission.medicationDetails
       }));
       setData(formattedData);
+
+      // Không lọc theo ngày nữa, lấy tất cả submissions cho timelineData
+      const todayTimeline = submissions
+        .map((submission, idx) => ({
+          id: idx + 1,
+          time: new Date(submission.submissionDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+          student: submission.studentName,
+          medication: submission.medicationDetails.map(m => `${m.medicineName} - ${m.dosage || ''} ${m.timeToUse ? `(${m.timeToUse})` : ''}`).join(', '),
+          status: mapStatusToFE(submission.status),
+          color: 'orange',
+          rejectReason: submission.rejectReason || ''
+        }));
+      setTimelineData(todayTimeline);
     } catch (error) {
       message.error('Failed to fetch medication submissions');
       console.error('Error fetching submissions:', error);
@@ -161,7 +142,7 @@ const MedicationManagement = () => {
     }
 
     if (classFilter) {
-      filtered = filtered.filter((item) => item.student.includes(classFilter));
+      filtered = filtered.filter((item) => item.className === classFilter);
     }
 
     return filtered;
@@ -179,11 +160,11 @@ const MedicationManagement = () => {
   const getStatusTag = (status) => {
     switch (status) {
       case 'pending':
-        return <Tag color="orange">Chờ xác nhận</Tag>;
+        return <Tag color="orange">Chờ nhận thuốc</Tag>;
       case 'confirmed':
-        return <Tag color="green">Đã xác nhận</Tag>;
+        return <Tag color="green">Đã nhận thuốc</Tag>;
       case 'expired':
-        return <Tag color="red">Đã từ chối</Tag>;
+        return <Tag color="red">Từ chối thuốc</Tag>;
       case 'completed':
         return <Tag color="blue">Đã phát thuốc</Tag>;
       case 'uncompleted':
@@ -222,7 +203,13 @@ const MedicationManagement = () => {
       title: 'Học sinh',
       dataIndex: 'student',
       key: 'student',
-      width: '25%'
+      width: '20%'
+    },
+    {
+      title: 'Lớp',
+      dataIndex: 'className',
+      key: 'className',
+      width: '10%'
     },
     {
       title: 'Tên thuốc',
@@ -246,7 +233,7 @@ const MedicationManagement = () => {
     {
       title: 'Hành động',
       key: 'actions',
-      width: '20%',
+      width: '15%',
       render: (_, record) => (
         <Space>
           <Button 
@@ -254,7 +241,6 @@ const MedicationManagement = () => {
             size="small" 
             onClick={() => handleViewDetails(record)}
           >
-            Xem chi tiết
           </Button>
           {record.status === 'pending' && (
             <>
@@ -264,7 +250,6 @@ const MedicationManagement = () => {
                 icon={<CheckOutlined />}
                 onClick={() => handleUpdateStatus(record.id, 'confirmed')}
               >
-                Xác nhận
               </Button>
               <Button
                 danger
@@ -272,7 +257,6 @@ const MedicationManagement = () => {
                 icon={<CloseOutlined />}
                 onClick={() => handleUpdateStatus(record.id, 'expired')}
               >
-                Từ chối
               </Button>
             </>
           )}
@@ -344,14 +328,14 @@ const MedicationManagement = () => {
   };
 
   const handleTimelineReject = () => {
-    timelineRejectForm.validateFields().then(values => {
-      setTimelineData(prev =>
-        prev.map(item => 
-          item.id === timelineRejectingId 
-            ? { ...item, status: 'uncompleted', rejectReason: values.reason } 
-            : item
-        )
-      );
+    timelineRejectForm.validateFields().then(async values => {
+      try {
+        await updateMedicationStatus(timelineRejectingId, mapStatusToBE('uncompleted'), values.reason);
+        message.success('Đã cập nhật trạng thái và lưu lý do từ chối thành công');
+        fetchMedicationSubmissions();
+      } catch (error) {
+        message.error('Cập nhật trạng thái thất bại');
+      }
       setTimelineRejectModalVisible(false);
       timelineRejectForm.resetFields();
     });
@@ -398,16 +382,18 @@ const MedicationManagement = () => {
             </Col>
             <Col>
               <Select
-                placeholder="Tất cả loại ..."
+                placeholder="Tất cả trạng thái ..."
                 value={statusFilter}
                 onChange={setStatusFilter}
                 style={{ minWidth: 170 }}
                 allowClear
               >
-                <Option value="">Tất cả loại</Option>
-                <Option value="pending">Chờ xác nhận</Option>
-                <Option value="confirmed">Đã xác nhận</Option>
-                <Option value="expired">Đã từ chối</Option>
+                <Option value="">Tất cả trạng thái</Option>
+                <Option value="pending">Chờ nhận thuốc</Option>
+                <Option value="confirmed">Đã nhận thuốc</Option>
+                <Option value="expired">Từ chối thuốc</Option>
+                <Option value="completed">Đã phát thuốc</Option>
+                <Option value="uncompleted">Chưa phát thuốc</Option>
               </Select>
             </Col>
             <Col>
@@ -419,10 +405,11 @@ const MedicationManagement = () => {
                 allowClear
               >
                 <Option value="">Tất cả trạng thái</Option>
-                <Option value="1A">Lớp 1A</Option>
-                <Option value="1B">Lớp 1B</Option>
-                <Option value="2A">Lớp 2A</Option>
-                <Option value="2B">Lớp 2B</Option>
+                <Option value="Lớp 5A">Lớp 5A</Option>
+                <Option value="Lớp 4B">Lớp 4B</Option>
+                <Option value="Lớp 3C">Lớp 3C</Option>
+                <Option value="Lớp 2A">Lớp 2A</Option>
+                <Option value="Lớp 1B">Lớp 1B</Option>
               </Select>
             </Col>
           </Row>
@@ -472,7 +459,15 @@ const MedicationManagement = () => {
             let statusText = '';
             if (item.status === 'completed') statusText = 'Đã hoàn thành';
             else if (item.status === 'uncompleted') statusText = 'Chưa hoàn thành';
-            else statusText = 'Chờ xử lý';
+            else if (item.status === 'confirmed') statusText = 'Đã nhận thuốc';
+            else if (item.status === 'expired') statusText = 'Từ chối thuốc';
+            else statusText = 'Chờ nhận thuốc';
+
+            // Tìm trạng thái ở danh sách (data) theo id
+            const listRecord = data.find(d => d.id === item.id);
+            const listStatus = listRecord ? listRecord.status : null;
+            // Chỉ cho phép cập nhật trạng thái nếu trạng thái ở danh sách là 'confirmed'
+            const allowUpdate = listStatus === 'confirmed';
 
             return (
               <Timeline.Item key={idx} dot={
@@ -485,39 +480,37 @@ const MedicationManagement = () => {
                       {item.status === 'completed' && <CheckCircleTwoTone twoToneColor="#52c41a" style={{marginRight: 4}} />}
                       {item.status === 'uncompleted' && <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{marginRight: 4}} />}
                       {item.status === 'pending' && <ClockCircleTwoTone twoToneColor="#faad14" style={{marginRight: 4}} />}
+                      {item.status === 'confirmed' && <CheckCircleTwoTone twoToneColor="#1890ff" style={{marginRight: 4}} />}
+                      {item.status === 'expired' && <CloseCircleTwoTone twoToneColor="#d4380d" style={{marginRight: 4}} />}
                       {statusText}
                     </span>
                     <div className="timeline-actions">
-                      {item.status === 'pending' && (
-                        <>
-                          <Button
-                            size="small"
-                            type="primary"
-                            icon={<CheckOutlined style={{ color: '#52c41a' }} />}
-                            onClick={() => handleUpdateStatus(item.id, 'completed')}
-                          />
-                          <Button
-                            size="small"
-                            danger
-                            icon={<CloseOutlined />}
-                            onClick={() => handleUpdateStatus(item.id, 'uncompleted')}
-                          />
-                        </>
-                      )}
+                      {allowUpdate && <>
+                        <Button
+                          size="small"
+                          icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}
+                          onClick={() => handleUpdateStatus(item.id, 'completed')}
+                          type="primary"
+                        ></Button>
+                        <Button
+                          size="small"
+                          icon={<CloseCircleTwoTone twoToneColor="#ff4d4f" />}
+                          onClick={() => handleUpdateStatus(item.id, 'uncompleted')}
+                          danger
+                        ></Button>
+                      </>}
                       {(item.status === 'completed' || item.status === 'uncompleted') && (
-                        <>
-                          <Button
-                            size="small"
-                            icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
-                            onClick={() => handleUpdateStatus(item.id, 'pending')}
-                          />
-                          <Button
-                            size="small"
-                            icon={<EyeOutlined />}
-                            onClick={() => handleViewDetails(item)}
-                          />
-                        </>
+                        <Button
+                          size="small"
+                          icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
+                          onClick={() => handleUpdateStatus(item.id, 'pending')}
+                        ></Button>
                       )}
+                      <Button
+                        size="small"
+                        icon={<EyeOutlined />}
+                        onClick={() => handleViewDetails(item)}
+                      ></Button>
                     </div>
                   </div>
                   <div className="timeline-body">
@@ -549,19 +542,27 @@ const MedicationManagement = () => {
               <p><strong>Lý do từ chối:</strong> {selectedRecord.rejectReason}</p>
             )}
             {detailLoading && <p>Đang tải chi tiết...</p>}
-            {detailData && Array.isArray(detailData) && detailData.length > 0 && (
+            {detailData && !Array.isArray(detailData) && (
               <div style={{marginTop: 16}}>
-                <strong>Chi tiết thuốc:</strong>
-                <ul>
-                  {detailData.map((item) => (
-                    <li key={item.medicationDetailId} style={{marginBottom: 8}}>
-                      <div><strong>Tên thuốc:</strong> {item.medicineName}</div>
-                      <div><strong>Liều dùng:</strong> {item.dosage}</div>
-                      <div><strong>Thời gian sử dụng:</strong> {item.timeToUse}</div>
-                      <div><strong>Ghi chú:</strong> {item.note}</div>
-                    </li>
-                  ))}
-                </ul>
+                {detailData.nurseName && <p><strong>Y tá nhận:</strong> {detailData.nurseName}</p>}
+                {detailData.studentClass && <p><strong>Lớp:</strong> {detailData.studentClass}</p>}
+                {detailData.submissionDate && <p><strong>Ngày gửi:</strong> {new Date(detailData.submissionDate).toLocaleString('vi-VN')}</p>}
+                {detailData.medicineImage && <p><strong>Ảnh thuốc:</strong> <img src={detailData.medicineImage} alt="medicine" style={{maxWidth: 120}} /></p>}
+                {detailData.medicationDetails && Array.isArray(detailData.medicationDetails) && detailData.medicationDetails.length > 0 && (
+                  <div style={{marginTop: 16}}>
+                    <strong>Chi tiết thuốc:</strong>
+                    <ul>
+                      {detailData.medicationDetails.map((item) => (
+                        <li key={item.medicationDetailId} style={{marginBottom: 8}}>
+                          <div><strong>Tên thuốc:</strong> {item.medicineName}</div>
+                          <div><strong>Liều dùng:</strong> {item.dosage}</div>
+                          <div><strong>Thời gian sử dụng:</strong> {item.timeToUse}</div>
+                          <div><strong>Ghi chú:</strong> {item.note}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
