@@ -67,6 +67,11 @@ const AppRoutes = () => {
             <ManageMedication />
           </PrivateRoute>
         } />
+        <Route path="manager" element={
+          <PrivateRoute>
+            <Home />
+          </PrivateRoute>
+        } />
       </Route>
     </Routes>
   );
