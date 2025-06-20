@@ -12,10 +12,13 @@ export const getMedicationSubmissions = async () => {
   }
 };
 
-export const updateMedicationStatus = async (submissionId, status, reason) => {
+export const updateMedicationStatus = async (submissionId, status, reason, evidence) => {
   try {
-    const body = { status };
+    // Lấy nurseId từ localStorage
+    const nurseId = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
+    const body = { status, nurseId };
     if (reason) body.reason = reason;
+    if (evidence) body.evidence = evidence;
     const response = await axios.put(`http://localhost:8080/api/medication-confirmations/${submissionId}/status`, body);
     return response.data;
   } catch (error) {
