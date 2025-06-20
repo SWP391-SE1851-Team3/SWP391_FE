@@ -3,7 +3,6 @@ import { Layout, Menu, Avatar, Badge, Button, message } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
 import { LogoutOutlined, LoginOutlined } from '@ant-design/icons';
-import { useVaccination } from '../context/VaccinationContext';
 const { Header } = Layout;
 import './Header.css';
 
@@ -47,7 +46,7 @@ const HeaderLayout = () => {
   const menuItems = getMenuByRole(role);
   const userName = localStorage.getItem('email') || 'Người dùng';
   const fullName = localStorage.getItem('fullname');
-  const { newVaccinationCount } = useVaccination();
+  
 
   const handleLogout = () => {
     localStorage.clear();
@@ -86,14 +85,7 @@ const HeaderLayout = () => {
           className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
         >
           {menuItems.map(item => (
-            <Menu.Item key={item.path}>
-              <Link to={item.path}>
-                {item.label}
-                {item.key === 'vaccination' && newVaccinationCount > 0 && (
-                  <Badge dot style={{ marginLeft: 6, backgroundColor: 'red' }} />
-                )}
-              </Link>
-            </Menu.Item>
+            
           ))}
         </Menu>
 
