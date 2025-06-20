@@ -417,19 +417,23 @@ const App = () => {
     editForm.validateFields().then(async values => {
       try {
         console.log("Form values before update:", values); // Debug log
+        // Lấy nurseId và nurseName từ localStorage
+        const nurseId = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
+        const nurseName = localStorage.getItem('nurseName') || localStorage.getItem('fullName') || localStorage.getItem('email') || '';
         const eventData = {
           eventId: selectedEvent.eventId,
-          studentId: values.studentId,
-          typeName: values.typeName,
+          usageMethod: values.usageMethod || '',
           isEmergency: values.isEmergency || false,
           hasParentBeenInformed: values.hasParentBeenInformed || false,
           temperature: values.temperature || '',
           heartRate: values.heartRate || '',
           eventDateTime: values.date.format('YYYY-MM-DD') + 'T' + values.time.format('HH:mm:ss.SSS') + 'Z',
-          usageMethod: values.usageMethod || '',
-          processingStatus: values.processingStatus,
+          nurseId,
+          studentId: values.studentId,
           note: values.description,
-          result: values.result
+          result: values.result,
+          processingStatus: values.processingStatus,
+          nurseName
         };
 
         console.log("Event data before API call:", eventData); // Debug log

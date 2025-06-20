@@ -66,9 +66,11 @@ const AppRoutes = () => {
             <ManageMedication />
           </PrivateRoute>
         } />
+
         <Route path='manage-vaccination' element={
           <PrivateRoute>
             <ManageVaccination />
+
           </PrivateRoute>
         } />
       </Route>
