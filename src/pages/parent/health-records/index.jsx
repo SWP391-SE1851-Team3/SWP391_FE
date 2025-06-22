@@ -79,6 +79,10 @@ const StudentHealthRecord = () => {
     const handleSave = async (values) => {
         setLoading(true);
         try {
+            console.log('Gửi lên:', {
+                parentId: Number(parentId),
+                studentId: selectedStudent.studentID
+            });
             await createStudentHealthProfile({
                 studentId: selectedStudentId,
                 ...values

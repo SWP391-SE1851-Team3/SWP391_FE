@@ -3,7 +3,6 @@ import { Layout, Menu, Avatar, Badge, Button, message } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
 import { LogoutOutlined, LoginOutlined } from '@ant-design/icons';
-
 const { Header } = Layout;
 import './Header.css';
 
@@ -48,6 +47,7 @@ const HeaderLayout = () => {
   const userName = localStorage.getItem('email') || 'Người dùng';
   const fullName = localStorage.getItem('fullname');
 
+
   const handleLogout = () => {
     localStorage.clear();
     message.success('Đăng xuất thành công!');
@@ -78,16 +78,20 @@ const HeaderLayout = () => {
         </div>
 
         <Menu
+
           mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
+
           selectedKeys={[
             menuItems.find(item => location.pathname.startsWith(item.path))?.path || '/'
           ]}
           className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
+
           items={menuItems.map(item => ({
             key: item.path,
             label: <Link to={item.path}>{item.label}</Link>
           }))}
         />
+
 
         <div className="user-controls">
           {isAuthenticated ? (
