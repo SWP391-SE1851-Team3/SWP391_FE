@@ -26,6 +26,7 @@ import {
   Alert,
   Checkbox
 } from 'antd';
+import './post-vaccination.css';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -276,71 +277,35 @@ const PostVaccinationObservation = () => {
       </Card>
 
       {/* Observations List */}
-      <div className="space-y-4">
-        {filteredObservations.map((observation) => (
-          <Card key={observation.id} hoverable>
-            <div className="flex justify-between items-start mb-4">
+      <div className="post-vaccination-list">
+        {filteredObservations.map((obs) => (
+          <div key={obs.id} className="post-card">
+            <div className="post-card-header">
               <div>
-                <Title level={4}>{observation.studentName}</Title>
-                <Text type="secondary">Lớp: {observation.className}</Text>
-                <br />
-                <Text type="secondary">Vaccine: {observation.vaccine}</Text>
+                <Title level={4}>{obs.studentName}</Title>
+                <Text type="secondary">
+                  Lớp: {obs.className} | Vaccine: {obs.vaccine}
+                </Text>
               </div>
-              <Space>
-                <Tag color={getSeverityColor(observation.severity)}>
-                  {getSeverityText(observation.severity)}
-                </Tag>
-                <Tag color={getStatusColor(observation.status)}>
-                  {getStatusText(observation.status)}
-                </Tag>
-              </Space>
-            </div>
-
-            <Row gutter={16} className="mb-4">
-              <Col span={12}>
-                <Text type="secondary">Ngày tiêm:</Text>
-                <br />
-                <Text>{observation.vaccinationDate}</Text>
-              </Col>
-              <Col span={12}>
-                <Text type="secondary">Thời gian quan sát:</Text>
-                <br />
-                <Text>{observation.observationTime}</Text>
-              </Col>
-            </Row>
-
-            <div className="mb-4">
-              <Text type="secondary">Triệu chứng quan sát:</Text>
-              <Card size="small" className="mt-2">
-                <Text>{observation.symptoms}</Text>
-              </Card>
-            </div>
-
-            {observation.followUpRequired && (
-              <Alert
-                message="Cần theo dõi tiếp"
-                description={`Ngày tái khám: ${observation.followUpDate}`}
-                type="warning"
-                showIcon
-                icon={<WarningOutlined />}
-                className="mb-4"
+              <Badge 
+                status={getStatusColor(obs.status)} 
+                text={getStatusText(obs.status)}
               />
-            )}
-
-            <div className="flex justify-between items-center">
-              <Text type="secondary">Y tá: {observation.nurseName}</Text>
-              <Space>
-                <Button icon={<EyeOutlined />}>
-                  Chi tiết
-                </Button>
-                {observation.status === 'monitoring' && (
-                  <Button type="primary" icon={<ClockCircleOutlined />}>
-                    Cập nhật
-                  </Button>
-                )}
-              </Space>
             </div>
-          </Card>
+            <div className="post-card-info">
+              <Space><Text type="secondary">Ngày tiêm:</Text> <Text>{obs.vaccinationDate}</Text></Space>
+              <Space><Text type="secondary">Thời gian theo dõi:</Text> <Text>{obs.observationTime}</Text></Space>
+              <Space><Text type="secondary">Y tá:</Text> <Text>{obs.nurseName}</Text></Space>
+            </div>
+            <div className="post-card-info">
+              <Space><Text type="secondary">Triệu chứng:</Text> <Text>{obs.symptoms}</Text></Space>
+              <Space><Text type="secondary">Mức độ:</Text> <Text>{getSeverityText(obs.severity)}</Text></Space>
+              {obs.followUpRequired && <Space><Text type="secondary">Tái khám:</Text> <Text>{obs.followUpDate}</Text></Space>}
+            </div>
+            <div className="post-card-actions">
+              <Button icon={<EyeOutlined />}>Xem chi tiết</Button>
+            </div>
+          </div>
         ))}
       </div>
 
