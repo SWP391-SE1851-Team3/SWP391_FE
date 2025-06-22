@@ -78,20 +78,16 @@ const HeaderLayout = () => {
         </div>
 
         <Menu
-mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
+          mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
           selectedKeys={[
             menuItems.find(item => location.pathname.startsWith(item.path))?.path || '/'
           ]}
           className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
-        >
-          {menuItems.map(item => (
-            <Menu.Item key={item.path}>
-              <Link to={item.path}>
-                {item.label}
-              </Link>
-            </Menu.Item>
-          ))}
-        </Menu>
+          items={menuItems.map(item => ({
+            key: item.path,
+            label: <Link to={item.path}>{item.label}</Link>
+          }))}
+        />
 
         <div className="user-controls">
           {isAuthenticated ? (

@@ -15,8 +15,8 @@ import {
   Badge,
   Modal,
   Form,
-  DatePicker,
   TimePicker,
+  DatePicker,
   message,
   Alert,
   Switch
@@ -340,6 +340,12 @@ const App = () => {
         // Nếu có cập nhật bởi y tá khác, có thể lấy tương tự hoặc để trống
         const updatedByNurseId = nurseId;
         const updatedByNurseName = nurseName;
+        
+        // Convert date string to proper format using moment
+        const dateObj = values.date; // DatePicker returns a moment object
+        const timeObj = values.time;
+        const eventDateTime = dateObj.format('YYYY-MM-DD') + 'T' + timeObj.format('HH:mm:ss.SSS') + 'Z';
+        
         const eventData = {
           eventId: values?.eventId,
           studentId: selectedStudent.studentID,
@@ -350,7 +356,7 @@ const App = () => {
           hasParentBeenInformed: values?.hasParentBeenInformed || false,
           temperature: values?.temperature || '',
           heartRate: values?.heartRate || '',
-          eventDateTime: values.date.format('YYYY-MM-DD') + 'T' + values.time.format('HH:mm:ss.SSS') + 'Z',
+          eventDateTime: eventDateTime,
           usageMethod: values?.usageMethod || '',
           eventTypeId: selectedEventType.eventTypeId,
           note: values?.note || '',
@@ -420,6 +426,12 @@ const App = () => {
         // Lấy nurseId và nurseName từ localStorage
         const nurseId = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
         const nurseName = localStorage.getItem('nurseName') || localStorage.getItem('fullName') || localStorage.getItem('email') || '';
+        
+        // Convert date string to proper format using moment
+        const dateObj = values.date; // DatePicker returns a moment object
+        const timeObj = values.time;
+        const eventDateTime = dateObj.format('YYYY-MM-DD') + 'T' + timeObj.format('HH:mm:ss.SSS') + 'Z';
+        
         const eventData = {
           eventId: selectedEvent.eventId,
           usageMethod: values.usageMethod || '',
@@ -427,7 +439,7 @@ const App = () => {
           hasParentBeenInformed: values.hasParentBeenInformed || false,
           temperature: values.temperature || '',
           heartRate: values.heartRate || '',
-          eventDateTime: values.date.format('YYYY-MM-DD') + 'T' + values.time.format('HH:mm:ss.SSS') + 'Z',
+          eventDateTime: eventDateTime,
           nurseId,
           studentId: values.studentId,
           note: values.description,
@@ -505,7 +517,7 @@ const App = () => {
         processingStatus: selectedEvent.processingStatus,
         temperature: selectedEvent.temperature,
         heartRate: selectedEvent.heartRate,
-        date: eventDateTime,
+        date: eventDateTime, // DatePicker expects a moment object
         time: eventDateTime,
         isEmergency: selectedEvent.isEmergency,
         hasParentBeenInformed: selectedEvent.hasParentBeenInformed,
@@ -1100,7 +1112,7 @@ const App = () => {
                 label="Ngày"
                 rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
               >
-                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                <DatePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -1143,12 +1155,14 @@ const App = () => {
             <Input placeholder="Nhập phương pháp xử lý" />
           </Form.Item>
 
+          {/* Ẩn phần ghi chú và kết quả xử lý khi tạo sự kiện mới
           <Form.Item name="note" label="Ghi chú">
             <TextArea rows={3} placeholder="Nhập ghi chú chi tiết về sự kiện y tế..." />
           </Form.Item>
           <Form.Item name="result" label="Kết quả xử lý">
             <TextArea rows={3} placeholder="Nhập kết quả xử lý..." />
           </Form.Item>
+          */}
         </Form>
       </Modal>
 
@@ -1211,13 +1225,13 @@ const App = () => {
            
             {selectedEvent.createdByNurseName && (
               <div className="detail-item">
-                <span className="label">Người tạo sự kiện:</span>
+                <span className="label">Người tạo sự kiện: </span>
                 <span className="value">{selectedEvent.createdByNurseName}</span>
               </div>
             )}
             {selectedEvent.updatedByNurseName && (
               <div className="detail-item">
-                <span className="label">Người cập nhật cuối:</span>
+                <span className="label">Người cập nhật cuối: </span>
                 <span className="value">{selectedEvent.updatedByNurseName}</span>
               </div>
             )}
@@ -1423,7 +1437,7 @@ const App = () => {
                 label="Ngày"
                 rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
               >
-                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                <DatePicker style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col span={12}>
