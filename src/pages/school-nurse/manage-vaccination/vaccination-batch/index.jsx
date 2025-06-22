@@ -25,7 +25,7 @@ import {
 import './Vaccination-batch.css';
 import moment from 'moment';
 
-import { createVaccinationBatch, getVaccineTypeByName, getVaccinationBatches, updateVaccinationBatch } from '../../../../api/vaccinationAPI';
+import { createVaccinationBatch, getVaccineTypeByName, getVaccinationBatches, updateVaccinationBatch, sendConsentFormByClassName } from '../../../../api/vaccinationAPI';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -50,6 +50,13 @@ const VaccinationScheduleManager = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [editForm] = Form.useForm();
+
+  // State for consent modal
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
+  const [consentForm] = Form.useForm();
+  const [sendingConsent, setSendingConsent] = useState(false);
+  const [selectedBatchForConsent, setSelectedBatchForConsent] = useState(null);
+  const [consentDateRange, setConsentDateRange] = useState([null, null]);
 
   // Function to get vaccine name by ID
   const getVaccineNameById = async (vaccineTypeID) => {
@@ -200,7 +207,7 @@ const VaccinationScheduleManager = () => {
       console.log('🚀 [Vaccination Schedule] Gửi payload tạo đợt tiêm:', payload);
       
       const response = await createVaccinationBatch(payload);
-
+      
       // Log the entire response from the server to check the keys
       console.log('✅ [Vaccination Schedule] Phản hồi từ server khi tạo mới:', response.data);
       
@@ -233,7 +240,7 @@ const VaccinationScheduleManager = () => {
 
       // Add the new schedule to the state without re-fetching
       setSchedules(prevSchedules => [formattedNewBatch, ...prevSchedules]);
-      
+
       form.resetFields();
       setIsCreateModalOpen(false);
       message.success('Đợt tiêm chủng đã được tạo thành công');
@@ -387,6 +394,36 @@ const VaccinationScheduleManager = () => {
   // Unique vaccine names for filter dropdown
   const uniqueVaccineNames = [...new Set(schedules.map(s => s.vaccine).filter(Boolean))];
 
+  const handleOpenConsentModal = (schedule) => {
+    setSelectedBatchForConsent(schedule);
+    setConsentDateRange([null, null]);
+    consentForm.setFieldsValue({
+      className: '',
+      batchId: schedule.batchID,
+      sendDate: null,
+      expireDate: null,
+      status: 'pending',
+    });
+    setIsConsentModalOpen(true);
+  };
+
+  const handleSendConsentForm = async () => {
+    try {
+      setSendingConsent(true);
+      const values = await consentForm.validateFields();
+      let sendDate = consentDateRange[0] ? consentDateRange[0].toISOString() : '';
+      let expireDate = consentDateRange[1] ? consentDateRange[1].toISOString() : '';
+      await sendConsentFormByClassName({ ...values, sendDate, expireDate });
+      message.success('Gửi phiếu đồng ý thành công!');
+      setIsConsentModalOpen(false);
+      consentForm.resetFields();
+    } catch (error) {
+      message.error('Gửi phiếu đồng ý thất bại!');
+    } finally {
+      setSendingConsent(false);
+    }
+  };
+
   return (
     <div className="vaccination-schedule-container">
       <div className="vaccination-schedule-header">
@@ -493,7 +530,7 @@ const VaccinationScheduleManager = () => {
                 {!schedule.consentsSent && (
                   <Button 
                     icon={<SendOutlined />}
-                    onClick={() => handleSendConsents(schedule.batchID)}
+                    onClick={() => handleOpenConsentModal(schedule)}
                   >
                     Gửi phiếu đồng ý
                   </Button>
@@ -727,6 +764,70 @@ const VaccinationScheduleManager = () => {
             label="Ghi chú"
           >
             <TextArea rows={4} placeholder="Ghi chú thêm về đợt tiêm..." />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Consent Modal */}
+      <Modal
+        title="Gửi phiếu đồng ý theo lớp"
+        open={isConsentModalOpen}
+        onCancel={() => setIsConsentModalOpen(false)}
+        onOk={handleSendConsentForm}
+        okText="Gửi phiếu"
+        confirmLoading={sendingConsent}
+        cancelText="Hủy"
+      >
+        <Form form={consentForm} layout="vertical">
+          <Form.Item
+            name="className"
+            label="Tên lớp"
+            rules={[{ required: true, message: 'Vui lòng chọn tên lớp' }]}
+          >
+            <Select
+              placeholder="Chọn lớp"
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+            >
+              <Select.Option value="Lớp 5A">Lớp 5A</Select.Option>
+              <Select.Option value="Lớp 4B">Lớp 4B</Select.Option>
+              <Select.Option value="Lớp 3C">Lớp 3C</Select.Option>
+              <Select.Option value="Lớp 2A">Lớp 2A</Select.Option>
+              <Select.Option value="Lớp 1B">Lớp 1B</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="batchId"
+            label="Mã đợt tiêm"
+            rules={[{ required: true, message: 'Vui lòng nhập mã đợt tiêm' }]}
+          >
+            <Input disabled />
+          </Form.Item>
+          <Form.Item
+            label="Chọn khoảng thời gian gửi phiếu"
+            required
+          >
+            <DatePicker.RangePicker
+              showTime
+              style={{ width: '100%' }}
+              value={consentDateRange}
+              onChange={setConsentDateRange}
+              format="YYYY-MM-DD HH:mm"
+              placeholder={["Ngày gửi phiếu", "Ngày hết hạn"]}
+            />
+          </Form.Item>
+          <Form.Item
+            name="status"
+            label="Trạng thái"
+            rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}
+            initialValue="pending"
+          >
+            <Select>
+              <Option value="pending">Chờ phản hồi</Option>
+              <Option value="sent">Đã gửi</Option>
+              <Option value="expired">Hết hạn</Option>
+            </Select>
           </Form.Item>
         </Form>
       </Modal>

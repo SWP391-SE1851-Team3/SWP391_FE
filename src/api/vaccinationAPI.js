@@ -99,3 +99,16 @@ export const updateVaccinationBatch = async (batchId, data) => {
     throw error;
   }
 };
+
+// Gửi phiếu đồng ý theo className
+export const sendConsentFormByClassName = async (data) => {
+  try {
+    console.log('🚀 [Vaccination API] Gửi phiếu đồng ý theo className:', data);
+    const response = await axios.post('http://localhost:8080/api/Consent_forms/consent-forms/send-by-classname', data);
+    console.log('✅ [Vaccination API] Gửi phiếu đồng ý thành công:', response.data);
+    return response;
+  } catch (error) {
+    console.error('❌ [Vaccination API] Lỗi khi gửi phiếu đồng ý:', error);
+    throw error;
+  }
+};
