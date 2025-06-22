@@ -1020,11 +1020,11 @@ const App = () => {
                     (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                 >
-                  <Option value="Lớp 1B">Lớp 1B</Option>
-                  <Option value="Lớp 2A">Lớp 2A</Option>
-                  <Option value="Lớp 3C">Lớp 3C</Option>
-                  <Option value="Lớp 4B">Lớp 4B</Option>
                   <Option value="Lớp 5A">Lớp 5A</Option>
+                  <Option value="Lớp 4B">Lớp 4B</Option>
+                  <Option value="Lớp 3C">Lớp 3C</Option>
+                  <Option value="Lớp 2A">Lớp 2A</Option>
+                  <Option value="Lớp 1B">Lớp 1B</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -1324,12 +1324,11 @@ const App = () => {
                     (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                 >
-                  <Option value="Lớp 4A">Lớp 4A</Option>
-                  <Option value="Lớp 4B">Lớp 4B</Option>
-                  <Option value="Lớp 4C">Lớp 4C</Option>
                   <Option value="Lớp 5A">Lớp 5A</Option>
-                  <Option value="Lớp 5B">Lớp 5B</Option>
-                  <Option value="Lớp 5C">Lớp 5C</Option>
+                  <Option value="Lớp 4B">Lớp 4B</Option>
+                  <Option value="Lớp 3C">Lớp 3C</Option>
+                  <Option value="Lớp 2A">Lớp 2A</Option>
+                  <Option value="Lớp 1B">Lớp 1B</Option>
                 </Select>
               </Form.Item>
             </Col>

@@ -21,6 +21,7 @@ import {
   Badge,
   Alert
 } from 'antd';
+import './consent-management.css';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -114,8 +115,8 @@ const ConsentManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="consent-management-container">
+      <div className="consent-management-header">
         <div>
           <Title level={2}>Quản lý Phiếu đồng ý</Title>
           <Text type="secondary">Theo dõi và quản lý phiếu đồng ý từ phụ huynh</Text>
@@ -123,7 +124,7 @@ const ConsentManagement = () => {
       </div>
 
       {/* Statistics */}
-      <Row gutter={16}>
+      <Row gutter={16} className="consent-management-stats">
         <Col span={6}>
           <Card>
             <Statistic 
@@ -163,7 +164,7 @@ const ConsentManagement = () => {
       </Row>
 
       {/* Filters */}
-      <Card title="Bộ lọc">
+      <Card title="Bộ lọc" className="consent-management-filters">
         <Row gutter={16}>
           <Col span={6}>
             <Input
@@ -209,44 +210,31 @@ const ConsentManagement = () => {
       </Card>
 
       {/* Consent List */}
-      <div className="space-y-4">
+      <div className="consent-management-list">
         {filteredConsents.map((consent) => (
-          <Card key={consent.id} hoverable>
-            <div className="flex justify-between items-start mb-4">
+          <div key={consent.id} className="consent-card">
+            <div className="consent-card-header">
               <div>
                 <Title level={4}>{consent.studentName}</Title>
-                <Text type="secondary">Lớp: {consent.className}</Text>
-                <br />
-                <Text type="secondary">Phụ huynh: {consent.parentName}</Text>
+                <Text type="secondary">
+                  Lớp: {consent.className} | Phụ huynh: {consent.parentName}
+                </Text>
               </div>
-              <Tag color={getStatusColor(consent.consentStatus)}>
-                {getStatusText(consent.consentStatus)}
-              </Tag>
+              <Badge 
+                status={getStatusColor(consent.consentStatus)} 
+                text={getStatusText(consent.consentStatus)}
+              />
             </div>
 
-            <Row gutter={16} className="mb-4">
-              <Col span={8}>
-                <Text type="secondary">Vaccine:</Text>
-                <br />
-                <Text>{consent.vaccine}</Text>
-              </Col>
-              <Col span={8}>
-                <Text type="secondary">Ngày tiêm:</Text>
-                <br />
-                <Text>{consent.scheduledDate}</Text>
-              </Col>
-              <Col span={8}>
-                <Text type="secondary">Gửi phiếu:</Text>
-                <br />
-                <Text>{consent.sentDate}</Text>
-              </Col>
-            </Row>
+            <div className="consent-card-info">
+              <Space><Text type="secondary">Vaccine:</Text> <Text>{consent.vaccine}</Text></Space>
+              <Space><Text type="secondary">Ngày tiêm:</Text> <Text>{consent.scheduledDate}</Text></Space>
+              <Space><Text type="secondary">Gửi phiếu:</Text> <Text>{consent.sentDate}</Text></Space>
+            </div>
 
             {consent.responseDate && (
-              <div className="mb-4">
-                <Text type="secondary">Ngày phản hồi:</Text>
-                <br />
-                <Text>{consent.responseDate}</Text>
+              <div className="consent-card-info">
+                <Space><Text type="secondary">Ngày phản hồi:</Text> <Text>{consent.responseDate}</Text></Space>
               </div>
             )}
 
@@ -256,11 +244,11 @@ const ConsentManagement = () => {
                 description={consent.reason}
                 type="error"
                 showIcon
-                className="mb-4"
+                className="consent-card-alert"
               />
             )}
 
-            <div className="flex justify-end gap-2">
+            <div className="consent-card-actions">
               <Button 
                 icon={<EyeOutlined />}
                 onClick={() => handleViewDetails(consent)}
@@ -276,7 +264,7 @@ const ConsentManagement = () => {
                 </Button>
               )}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
@@ -288,7 +276,7 @@ const ConsentManagement = () => {
         footer={null}
       >
         {selectedConsent && (
-          <div className="space-y-4">
+          <div>
             <Row gutter={16}>
               <Col span={12}>
                 <Text type="secondary">Học sinh:</Text>
