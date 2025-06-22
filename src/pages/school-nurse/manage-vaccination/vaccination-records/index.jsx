@@ -6,7 +6,8 @@ import {
   FileTextOutlined, 
   CalendarOutlined, 
   UserOutlined, 
-  MedicineBoxOutlined 
+  MedicineBoxOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
 import { 
   Button, 
@@ -23,6 +24,7 @@ import {
   Col,
   Statistic
 } from 'antd';
+import './vaccination-records.css';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -235,68 +237,32 @@ const VaccinationRecords = () => {
       </Card>
 
       {/* Records List */}
-      <div style={{ display: 'grid', gap: '16px' }}>
+      <div className="vaccination-records-list">
         {filteredRecords.map((record) => (
-          <Card key={record.id} hoverable>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <div key={record.id} className="records-card">
+            <div className="records-card-header">
               <div>
-                <Title level={4} style={{ margin: 0 }}>
-                  <UserOutlined style={{ marginRight: '8px' }} />
-                  {record.studentName}
-                </Title>
-                <Text type="secondary">Lớp: {record.className}</Text>
+                <Title level={4}>{record.studentName}</Title>
+                <Text type="secondary">
+                  Lớp: {record.className} | Vaccine: {record.vaccine}
+                </Text>
               </div>
               <Badge status="success" text="Hoàn thành" />
             </div>
-
-            <Row gutter={16} style={{ marginBottom: '16px' }}>
-              <Col span={6}>
-                <Space>
-                  <MedicineBoxOutlined style={{ color: '#1890ff' }} />
-                  <div>
-                    <Text type="secondary">Vaccine:</Text>
-                    <div>{record.vaccine}</div>
-                  </div>
-                </Space>
-              </Col>
-              <Col span={6}>
-                <Space>
-                  <FileTextOutlined style={{ color: '#52c41a' }} />
-                  <div>
-                    <Text type="secondary">Mũi số:</Text>
-                    <div>{record.doseNumber}</div>
-                  </div>
-                </Space>
-              </Col>
-              <Col span={6}>
-                <Space>
-                  <CalendarOutlined style={{ color: '#722ed1' }} />
-                  <div>
-                    <Text type="secondary">Ngày giờ:</Text>
-                    <div>{record.vaccinationDate} {record.vaccinationTime}</div>
-                  </div>
-                </Space>
-              </Col>
-              <Col span={6}>
-                <div>
-                  <Text type="secondary">Số lô:</Text>
-                  <div style={{ fontFamily: 'monospace' }}>{record.batchId}</div>
-                </div>
-              </Col>
-            </Row>
-
-            <div style={{ marginBottom: '16px' }}>
-              <Text type="secondary">Y tá thực hiện:</Text>
-              <div>{record.nurseName}</div>
+            <div className="records-card-info">
+              <Space><Text type="secondary">Mũi số:</Text> <Text>{record.doseNumber}</Text></Space>
+              <Space><Text type="secondary">Ngày tiêm:</Text> <Text>{record.vaccinationDate}</Text></Space>
+              <Space><Text type="secondary">Giờ tiêm:</Text> <Text>{record.vaccinationTime}</Text></Space>
             </div>
-
-            {record.notes && (
-              <Card style={{ backgroundColor: '#e6f7ff' }}>
-                <Text type="secondary">Ghi chú:</Text>
-                <div style={{ color: '#1890ff' }}>{record.notes}</div>
-              </Card>
-            )}
-          </Card>
+            <div className="records-card-info">
+              <Space><Text type="secondary">Y tá:</Text> <Text>{record.nurseName}</Text></Space>
+              <Space><Text type="secondary">Lô vaccine:</Text> <Text>{record.batchId}</Text></Space>
+              <Space><Text type="secondary">Ghi chú:</Text> <Text>{record.notes}</Text></Space>
+            </div>
+            <div className="records-card-actions">
+              <Button icon={<EyeOutlined />}>Xem chi tiết</Button>
+            </div>
+          </div>
         ))}
       </div>
 
