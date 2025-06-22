@@ -96,13 +96,18 @@ const MedicineForm = () => {
 
   return (
     <div className="medicine-form-container">
-      <Typography.Title level={3}>Gửi Thuốc cho Học sinh</Typography.Title>
-      <Spin spinning={loading}>
-        <Form.Item label="Chọn học sinh" required>
+      <div className="medicine-form-header-center">
+        <Typography.Title level={3} className="medicine-form-title">
+          Gửi Thuốc cho Học sinh
+        </Typography.Title>
+        {/* <div className="medicine-form-subtitle">
+          Chọn học sinh để nhập hồ sơ sức khỏe
+        </div> */}
+        <Form.Item className="medicine-form-select-wrapper" required>
           <Select
             value={selectedStudentId ?? undefined}
             placeholder="Chọn học sinh"
-            style={{ width: '50%' }}
+            className="medicine-form-select"
             onChange={(value) => {
               setSelectedStudentId(value);
               form.resetFields();
@@ -119,7 +124,8 @@ const MedicineForm = () => {
               ))}
           </Select>
         </Form.Item>
-
+      </div>
+      <Spin spinning={loading}>
         {selectedStudentId && (
           <Form
             form={form}
