@@ -428,8 +428,8 @@ const VaccinationScheduleManager = () => {
     <div className="vaccination-schedule-container">
       <div className="vaccination-schedule-header">
         <div>
-          <Title level={2}>Quản lý Đợt tiêm chủng</Title>
-          <Text type="secondary">Tạo và quản lý các đợt tiêm chủng cho học sinh</Text>
+          <Title level={2} >Quản lý Đợt tiêm chủng</Title>
+        
         </div>
         
         <Button 

@@ -42,6 +42,7 @@ export const getAllMedicalEvents = async () => {
 export const fetchStudentsByClass = async (className) => {
   try {
     const response = await axios.get(`${API_BASE}/${className}`);
+    console.log('Kết quả fetchStudentsByClass:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching students by class:', error);
