@@ -10,12 +10,16 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  background-color: #69CD32;
+  border-radius: 12px;
 }
 
 .vaccination-schedule-header h2 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
+  margin: 17px;
+  font-size: 25px;
+  font-weight: 600;
+  color: #fff;
+  padding-bottom: 17px;
 }
 
 .vaccination-schedule-header p {
@@ -35,9 +39,10 @@
 }
 
 .vaccination-schedule-create-btn {
-  background: linear-gradient(135deg, #1890ff, #38a9ff);
+  background: linear-gradient(to right, #1890ff, #52c41a);
   border: none;
   box-shadow: 0 4px 10px rgba(24, 144, 255, 0.3);
+  margin: 17px;
 }
 
 .vaccination-schedule-list {
