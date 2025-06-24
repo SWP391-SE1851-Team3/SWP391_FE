@@ -112,3 +112,85 @@ export const sendConsentFormByClassName = async (data) => {
     throw error;
   }
 };
+
+// Lấy danh sách phiếu đồng ý cho y tá
+export const getConsentForms = async () => {
+  try {
+    console.log('🚀 [Vaccination API] Bắt đầu lấy danh sách phiếu đồng ý...');
+    const response = await axios.get('http://localhost:8080/api/Consent_forms/viewNurse');
+    console.log('✅ [Vaccination API] Lấy danh sách phiếu đồng ý thành công:', response.data);
+    return response;
+  } catch (error) {
+    console.error('❌ [Vaccination API] Lỗi khi lấy danh sách phiếu đồng ý:', error);
+    throw error;
+  }
+};
+
+// Lấy chi tiết phiếu đồng ý theo consent_form_id
+export const getConsentFormDetail = async (consentFormId) => {
+  try {
+    console.log('🚀 [Vaccination API] Lấy chi tiết phiếu đồng ý:', consentFormId);
+    const response = await axios.get(`http://localhost:8080/api/Consent_forms/consent-info`, {
+      params: { consent_form_id: consentFormId }
+    });
+    console.log('✅ [Vaccination API] Lấy chi tiết phiếu đồng ý thành công:', response.data);
+    return response;
+  } catch (error) {
+    console.error('❌ [Vaccination API] Lỗi khi lấy chi tiết phiếu đồng ý:', error);
+    throw error;
+  }
+};
+  export const geVaccinationRecords = async () => {
+    try {
+      console.log('🚀 [Vaccination API] Lấy danh sách hồ sơ:');
+      const response = await axios.get(`http://localhost:8080/api/vaccination_records`, {
+        
+      });
+      console.log('✅ [Vaccination API] Lấy hồ sơ thành công:', response.data);
+      return response;
+    } catch (error) {
+      console.error('❌ [Vaccination API] Lỗi khi lấy hồ sơ:', error);
+      throw error;
+    }
+};
+
+// Lấy chi tiết hồ sơ tiêm chủng theo id
+export const getVaccinationRecordDetail = async (id) => {
+  try {
+    console.log('🚀 [Vaccination API] Lấy chi tiết hồ sơ tiêm chủng:', id);
+    const response = await axios.get(`http://localhost:8080/api/vaccination_records/${id}`);
+    console.log('✅ [Vaccination API] Lấy chi tiết hồ sơ tiêm chủng thành công:', response.data);
+    return response;
+  } catch (error) {
+    console.error('❌ [Vaccination API] Lỗi khi lấy chi tiết hồ sơ tiêm chủng:', error);
+    throw error;
+  }
+};
+
+// Ghi nhận tiêm chủng và gửi email
+export const createVaccinationRecord = async (data) => {
+  try {
+    console.log('🚀 [Vaccination API] Ghi nhận tiêm chủng và gửi email:', data);
+    const response = await axios.post('http://localhost:8080/api/vaccination_records/vaccination-records/send-email', data);
+    console.log('✅ [Vaccination API] Ghi nhận tiêm chủng và gửi email thành công:', response.data);
+    return response;
+  } catch (error) {
+    console.error('❌ [Vaccination API] Lỗi khi ghi nhận tiêm chủng và gửi email:', error);
+    throw error;
+  }
+};
+
+// Cập nhật lại hồ sơ tiêm chủng (resend)
+export const updateVaccinationRecord = async (vaccinationRecordID, data) => {
+  try {
+    console.log('🚀 [Vaccination API] Gửi lại hồ sơ tiêm chủng:', vaccinationRecordID, data);
+    const response = await axios.put(`http://localhost:8080/api/vaccination_records/vaccination-records/resend/${vaccinationRecordID}`, data);
+    console.log('✅ [Vaccination API] Gửi lại hồ sơ tiêm chủng thành công:', response.data);
+    return response;
+  } catch (error) {
+    console.error('❌ [Vaccination API] Lỗi khi gửi lại hồ sơ tiêm chủng:', error);
+    throw error;
+  }
+};
+
+
