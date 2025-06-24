@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   SendOutlined, 
   EyeOutlined, 
@@ -22,54 +22,45 @@ import {
   Alert
 } from 'antd';
 import './consent-management.css';
-
+import {getConsentForms, getConsentFormDetail} from '../../../../api/vaccinationAPI';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const ConsentManagement = () => {
-  const [consents, setConsents] = useState([
-    {
-      id: 1,
-      studentName: 'Nguyễn Văn A',
-      parentName: 'Nguyễn Thị B',
-      vaccine: 'COVID-19 Pfizer',
-      scheduledDate: '2025-06-15',
-      consentStatus: 'pending',
-      sentDate: '2025-06-10',
-      reason: '',
-      className: '6A'
-    },
-    {
-      id: 2,
-      studentName: 'Trần Thị C',
-      parentName: 'Trần Văn D',
-      vaccine: 'COVID-19 Pfizer',
-      scheduledDate: '2025-06-15',
-      consentStatus: 'approved',
-      sentDate: '2025-06-10',
-      responseDate: '2025-06-11',
-      reason: '',
-      className: '6B'
-    },
-    {
-      id: 3,
-      studentName: 'Lê Văn E',
-      parentName: 'Lê Thị F',
-      vaccine: 'COVID-19 Pfizer',
-      scheduledDate: '2025-06-15',
-      consentStatus: 'rejected',
-      sentDate: '2025-06-10',
-      responseDate: '2025-06-12',
-      reason: 'Con em đang bị cảm, chưa thể tiêm',
-      className: '6A'
-    }
-  ]);
-
+  const [consents, setConsents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [classFilter, setClassFilter] = useState('all');
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedConsent, setSelectedConsent] = useState(null);
+
+  useEffect(() => {
+    const fetchConsents = async () => {
+      try {
+        const res = await getConsentForms();
+        // Mapping dữ liệu trả về cho phù hợp UI hiện tại với kiểu dữ liệu mới
+        const mapped = (res.data || []).map(item => ({
+          id: item.consent_id,
+          studentName: item.fullNameOfStudent || '',
+          parentName: item.fullNameOfParent || '',
+          vaccine: item.vaccineName || '',
+          scheduledDate: item.localDate || (item.scheduledDate ? item.scheduledDate.substring(0, 10) : ''),
+          consentStatus: item.status || '',
+          sentDate: item.send_date ? item.send_date.substring(0, 10) : '',
+          responseDate: item.expire_date ? item.expire_date.substring(0, 10) : '',
+          reason: item.reason || '',
+          className: item.className || '',
+          hasAllergy: item.hasAllergy || '',
+          isAgree: item.isAgree || ''
+        }));
+        setConsents(mapped);
+      } catch (err) {
+        setConsents([]);
+        message.error('Không thể tải danh sách phiếu đồng ý');
+      }
+    };
+    fetchConsents();
+  }, []);
 
   const filteredConsents = consents.filter(consent => {
     const matchesSearch = consent.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -102,9 +93,14 @@ const ConsentManagement = () => {
     message.success('Phiếu đồng ý đã được gửi lại cho phụ huynh');
   };
 
-  const handleViewDetails = (consent) => {
-    setSelectedConsent(consent);
-    setIsDetailModalOpen(true);
+  const handleViewDetails = async (consent) => {
+    try {
+      const res = await getConsentFormDetail(consent.id);
+      setSelectedConsent(res.data);
+      setIsDetailModalOpen(true);
+    } catch (err) {
+      message.error('Không thể lấy chi tiết phiếu đồng ý');
+    }
   };
 
   const stats = {
@@ -119,7 +115,6 @@ const ConsentManagement = () => {
       <div className="consent-management-header">
         <div>
           <Title level={2}>Quản lý Phiếu đồng ý</Title>
-          <Text type="secondary">Theo dõi và quản lý phiếu đồng ý từ phụ huynh</Text>
         </div>
       </div>
 
@@ -240,10 +235,9 @@ const ConsentManagement = () => {
 
             {consent.reason && (
               <Alert
-                message="Lý do từ chối"
+                message="Lý do"
                 description={consent.reason}
-                type="error"
-                showIcon
+                type="info"
                 className="consent-card-alert"
               />
             )}
@@ -281,31 +275,62 @@ const ConsentManagement = () => {
               <Col span={12}>
                 <Text type="secondary">Học sinh:</Text>
                 <br />
-                <Text strong>{selectedConsent.studentName}</Text>
+                <Text strong>{selectedConsent.fullNameOfStudent || ''}</Text>
               </Col>
               <Col span={12}>
                 <Text type="secondary">Lớp:</Text>
                 <br />
-                <Text strong>{selectedConsent.className}</Text>
+                <Text strong>{selectedConsent.className || ''}</Text>
               </Col>
               <Col span={12}>
                 <Text type="secondary">Phụ huynh:</Text>
                 <br />
-                <Text strong>{selectedConsent.parentName}</Text>
+                <Text strong>{selectedConsent.fullNameOfParent || ''}</Text>
               </Col>
               <Col span={12}>
                 <Text type="secondary">Vaccine:</Text>
                 <br />
-                <Text strong>{selectedConsent.vaccine}</Text>
+                <Text strong>{selectedConsent.vaccineName || ''}</Text>
+              </Col>
+              <Col span={12}>
+                <Text type="secondary">Ngày tiêm dự kiến:</Text>
+                <br />
+                <Text strong>{selectedConsent.localDate || (selectedConsent.scheduledDate ? selectedConsent.scheduledDate.substring(0, 10) : '')}</Text>
+              </Col>
+              <Col span={12}>
+                <Text type="secondary">Ngày gửi phiếu:</Text>
+                <br />
+                <Text strong>{selectedConsent.send_date ? selectedConsent.send_date.substring(0, 10) : ''}</Text>
+              </Col>
+              <Col span={12}>
+                <Text type="secondary">Ngày hết hạn phản hồi:</Text>
+                <br />
+                <Text strong>{selectedConsent.expire_date ? selectedConsent.expire_date.substring(0, 10) : ''}</Text>
+              </Col>
+              <Col span={12}>
+                <Text type="secondary">Trạng thái:</Text>
+                <br />
+                <Text strong>{selectedConsent.status || ''}</Text>
+              </Col>
+              <Col span={12}>
+                <Text type="secondary">Dị ứng:</Text>
+                <br />
+                <Text strong>{selectedConsent.hasAllergy || 'Không'}</Text>
+              </Col>
+              <Col span={12}>
+                <Text type="secondary">Đồng ý tiêm:</Text>
+                <br />
+                <Text strong>{selectedConsent.isAgree || ''}</Text>
               </Col>
             </Row>
-            <Card>
-              <Title level={5}>Thông tin tiêm chủng</Title>
-              <Text>
-                Đợt tiêm vaccine {selectedConsent.vaccine} dự kiến vào ngày {selectedConsent.scheduledDate} 
-                tại phòng y tế trường. Phiếu đồng ý đã được gửi vào ngày {selectedConsent.sentDate}.
-              </Text>
-            </Card>
+            {selectedConsent.reason && (
+              <Alert
+                message="Lý do"
+                description={selectedConsent.reason}
+                type="info"
+                className="consent-card-alert"
+              />
+            )}
           </div>
         )}
       </Modal>
