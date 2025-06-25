@@ -376,7 +376,7 @@ const VaccinationRecords = () => {
                   Lớp: {record.className}    | Tên vaccine: {record.vaccineName}
                 </Text>
               </div>
-              <Badge status={record.status === 'completed' ? 'success' : (record.status === 'pending' ? 'warning' : 'default')} text={record.status || ''} />
+              <Badge status={record.status === 'completed' ? 'success' : (record.status === 'Đang theo dõi' ? 'warning' : 'default')} text={record.status || ''} />
             </div>
             <div className="records-card-info">
               <Space><Text type="secondary">Ngày giờ theo dõi:</Text> <Text>{record.observation_time ? record.observation_time.replace('T', ' ').substring(0, 16) : ''}</Text></Space>
@@ -479,7 +479,7 @@ const VaccinationRecords = () => {
           <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}>
             <Select placeholder="Chọn trạng thái">
               <Option value="completed">Hoàn thành</Option>
-              <Option value="pending">Chờ kiểm tra</Option>
+              <Option value="Đang theo dõi">Đang theo dõi</Option>
             </Select>
           </Form.Item>
           <Form.Item name="createNurseName" label="Tên y tá tạo" style={{ display: 'none' }}>
@@ -498,7 +498,7 @@ const VaccinationRecords = () => {
       </Modal>
 
       <Modal
-        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#096dd9' }}>Chi tiết hồ sơ tiêm chủng</span>}
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết hồ sơ tiêm chủng</span>}
         open={detailModalOpen}
         onCancel={() => setDetailModalOpen(false)}
         footer={null}
@@ -508,47 +508,47 @@ const VaccinationRecords = () => {
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
             <Row gutter={[24, 16]}>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><UserOutlined /> Học sinh:</Text><br />
+                <Text type="secondary" strong>Học sinh:</Text><br />
                 <Text strong style={{ fontSize: 16 }}>{selectedRecord.studentName}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="class">🏫</span> Lớp:</Text><br />
+                <Text type="secondary" strong><span role="img" aria-label="class"></span> Lớp:</Text><br />
                 <Text strong>{selectedRecord.className}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><MedicineBoxOutlined /> Tên vaccine:</Text><br />
+                <Text type="secondary" strong> Tên vaccine:</Text><br />
                 <Text strong>{selectedRecord.vaccineName}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><FileTextOutlined /> Trạng thái:</Text><br />
+                <Text type="secondary" strong> Trạng thái:</Text><br />
                 <Text strong>{selectedRecord.status}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><UserOutlined /> Y tá tạo:</Text><br />
+                <Text type="secondary" strong> Y tá tạo:</Text><br />
                 <Text>{selectedRecord.createNurseName}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><UserOutlined /> Y tá chỉnh sửa:</Text><br />
+                <Text type="secondary" strong> Y tá chỉnh sửa:</Text><br />
                 <Text>{selectedRecord.editNurseName}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><CalendarOutlined /> Ngày giờ theo dõi:</Text><br />
+                <Text type="secondary" strong> Ngày giờ theo dõi:</Text><br />
                 <Text>{selectedRecord.observation_time ? selectedRecord.observation_time.replace('T', ' ').substring(0, 16) : ''}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="symptom">🤒</span> Triệu chứng:</Text><br />
+                <Text type="secondary" strong><span role="img" aria-label="symptom"></span> Triệu chứng:</Text><br />
                 <Text>{selectedRecord.symptoms}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="severity">⚠️</span> Mức độ:</Text><br />
+                <Text type="secondary" strong><span role="img" aria-label="severity"></span> Mức độ:</Text><br />
                 <Text>{selectedRecord.severity}</Text>
               </Col>
               <Col span={24} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="note">📝</span> Ghi chú:</Text><br />
+                <Text type="secondary" strong><span role="img" aria-label="note"></span> Ghi chú:</Text><br />
                 <Text>{selectedRecord.notes}</Text>
               </Col>
               <Col span={24} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="observation">👀</span> Ghi chú theo dõi:</Text><br />
+                <Text type="secondary" strong><span role="img" aria-label="observation"></span> Ghi chú theo dõi:</Text><br />
                 <Text>{selectedRecord.observation_notes}</Text>
               </Col>
             </Row>
@@ -605,7 +605,7 @@ const VaccinationRecords = () => {
           <Form.Item name="status" label="Trạng thái">
             <Select>
               <Option value="completed">Hoàn thành</Option>
-              <Option value="pending">Chờ kiểm tra</Option>
+              <Option value="Đang theo dõi">Đang theo dõi</Option>
             </Select>
           </Form.Item>
           <Form.Item name="parentID" label="Mã phụ huynh" style={{ display: 'none' }}>
