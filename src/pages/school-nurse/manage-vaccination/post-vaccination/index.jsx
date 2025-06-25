@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  PlusOutlined, 
   SearchOutlined, 
   FilterOutlined, 
   WarningOutlined, 
@@ -23,109 +22,72 @@ import {
   message,
   Statistic,
   Badge,
-  Alert,
-  Checkbox
+  Alert
 } from 'antd';
 import './post-vaccination.css';
-
+import {getStudentVaccinationRecordsFollowedByNurse, getVaccinationRecordDetail} from '../../../../api/vaccinationAPI';  
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
 const PostVaccinationObservation = () => {
-  const [observations, setObservations] = useState([
-    {
-      id: 1,
-      studentName: 'Nguyễn Văn A',
-      className: '6A',
-      vaccine: 'COVID-19 Pfizer',
-      vaccinationDate: '2025-06-15',
-      observationTime: '2025-06-15 10:00:00',
-      symptoms: 'Không có phản ứng bất thường',
-      severity: 'none',
-      nurseId: 'NT001',
-      nurseName: 'Nguyễn Thị B',
-      status: 'completed',
-      followUpRequired: false
-    },
-    {
-      id: 2,
-      studentName: 'Trần Thị C',
-      className: '6B',
-      vaccine: 'COVID-19 Pfizer',
-      vaccinationDate: '2025-06-15',
-      observationTime: '2025-06-15 10:15:00',
-      symptoms: 'Đau nhẹ tại vị trí tiêm, hơi mệt',
-      severity: 'mild',
-      nurseId: 'NT001',
-      nurseName: 'Nguyễn Thị B',
-      status: 'monitoring',
-      followUpRequired: true,
-      followUpDate: '2025-06-16'
-    },
-    {
-      id: 3,
-      studentName: 'Lê Văn E',
-      className: '6A',
-      vaccine: 'COVID-19 Pfizer',
-      vaccinationDate: '2025-06-15',
-      observationTime: '2025-06-15 10:30:00',
-      symptoms: 'Sốt nhẹ 37.5°C, đau đầu',
-      severity: 'mild',
-      nurseId: 'NT001',
-      nurseName: 'Nguyễn Thị B',
-      status: 'monitoring',
-      followUpRequired: true,
-      followUpDate: '2025-06-16'
-    }
-  ]);
-
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [form] = Form.useForm();
+  const [observations, setObservations] = useState([]);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedObservationDetail, setSelectedObservationDetail] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const students = [
-    { name: 'Nguyễn Văn A', class: '6A', vaccine: 'COVID-19 Pfizer', date: '2025-06-15' },
-    { name: 'Trần Thị C', class: '6B', vaccine: 'COVID-19 Pfizer', date: '2025-06-15' },
-    { name: 'Lê Văn E', class: '6A', vaccine: 'COVID-19 Pfizer', date: '2025-06-15' }
-  ];
+  useEffect(() => {
+    const fetchObservations = async () => {
+      try {
+        const res = await getStudentVaccinationRecordsFollowedByNurse();
+        // Map dữ liệu trả về cho phù hợp với cấu trúc mới
+        const mapped = (res.data || []).map(item => ({
+          id: item.studentId,
+          vaccinationRecordID: item.vaccinationRecordID,
+          studentID: item.studentID,
+          studentName: item.fullName || '',
+          className: item.className || '',
+          batchID: item.batchID,
+          vaccineName: item.vaccineTypeName || '',
+          symptoms: item.symptoms,
+          severity: item.severity,
+          notes: item.notes,
+          observation_notes: item.observation_notes,
+          observation_time: item.observation_time,
+          status: item.status || 'Đang theo dõi',
+          createNurseID: item.createNurseID,
+          createNurseName: item.createNurseName,
+          editNurseID: item.editNurseID,
+          editNurseName: item.editNurseName,
+          parentID: item.parentID,
+          vaccine: item.vaccineTypeName || '',
+          observationTime: item.observationTime ? new Date(item.observationTime).toLocaleString('vi-VN') : '',
+          observationNotes: item.observationNotes || '',
+          nurseId: '',
+          nurseName: '',
+          followUpRequired: false,
+          followUpDate: '',
+          vaccinationDate: ''
+        }));
+        setObservations(mapped);
+      } catch (err) {
+        setObservations([]);
+        message.error('Không thể tải danh sách theo dõi sau tiêm');
+      }
+    };
+    fetchObservations();
+  }, []);
 
   const filteredObservations = observations.filter(observation => {
     const matchesSearch = observation.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         observation.symptoms.toLowerCase().includes(searchTerm.toLowerCase());
+                         (observation.observationNotes || observation.symptoms || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSeverity = severityFilter === 'all' || observation.severity === severityFilter;
     const matchesStatus = statusFilter === 'all' || observation.status === statusFilter;
     
     return matchesSearch && matchesSeverity && matchesStatus;
   });
-
-  const handleCreateObservation = (values) => {
-    const selectedStudent = students.find(s => s.name === values.studentName);
-    const observation = {
-      id: Date.now(),
-      studentName: values.studentName,
-      className: selectedStudent ? selectedStudent.class : '',
-      vaccine: selectedStudent ? selectedStudent.vaccine : '',
-      vaccinationDate: selectedStudent ? selectedStudent.date : '',
-      observationTime: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      symptoms: values.symptoms,
-      severity: values.severity,
-      nurseId: 'NT001',
-      nurseName: 'Nguyễn Thị B',
-      status: values.severity === 'none' ? 'completed' : 'monitoring',
-      followUpRequired: values.followUpRequired,
-      followUpDate: values.followUpRequired ? 
-        new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null
-    };
-
-    setObservations([...observations, observation]);
-    form.resetFields();
-    setIsCreateModalOpen(false);
-
-    message.success('Thông tin theo dõi đã được ghi nhận');
-  };
 
   const getSeverityColor = (severity) => {
     switch (severity) {
@@ -149,18 +111,16 @@ const PostVaccinationObservation = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'success';
-      case 'monitoring': return 'processing';
-      case 'follow_up': return 'warning';
+      case 'Hoàn thành': return 'success';
+      case 'Đang theo dõi': return 'processing';
       default: return 'default';
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'completed': return 'Hoàn thành';
-      case 'monitoring': return 'Đang theo dõi';
-      case 'follow_up': return 'Cần tái khám';
+      case 'Hoàn thành': return 'Hoàn thành';
+      case 'Đang theo dõi': return 'Đang theo dõi';
       default: return status;
     }
   };
@@ -169,28 +129,31 @@ const PostVaccinationObservation = () => {
     total: observations.length,
     noReaction: observations.filter(o => o.severity === 'none').length,
     mildReaction: observations.filter(o => o.severity === 'mild').length,
-    monitoring: observations.filter(o => o.status === 'monitoring').length
+    monitoring: observations.filter(o => o.status === 'Đang theo dõi').length
+  };
+
+  // Xem chi tiết
+  const handleViewDetail = async (observation) => {
+    try {
+      const recordId = observation.vaccinationRecordID || observation.id;
+      const res = await getVaccinationRecordDetail(recordId);
+      setSelectedObservationDetail(res.data);
+      setIsDetailModalOpen(true);
+    } catch (err) {
+      message.error('Không thể lấy chi tiết theo dõi sau tiêm');
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="post-vaccination-container">
+      <div className="post-vaccination-header">
         <div>
           <Title level={2}>Theo dõi sau tiêm chủng</Title>
-          <Text type="secondary">Ghi nhận và theo dõi phản ứng sau tiêm chủng của học sinh</Text>
         </div>
-        
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />}
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          Ghi nhận theo dõi
-        </Button>
       </div>
 
       {/* Statistics */}
-      <Row gutter={16}>
+      <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
           <Card>
             <Statistic 
@@ -209,15 +172,7 @@ const PostVaccinationObservation = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic 
-              title="Phản ứng nhẹ" 
-              value={stats.mildReaction}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
+        
         <Col span={6}>
           <Card>
             <Statistic 
@@ -230,7 +185,7 @@ const PostVaccinationObservation = () => {
       </Row>
 
       {/* Filters */}
-      <Card title="Bộ lọc">
+      <Card title="Bộ lọc" className="post-vaccination-filters">
         <Row gutter={16}>
           <Col span={6}>
             <Input
@@ -263,9 +218,8 @@ const PostVaccinationObservation = () => {
               placeholder="Trạng thái"
             >
               <Option value="all">Tất cả trạng thái</Option>
-              <Option value="completed">Hoàn thành</Option>
-              <Option value="monitoring">Đang theo dõi</Option>
-              <Option value="follow_up">Cần tái khám</Option>
+              <Option value="Hoàn thành">Hoàn thành</Option>
+              <Option value="Đang theo dõi">Đang theo dõi</Option>
             </Select>
           </Col>
           <Col span={6}>
@@ -293,101 +247,78 @@ const PostVaccinationObservation = () => {
               />
             </div>
             <div className="post-card-info">
-              <Space><Text type="secondary">Ngày tiêm:</Text> <Text>{obs.vaccinationDate}</Text></Space>
               <Space><Text type="secondary">Thời gian theo dõi:</Text> <Text>{obs.observationTime}</Text></Space>
-              <Space><Text type="secondary">Y tá:</Text> <Text>{obs.nurseName}</Text></Space>
+              <Space><Text type="secondary">Mã học sinh:</Text> <Text>{obs.id}</Text></Space>
             </div>
             <div className="post-card-info">
-              <Space><Text type="secondary">Triệu chứng:</Text> <Text>{obs.symptoms}</Text></Space>
-              <Space><Text type="secondary">Mức độ:</Text> <Text>{getSeverityText(obs.severity)}</Text></Space>
-              {obs.followUpRequired && <Space><Text type="secondary">Tái khám:</Text> <Text>{obs.followUpDate}</Text></Space>}
+              <Space><Text type="secondary">Ghi chú quan sát:</Text> <Text>{obs.observationNotes || obs.symptoms}</Text></Space>
+             
             </div>
             <div className="post-card-actions">
-              <Button icon={<EyeOutlined />}>Xem chi tiết</Button>
+              <Button icon={<EyeOutlined />} onClick={() => handleViewDetail(obs)}>Xem chi tiết</Button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Create Modal */}
+      {/* Detail Modal */}
       <Modal
-        title="Ghi nhận theo dõi sau tiêm"
-        open={isCreateModalOpen}
-        onCancel={() => setIsCreateModalOpen(false)}
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết theo dõi sau tiêm</span>}
+        open={isDetailModalOpen}
+        onCancel={() => setIsDetailModalOpen(false)}
         footer={null}
+        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleCreateObservation}
-        >
-          <Form.Item
-            name="studentName"
-            label="Học sinh"
-            rules={[{ required: true, message: 'Vui lòng chọn học sinh!' }]}
-          >
-            <Select placeholder="Chọn học sinh đã tiêm">
-              {students.map((student) => (
-                <Option key={student.name} value={student.name}>
-                  {student.name} - {student.class} ({student.vaccine})
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="symptoms"
-            label="Triệu chứng quan sát"
-            rules={[{ required: true, message: 'Vui lòng nhập triệu chứng!' }]}
-          >
-            <TextArea
-              placeholder="Mô tả các triệu chứng quan sát được (đau, sốt, phản ứng tại chỗ, v.v.)"
-              rows={4}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="severity"
-            label="Mức độ nghiêm trọng"
-            initialValue="none"
-          >
-            <Select>
-              <Option value="none">Không có phản ứng</Option>
-              <Option value="mild">Nhẹ</Option>
-              <Option value="moderate">Vừa phải</Option>
-              <Option value="severe">Nghiêm trọng</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="followUpRequired"
-            valuePropName="checked"
-            initialValue={false}
-          >
-            <Checkbox>Cần theo dõi tiếp</Checkbox>
-          </Form.Item>
-
-          <Form.Item
-            name="notes"
-            label="Ghi chú thêm"
-          >
-            <TextArea
-              placeholder="Các ghi chú bổ sung, khuyến nghị..."
-              rows={3}
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button onClick={() => setIsCreateModalOpen(false)}>
-                Hủy
-              </Button>
-              <Button type="primary" htmlType="submit">
-                Ghi nhận
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
+        {selectedObservationDetail && (
+          <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+            <Row gutter={[24, 16]}>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="user"></span> Học sinh:</Text><br />
+                <Text strong style={{ fontSize: 16 }}>{selectedObservationDetail.studentName}</Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="class"></span> Lớp:</Text><br />
+                <Text strong>{selectedObservationDetail.className}</Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="vaccine"></span> Tên vaccine:</Text><br />
+                <Text strong>{selectedObservationDetail.vaccineName}</Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="status"></span> Trạng thái:</Text><br />
+                <Text strong>{selectedObservationDetail.status}</Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="nurse"></span> Y tá tạo:</Text><br />
+                <Text>{selectedObservationDetail.createNurseName}</Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="nurse-edit"></span> Y tá chỉnh sửa:</Text><br />
+                <Text>{selectedObservationDetail.editNurseName}</Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="calendar"></span> Ngày giờ theo dõi:</Text><br />
+                <Text>{selectedObservationDetail.observation_time ? selectedObservationDetail.observation_time.replace('T', ' ').substring(0, 16) : ''}</Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="symptom"></span> Triệu chứng:</Text><br />
+                <Text>{selectedObservationDetail.symptoms}</Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="severity"></span> Mức độ:</Text><br />
+                <Text>{selectedObservationDetail.severity}</Text>
+              </Col>
+              <Col span={24} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="note"></span> Ghi chú:</Text><br />
+                <Text>{selectedObservationDetail.notes}</Text>
+              </Col>
+              <Col span={24} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong><span role="img" aria-label="observation"></span> Ghi chú theo dõi:</Text><br />
+                <Text>{selectedObservationDetail.observation_notes}</Text>
+              </Col>
+            </Row>
+          </div>
+        )}
       </Modal>
     </div>
   );
