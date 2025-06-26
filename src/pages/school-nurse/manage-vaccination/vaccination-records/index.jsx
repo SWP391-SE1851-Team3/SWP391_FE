@@ -376,7 +376,7 @@ const VaccinationRecords = () => {
                   Lớp: {record.className}    | Tên vaccine: {record.vaccineName}
                 </Text>
               </div>
-              <Badge status={record.status === 'completed' ? 'success' : (record.status === 'Đang theo dõi' ? 'warning' : 'default')} text={record.status || ''} />
+              <Badge status={record.status === 'Hoàn thành' ? 'success' : (record.status === 'Đang theo dõi' ? 'warning' : 'default')} text={record.status || ''} />
             </div>
             <div className="records-card-info">
               <Space><Text type="secondary">Ngày giờ theo dõi:</Text> <Text>{record.observation_time ? record.observation_time.replace('T', ' ').substring(0, 16) : ''}</Text></Space>
@@ -478,7 +478,7 @@ const VaccinationRecords = () => {
           </Form.Item>
           <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}>
             <Select placeholder="Chọn trạng thái">
-              <Option value="completed">Hoàn thành</Option>
+              <Option value="Hoàn thành">Hoàn thành</Option>
               <Option value="Đang theo dõi">Đang theo dõi</Option>
             </Select>
           </Form.Item>
@@ -604,7 +604,7 @@ const VaccinationRecords = () => {
           </Form.Item>
           <Form.Item name="status" label="Trạng thái">
             <Select>
-              <Option value="completed">Hoàn thành</Option>
+              <Option value="Hoàn thành">Hoàn thành</Option>
               <Option value="Đang theo dõi">Đang theo dõi</Option>
             </Select>
           </Form.Item>

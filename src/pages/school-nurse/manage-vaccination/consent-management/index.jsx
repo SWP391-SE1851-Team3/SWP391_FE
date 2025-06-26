@@ -45,7 +45,7 @@ const ConsentManagement = () => {
           parentName: item.fullNameOfParent || '',
           vaccine: item.vaccineName || '',
           scheduledDate: item.localDate || (item.scheduledDate ? item.scheduledDate.substring(0, 10) : ''),
-          consentStatus: item.status || '',
+          consentStatus: item.status === 'pending' ? 'chờ xác nhận' : item.status === 'approved' ? 'đã xác nhận' : item.status === 'rejected' ? 'từ chối' : item.status || '',
           sentDate: item.send_date ? item.send_date.substring(0, 10) : '',
           responseDate: item.expire_date ? item.expire_date.substring(0, 10) : '',
           reason: item.reason || '',
@@ -73,18 +73,18 @@ const ConsentManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'warning';
-      case 'approved': return 'success';
-      case 'rejected': return 'error';
+      case 'chờ xác nhận': return 'warning';
+      case 'đã xác nhận': return 'success';
+      case 'từ chối': return 'error';
       default: return 'default';
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'pending': return 'Chờ phản hồi';
-      case 'approved': return 'Đã đồng ý';
-      case 'rejected': return 'Từ chối';
+      case 'chờ xác nhận': return 'Chờ xác nhận';
+      case 'đã xác nhận': return 'Đã xác nhận';
+      case 'từ chối': return 'Từ chối';
       default: return status;
     }
   };
@@ -105,9 +105,9 @@ const ConsentManagement = () => {
 
   const stats = {
     total: consents.length,
-    pending: consents.filter(c => c.consentStatus === 'pending').length,
-    approved: consents.filter(c => c.consentStatus === 'approved').length,
-    rejected: consents.filter(c => c.consentStatus === 'rejected').length
+    pending: consents.filter(c => c.consentStatus === 'chờ xác nhận').length,
+    approved: consents.filter(c => c.consentStatus === 'đã xác nhận').length,
+    rejected: consents.filter(c => c.consentStatus === 'từ chối').length
   };
 
   return (
@@ -132,7 +132,7 @@ const ConsentManagement = () => {
         <Col span={6}>
           <Card>
             <Statistic 
-              title="Chờ phản hồi" 
+              title="Chờ xác nhận" 
               value={stats.pending}
               valueStyle={{ color: '#faad14' }}
             />
@@ -141,7 +141,7 @@ const ConsentManagement = () => {
         <Col span={6}>
           <Card>
             <Statistic 
-              title="Đã đồng ý" 
+              title="Đã xác nhận" 
               value={stats.approved}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -178,9 +178,9 @@ const ConsentManagement = () => {
               placeholder="Trạng thái"
             >
               <Option value="all">Tất cả trạng thái</Option>
-              <Option value="pending">Chờ phản hồi</Option>
-              <Option value="approved">Đã đồng ý</Option>
-              <Option value="rejected">Từ chối</Option>
+              <Option value="chờ xác nhận">Chờ xác nhận</Option>
+              <Option value="đã xác nhận">Đã xác nhận</Option>
+              <Option value="từ chối">Từ chối</Option>
             </Select>
           </Col>
           <Col span={6}>
@@ -249,7 +249,7 @@ const ConsentManagement = () => {
               >
                 Xem chi tiết
               </Button>
-              {consent.consentStatus === 'pending' && (
+              {consent.consentStatus === 'chờ xác nhận' && (
                 <Button 
                   icon={<SendOutlined />}
                   onClick={() => handleResendConsent(consent.id)}
