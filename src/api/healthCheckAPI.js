@@ -35,3 +35,25 @@ export const updateHealthCheck = async (health_ScheduleID, data) => {
     throw error;
   }
 };
+
+// Lấy danh sách phiếu xác nhận
+export const getAllHealthConsents = async () => {
+  try {
+    const response = await axios.get('http://localhost:8080/api/health-consent/all');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching health consents:', error);
+    throw error;
+  }
+};
+
+// Tạo phiếu xác nhận cho lớp
+export const createHealthConsentForClass = async (data) => {
+  try {
+    const response = await axios.post('http://localhost:8080/api/health-consent/create-for-class', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating health consent for class:', error);
+    throw error;
+  }
+};

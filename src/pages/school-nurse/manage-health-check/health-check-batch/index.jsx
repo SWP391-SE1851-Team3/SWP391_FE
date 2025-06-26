@@ -24,7 +24,7 @@ import {
 } from 'antd';
 import './health-check-batch.css';
 import moment from 'moment';
-import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck } from '../../../../api/healthCheckAPI';
+import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck, createHealthConsentForClass } from '../../../../api/healthCheckAPI';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -47,6 +47,12 @@ const HealthCheckBatchManager = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [editForm] = Form.useForm();
+
+  // State cho modal gửi phiếu xác nhận
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
+  const [consentForm] = Form.useForm();
+  const [selectedBatchForConsent, setSelectedBatchForConsent] = useState(null);
+  const [consentDateRange, setConsentDateRange] = useState([]);
 
   // TODO: Thêm các API health-check khi cần
 
@@ -203,6 +209,42 @@ const HealthCheckBatchManager = () => {
     }
   };
 
+  // Xử lý gửi phiếu xác nhận
+  const handleSendConsent = (batch) => {
+    setSelectedBatchForConsent(batch);
+    setIsConsentModalOpen(true);
+    consentForm.resetFields();
+    setConsentDateRange([]);
+  };
+
+  const handleCreateConsent = async () => {
+    try {
+      const values = await consentForm.validateFields();
+      if (!consentDateRange || consentDateRange.length !== 2) {
+        message.error('Vui lòng chọn khoảng thời gian gửi và hết hạn!');
+        return;
+      }
+      const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+      const data = {
+        className: values.className,
+        healthScheduleId: selectedBatchForConsent.id,
+        sendDate: consentDateRange[0].toISOString(),
+        expireDate: consentDateRange[1].toISOString(),
+        isAgreed: values.isAgreed,
+        notes: values.notes,
+        createByNurseId: nurseId
+      };
+      await createHealthConsentForClass(data);
+      message.success('Gửi phiếu xác nhận thành công!');
+      setIsConsentModalOpen(false);
+      setSelectedBatchForConsent(null);
+      consentForm.resetFields();
+      setConsentDateRange([]);
+    } catch (error) {
+      message.error('Gửi phiếu xác nhận thất bại!');
+    }
+  };
+
   return (
     <div className="health-check-batch-container">
       <div className="health-check-batch-header">
@@ -292,6 +334,13 @@ const HealthCheckBatchManager = () => {
                 >
                   Chỉnh sửa
                 </Button>
+                <Button
+                  icon={<SendOutlined />}
+                  style={{ marginLeft: 8 }}
+                  onClick={() => handleSendConsent(batch)}
+                >
+                  Gửi phiếu xác nhận
+                </Button>
               </div>
             </div>
           ))}
@@ -299,62 +348,111 @@ const HealthCheckBatchManager = () => {
       )}
 
       <Modal
-        title="Tạo đợt khám sức khỏe mới"
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Tạo đợt khám sức khỏe mới</span>}
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         onOk={handleCreateBatch}
         okText="Tạo đợt khám"
         cancelText="Hủy"
+        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
-        <Form form={form} layout="vertical">
-          <Form.Item name="batchName" label="Tên đợt khám" rules={[{ required: true, message: 'Vui lòng nhập tên đợt khám' }]}> 
-            <Input />
-          </Form.Item>
-          <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="location" label="Địa điểm">
-            <Input />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <TextArea />
-          </Form.Item>
-          <Form.Item name="status" label="Trạng thái" initialValue="pending">
-            <Select>
-              <Option value="pending">Chờ xử lý</Option>
-              <Option value="confirmed">Đã xác nhận</Option>
-            </Select>
-          </Form.Item>
-        </Form>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <Form form={form} layout="vertical">
+            <Form.Item name="batchName" label="Tên đợt khám" rules={[{ required: true, message: 'Vui lòng nhập tên đợt khám' }]}> 
+              <Input />
+            </Form.Item>
+            <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="location" label="Địa điểm">
+              <Input />
+            </Form.Item>
+            <Form.Item name="notes" label="Ghi chú">
+              <TextArea />
+            </Form.Item>
+            <Form.Item name="status" label="Trạng thái" initialValue="pending">
+              <Select>
+                <Option value="pending">Chờ xử lý</Option>
+                <Option value="confirmed">Đã xác nhận</Option>
+              </Select>
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
       <Modal
-        title="Chỉnh sửa đợt khám sức khỏe"
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chỉnh sửa đợt khám sức khỏe</span>}
         open={isEditModalOpen}
         onCancel={() => { setIsEditModalOpen(false); setSelectedBatch(null); editForm.resetFields(); }}
         onOk={handleUpdateBatch}
         okText="Cập nhật"
         cancelText="Hủy"
+        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
-        <Form form={editForm} layout="vertical">
-          <Form.Item name="batchName" label="Tên đợt khám" rules={[{ required: true, message: 'Vui lòng nhập tên đợt khám' }]}> 
-            <Input />
-          </Form.Item>
-          <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="location" label="Địa điểm">
-            <Input />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <TextArea />
-          </Form.Item>
-          <Form.Item name="status" label="Trạng thái">
-            <Select>
-              <Option value="pending">Chờ xử lý</Option>
-              <Option value="confirmed">Đã xác nhận</Option>
-            </Select>
-          </Form.Item>
-        </Form>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <Form form={editForm} layout="vertical">
+            <Form.Item name="batchName" label="Tên đợt khám" rules={[{ required: true, message: 'Vui lòng nhập tên đợt khám' }]}> 
+              <Input />
+            </Form.Item>
+            <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="location" label="Địa điểm">
+              <Input />
+            </Form.Item>
+            <Form.Item name="notes" label="Ghi chú">
+              <TextArea />
+            </Form.Item>
+            <Form.Item name="status" label="Trạng thái">
+              <Select>
+                <Option value="pending">Chờ xử lý</Option>
+                <Option value="confirmed">Đã xác nhận</Option>
+              </Select>
+            </Form.Item>
+          </Form>
+        </div>
+      </Modal>
+      <Modal
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Gửi phiếu xác nhận cho lớp</span>}
+        open={isConsentModalOpen}
+        onCancel={() => { setIsConsentModalOpen(false); setSelectedBatchForConsent(null); consentForm.resetFields(); }}
+        onOk={handleCreateConsent}
+        okText="Gửi phiếu"
+        cancelText="Hủy"
+        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+      >
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <Form form={consentForm} layout="vertical">
+            <Form.Item name="className" label="Tên lớp" rules={[{ required: true, message: 'Vui lòng nhập tên lớp' }]}> 
+              <Select placeholder="Chọn lớp" showSearch optionFilterProp="children">
+                <Option value="Lớp 5A">Lớp 5A</Option>
+                <Option value="Lớp 4B">Lớp 4B</Option>
+                <Option value="Lớp 3C">Lớp 3C</Option>
+                <Option value="Lớp 2A">Lớp 2A</Option>
+                <Option value="Lớp 1B">Lớp 1B</Option>
+              </Select>
+            </Form.Item>
+            <Form.Item label="Chọn khoảng thời gian gửi phiếu" required>
+              <DatePicker.RangePicker
+                showTime
+                style={{ width: '100%' }}
+                value={consentDateRange}
+                onChange={setConsentDateRange}
+                format="YYYY-MM-DD HH:mm"
+                placeholder={["Ngày gửi phiếu", "Ngày hết hạn"]}
+              />
+            </Form.Item>
+            <Form.Item name="isAgreed" label="Trạng thái xác nhận" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}> 
+              <Select>
+                <Option value="Chờ phản hồi">Chờ phản hồi</Option>
+                <Option value="Đã đồng ý">Đã đồng ý</Option>
+                <Option value="Đã từ chối">Đã từ chối</Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="notes" label="Ghi chú">
+              <Input.TextArea />
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
     </div>
   );
