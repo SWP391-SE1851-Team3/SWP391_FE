@@ -6,6 +6,7 @@ import MainLayout from '../layout/MainLayout';
 import PrivateRoute from './ProtectedRoute';
 import StudentHealthRecord from '../pages/parent/health-records';
 import ParentPage from '../pages/parent';
+import ManagerPage from '../pages/manager';
 import MedicineForm from '../pages/parent/medicine-submission';
 import HealthCheckNotification from '../pages/parent/health-check';
 import ParentVaccineConfirmation from '../pages/parent/vaccination';
@@ -30,6 +31,13 @@ const AppRoutes = () => {
             <ParentPage />
           </PrivateRoute>
         } />
+
+        <Route path="manager" element={
+          <PrivateRoute>
+            <ManagerPage />
+          </PrivateRoute>
+        } />
+
         <Route path="health-records" element={
           <PrivateRoute>
             <StudentHealthRecord />
@@ -73,7 +81,7 @@ const AppRoutes = () => {
             <ManageVaccination />
           </PrivateRoute>
         } />
-         <Route path='manage-health-check' element={
+        <Route path='manage-health-check' element={
           <PrivateRoute>
             <HealthCheckNurse />
           </PrivateRoute>
