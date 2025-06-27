@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Login from '../pages/login';
-import Home from '../pages/home';
+import Home from '../pages/home/HomePage'; // hoặc import Home from '../pages/home/Home';
 import MainLayout from '../layout/MainLayout';
 import PrivateRoute from './ProtectedRoute';
 import StudentHealthRecord from '../pages/parent/health-records';
@@ -13,6 +13,7 @@ import MedicalEvents from '../pages/school-nurse/medical-events';
 import NursePage from '../pages/school-nurse';
 import ManageMedication from '../pages/school-nurse/manage-medication';
 import ManageVaccination from '../pages/school-nurse/manage-vaccination';
+import ManagerPage from '../pages/manager';
 const AppRoutes = () => {
   return (
     <Routes>
@@ -27,6 +28,11 @@ const AppRoutes = () => {
         <Route path="parent" element={
           <PrivateRoute>
             <ParentPage />
+          </PrivateRoute>
+        } />
+        <Route path="manager" element={
+          <PrivateRoute>
+            <ManagerPage />
           </PrivateRoute>
         } />
         <Route path="health-records" element={
