@@ -57,14 +57,14 @@ function ManagerPage() {
                 message: 'Thành công',
                 description: 'Dữ liệu đã được cập nhật mới nhất.',
                 placement: 'topRight',
-                duration: 3,
+                duration: 3
             });
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
             notification.error({
                 message: 'Lỗi tải dữ liệu',
                 description: 'Không thể tải dữ liệu dashboard. Vui lòng thử lại.',
-                placement: 'topRight',
+                placement: 'topRight'
             });
         } finally {
             setLoading(false);
@@ -74,6 +74,9 @@ function ManagerPage() {
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Tính toán tỷ lệ đồng ý tiêm chủng chính xác
+    const consentRatePercent = (vaccinationStats.consentRate || 0);
 
     // Cấu hình biểu đồ tiêm chủng theo API thực tế
     const vaccinationColumnData = [];
@@ -94,9 +97,8 @@ function ManagerPage() {
         seriesField: 'category',
         color: ['#52C41A', '#F5F5F5', '#1890FF', '#FF4D4F'],
         columnStyle: {
-            radius: [2, 2, 0, 0],
+            radius: [2, 2, 0, 0]
         },
-        // Loại bỏ label để tránh lỗi
         label: false,
         legend: {
             position: 'bottom',
@@ -105,62 +107,61 @@ function ManagerPage() {
                 style: {
                     fontSize: 12,
                     fontWeight: 500,
-                    color: '#333333',
-                },
+                    color: '#333333'
+                }
             },
             marker: {
                 symbol: 'circle',
                 style: {
-                    r: 6,
-                },
-            },
+                    r: 6
+                }
+            }
         },
         xAxis: {
             label: {
                 style: {
                     fontSize: 12,
                     fill: '#666666',
-                    fontWeight: 500,
+                    fontWeight: 500
                 },
                 autoRotate: false,
-                autoHide: false,
+                autoHide: false
             },
             line: {
                 style: {
                     stroke: '#E8E8E8',
-                    lineWidth: 1,
-                },
+                    lineWidth: 1
+                }
             },
             tickLine: {
                 style: {
                     stroke: '#E8E8E8',
-                    lineWidth: 1,
-                },
-            },
+                    lineWidth: 1
+                }
+            }
         },
         yAxis: {
             label: {
                 style: {
                     fontSize: 11,
-                    fill: '#666666',
-                },
+                    fill: '#666666'
+                }
             },
             grid: {
                 line: {
                     style: {
                         stroke: '#F0F0F0',
                         lineDash: [2, 2],
-                        lineWidth: 1,
-                    },
-                },
-            },
+                        lineWidth: 1
+                    }
+                }
+            }
         },
         meta: {
             type: { alias: 'Loại thống kê' },
             value: { alias: 'Số lượng' },
-            category: { alias: 'Trạng thái' },
+            category: { alias: 'Trạng thái' }
         },
-        // Tooltip đơn giản
         tooltip: {
             shared: false,
             showMarkers: true,
@@ -171,21 +172,24 @@ function ManagerPage() {
             formatter: (datum) => {
                 return {
                     name: datum.category,
-                    value: datum.value,
+                    value: datum.value
                 };
-            },
+            }
         },
         interactions: [
             { type: 'element-active' },
-            { type: 'element-highlight' },
-        ],
+            { type: 'element-highlight' }
+        ]
     };
 
-    // Cấu hình biểu đồ đơn thuốc (Pie Chart)
+    // Tính toán số đơn thuốc chờ duyệt
+    const pendingMedications = (medicationStats.totalSubmissions || 0) - (medicationStats.approvedSubmissions || 0) - (medicationStats.rejectedSubmissions || 0);
+
+    // Cấu hình biểu đồ đơn thuốc (Pie Chart) - Sử dụng API fields chính xác
     const medicationPieData = [
-        { type: 'Đã duyệt', value: medicationStats.completed || 0 },
-        { type: 'Chờ duyệt', value: medicationStats.pending || 0 },
-        { type: 'Từ chối', value: medicationStats.rejected || 0 }
+        { type: 'Đã duyệt', value: medicationStats.approvedSubmissions || 0 },
+        { type: 'Chờ duyệt', value: pendingMedications },
+        { type: 'Từ chối', value: medicationStats.rejectedSubmissions || 0 }
     ].filter(item => item.value > 0);
 
     const medicationPieConfig = {
@@ -200,8 +204,8 @@ function ManagerPage() {
             content: '{name}\n{percentage}',
             style: {
                 fontSize: 12,
-                fontWeight: 500,
-            },
+                fontWeight: 500
+            }
         },
         legend: {
             position: 'bottom',
@@ -209,31 +213,31 @@ function ManagerPage() {
             itemName: {
                 style: {
                     fontSize: 12,
-                    fontWeight: 500,
-                },
+                    fontWeight: 500
+                }
             },
             marker: {
                 symbol: 'circle',
                 style: {
-                    r: 4,
-                },
-            },
+                    r: 4
+                }
+            }
         },
         interactions: [
             { type: 'element-active' },
-            { type: 'pie-statistic-active' },
+            { type: 'pie-statistic-active' }
         ],
         tooltip: {
             formatter: (datum) => {
-                const total = medicationStats.totalSent || 0;
+                const total = medicationStats.totalSubmissions || 0;
                 const percentage = total > 0 ? ((datum.value / total) * 100).toFixed(1) : 0;
                 
                 return {
                     name: datum.type,
-                    value: `${datum.value} (${percentage}%)`,
+                    value: `${datum.value} (${percentage}%)`
                 };
-            },
-        },
+            }
+        }
     };
 
     // Biểu đồ xu hướng thuốc
@@ -244,10 +248,10 @@ function ManagerPage() {
         smooth: true,
         color: '#1890FF',
         areaStyle: {
-            fill: 'l(270) 0:#ffffff 0.5:#7ec2f3 1:#1890FF',
+            fill: 'l(270) 0:#ffffff 0.5:#7ec2f3 1:#1890FF'
         },
         line: {
-            size: 3,
+            size: 3
         },
         point: {
             size: 4,
@@ -255,46 +259,46 @@ function ManagerPage() {
             style: {
                 fill: '#1890FF',
                 stroke: '#ffffff',
-                lineWidth: 2,
-            },
+                lineWidth: 2
+            }
         },
         xAxis: {
             label: {
                 style: {
                     fontSize: 12,
-                    fill: '#8C8C8C',
-                },
+                    fill: '#8C8C8C'
+                }
             },
             line: null,
-            tickLine: null,
+            tickLine: null
         },
         yAxis: {
             label: {
                 style: {
                     fontSize: 12, 
-                    fill: '#8C8C8C',
-                },
+                    fill: '#8C8C8C'
+                }
             },
             grid: {
                 line: {
                     style: {
                         stroke: '#F0F0F0',
-                        lineDash: [4, 4],
-                    },
-                },
-            },
+                        lineDash: [4, 4]
+                    }
+                }
+            }
         },
         tooltip: {
             formatter: (datum) => {
                 return {
                     name: `Tháng ${datum.month}`,
-                    value: datum.value,
+                    value: datum.value
                 };
-            },
+            }
         },
         interactions: [
-            { type: 'element-active' },
-        ],
+            { type: 'element-active' }
+        ]
     };
 
     const handleDownloadFullReport = async () => {
@@ -303,7 +307,7 @@ function ManagerPage() {
             notification.success({
                 message: 'Đang tạo báo cáo',
                 description: 'Báo cáo đầy đủ đang được tạo...',
-                placement: 'topRight',
+                placement: 'topRight'
             });
             
             if (response.data.fileUrl) {
@@ -319,14 +323,15 @@ function ManagerPage() {
             notification.error({
                 message: 'Lỗi',
                 description: 'Không thể tạo báo cáo. Vui lòng thử lại.',
-                placement: 'topRight',
+                placement: 'topRight'
             });
         }
     };
 
     // Debug log
     console.log('Vaccination stats:', vaccinationStats);
-    console.log('Column data:', vaccinationColumnData);
+    console.log('Consent rate from API:', vaccinationStats.consentRate);
+    console.log('Consent rate percent:', consentRatePercent);
 
     return (
         <div className="manager-page">
@@ -400,12 +405,12 @@ function ManagerPage() {
                                     <div className="stat-content">
                                         <Statistic
                                             title="Đơn thuốc"
-                                            value={medicationStats.totalSent || 0}
+                                            value={medicationStats.totalSubmissions || 0}
                                             valueStyle={{ color: '#52C41A' }}
                                         />
                                         <div className="stat-extra">
                                             <Text type="secondary">Chờ duyệt: </Text>
-                                            <Text strong>{medicationStats.pending || 0}</Text>
+                                            <Text strong>{pendingMedications}</Text>
                                         </div>
                                     </div>
                                 </Card>
@@ -485,7 +490,7 @@ function ManagerPage() {
                                 </Card>
                             </Col>
 
-                            {/* Consent Rate Progress Display thay thế Gauge */}
+                            {/* Consent Rate Progress Display - Đã sửa */}
                             <Col xs={24} lg={12}>
                                 <Card
                                     className="chart-card consent-chart-card"
@@ -497,21 +502,21 @@ function ManagerPage() {
                                             <Text strong>Tỷ lệ đồng ý tiêm chủng</Text>
                                         </div>
                                         <div className="chart-completion">
-                                            <Text type="secondary">Học sinh đã tiêm: </Text>
-                                            <Text strong className="completion-rate">{vaccinationStats.totalVaccinated || 0}</Text>
+                                            <Text type="secondary">Tỷ lệ: </Text>
+                                            <Text strong className="completion-rate">{consentRatePercent.toFixed(1)}%</Text>
                                         </div>
                                     </div>
                                     <div className="chart-container" style={{ textAlign: 'center', padding: '40px 20px' }}>
-                                        {/* Hiển thị tỷ lệ đồng ý dưới dạng Progress Circle */}
+                                        {/* Hiển thị tỷ lệ đồng ý dưới dạng Progress Circle với giá trị chính xác */}
                                         <div style={{ marginBottom: 24 }}>
                                             <Progress
                                                 type="circle"
-                                                percent={(vaccinationStats.consentRate || 0) * 100}
+                                                percent={Math.round(consentRatePercent)}
                                                 format={(percent) => `${percent}%`}
                                                 width={120}
                                                 strokeColor={{
                                                     '0%': '#108ee9',
-                                                    '100%': '#87d068',
+                                                    '100%': '#87d068'
                                                 }}
                                                 trailColor="#f0f0f0"
                                             />
@@ -519,6 +524,11 @@ function ManagerPage() {
                                                 <Text strong style={{ fontSize: 16, color: '#1890FF' }}>
                                                     Tỷ lệ đồng ý tiêm chủng
                                                 </Text>
+                                                <div style={{ marginTop: 4 }}>
+                                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                                        (Dựa trên API: {(vaccinationStats.consentRate || 0).toFixed(2)})
+                                                    </Text>
+                                                </div>
                                             </div>
                                         </div>
                                         
@@ -628,7 +638,7 @@ function ManagerPage() {
                                             <Col span={12}>
                                                 <Statistic
                                                     title="Đơn thuốc"
-                                                    value={medicationStats.pending || 0}
+                                                    value={pendingMedications}
                                                     valueStyle={{ color: '#FAAD14' }}
                                                 />
                                             </Col>
@@ -655,7 +665,7 @@ function ManagerPage() {
                                             <Col span={12}>
                                                 <Statistic
                                                     title="Từ chối thuốc"
-                                                    value={medicationStats.rejected || 0}
+                                                    value={medicationStats.rejectedSubmissions || 0}
                                                     valueStyle={{ color: '#FF4D4F' }}
                                                 />
                                             </Col>
