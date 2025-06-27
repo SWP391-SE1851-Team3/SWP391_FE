@@ -193,4 +193,33 @@ export const updateVaccinationRecord = async (vaccinationRecordID, data) => {
   }
 };
 
+// Lấy danh sách hồ sơ theo dõi sau tiêm của học sinh theo y tá
+export const getStudentVaccinationRecordsFollowedByNurse = async () => {
+  try {
+    console.log('🚀 [Vaccination API] Bắt đầu lấy danh sách hồ sơ theo dõi sau tiêm của học sinh...', {
+      timestamp: new Date().toISOString()
+    });
+    
+    const response = await axios.get('http://localhost:8080/api/vaccination_records/StudentFollowedbyNurse');
+    
+    console.log('✅ [Vaccination API] Lấy danh sách hồ sơ theo dõi sau tiêm thành công:', {
+      timestamp: new Date().toISOString(),
+      count: response.data.length,
+      data: response.data
+    });
+    
+    return response;
+  } catch (error) {
+    console.error('❌ [Vaccination API] Lỗi khi lấy danh sách hồ sơ theo dõi sau tiêm:', {
+      timestamp: new Date().toISOString(),
+      error: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    
+    throw error;
+  }
+};
+
+
 

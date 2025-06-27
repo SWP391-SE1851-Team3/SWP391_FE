@@ -145,6 +145,7 @@ const ParentVaccineConfirmation = () => {
   );
 
   // Thông tin đã xác nhận hiển thị ở phần lịch sử
+<<<<<<< HEAD
 const renderHistoryInfo = () => (
   <li className="history-card">
     <div className="history-card-row top-row">
@@ -162,32 +163,56 @@ const renderHistoryInfo = () => (
     </div>
   </li>
 );
+=======
+  const renderHistoryInfo = () => (
+    <li className="history-card">
+      <span className="status-badge status-error">Từ chối tiêm</span>
+      <div className="history-card-row">
+        <span className="history-label">Học Sinh:</span> {consentForm.fullNameOfStudent}
+        <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {consentForm.className}
+      </div>
+      <div className="history-card-row">
+        <span className="history-label">Vắc xin:</span> {consentForm.vaccineName}
+      </div>
+      <div className="history-card-row">
+        <span className="history-label">Địa điểm:</span> {consentForm.location}
+      </div>
+    </li>
+  );
+>>>>>>> e2e56f12c1363454251e61341b0e99a4ca5a9685
 
   return (
     <div className="vaccine-record-container">
       {!selectedStudent ? (
-        <div className="students-list">
-          {loadingStudents ? (
-            <Spin tip="Đang tải danh sách học sinh..." />
-          ) : students.length > 0 ? (
-            students.map((student) => (
-              <div key={student.studentID} className="student-card">
-                <div className="student-avatar">{student.fullName?.charAt(0)}</div>
-                <div className="student-content">
-                  <h3>{student.fullName}</h3>
-                  <h4>{student.className}</h4>
-                  <div className="action-buttons">
-                    <button className="view-btn" onClick={() => handleViewDetails(student)}>
-                      Xem Thông Tin
-                    </button>
+        <>
+          {/* THÊM HEADER Ở ĐÂY */}
+          <div className="page-header">
+            <h2>Thông Tin Vắc Xin Học Sinh</h2>
+          </div>
+          
+          <div className="students-list">
+            {loadingStudents ? (
+              <Spin tip="Đang tải danh sách học sinh..." />
+            ) : students.length > 0 ? (
+              students.map((student) => (
+                <div key={student.studentID} className="student-card">
+                  <div className="student-avatar">{student.fullName?.charAt(0)}</div>
+                  <div className="student-content">
+                    <h3>{student.fullName}</h3>
+                    <h4>{student.className}</h4>
+                    <div className="action-buttons">
+                      <button className="view-btn" onClick={() => handleViewDetails(student)}>
+                        Xem Thông Tin
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p>Không có học sinh nào.</p>
-          )}
-        </div>
+              ))
+            ) : (
+              <p>Không có học sinh nào.</p>
+            )}
+          </div>
+        </>
       ) : loadingForm ? (
         <Spin tip="Đang tải thông tin chi tiết..." />
       ) : (
@@ -250,12 +275,19 @@ const renderHistoryInfo = () => (
               {consentForm.vaccineHistory.length > 0 &&
                 consentForm.vaccineHistory.map((item, index) => (
                   <li key={index} className="history-card">
+<<<<<<< HEAD
                     <div className="history-card-row top-row">
                       <div>
                         <span className="history-label">Học Sinh:</span> {item.student}
                         <span className="history-label" style={{ marginLeft: 32 }}>Lớp:</span> {item.class}
                       </div>
                       <span className="status-badge status-error">Từ chối tiêm</span>
+=======
+                    <span className="status-badge status-error">Từ chối tiêm</span>
+                    <div className="history-card-row">
+                      <span className="history-label">Học Sinh:</span> {item.student}
+                      <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {item.class}
+>>>>>>> e2e56f12c1363454251e61341b0e99a4ca5a9685
                     </div>
                     <div className="history-card-row">
                       <span className="history-label">Vắc xin:</span> {item.vaccine}
