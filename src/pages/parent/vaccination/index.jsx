@@ -71,30 +71,30 @@ const ParentVaccineConfirmation = () => {
       } else {
         // Có consent form
         setHasConsentForm(true);
-        
+
         // Tìm form "Chờ phản hồi" đầu tiên
-        const pendingForm = dataList.find(item => 
-          item.isAgree === "Chờ phản hồi" || 
+        const pendingForm = dataList.find(item =>
+          item.isAgree === "Chờ phản hồi" ||
           item.isAgree === "Chưa xác nhận" ||
           item.isAgree === null ||
           item.isAgree === ""
         );
-        
+
         // Nếu có form pending, ưu tiên hiển thị form đó
         const data = pendingForm || dataList[0];
-        
+
         // Kiểm tra xem có form nào đang chờ phản hồi không
         hasPending = !!pendingForm;
         setHasPendingForm(hasPending);
-        
+
         // Thử nhiều tên trường ID khác nhau
-        const formId = data.consent_form_id || 
-                      data.consent_id ||
-                      data.id || 
-                      data.consentFormId || 
-                      data.formId ||
-                      data.consentId;
-        
+        const formId = data.consent_form_id ||
+          data.consent_id ||
+          data.id ||
+          data.consentFormId ||
+          data.formId ||
+          data.consentId;
+
         consentData = {
           consent_form_id: formId,
           fullNameOfParent: data.fullNameOfParent || "Chưa có dữ liệu",
@@ -103,7 +103,7 @@ const ParentVaccineConfirmation = () => {
           vaccineName: data.vaccineName || "Chưa có dữ liệu",
           scheduledDate: data.scheduledDate || "Chưa có dữ liệu",
           location: data.location || "Chưa có dữ liệu",
-          vaccineHistory: dataList.filter(item => 
+          vaccineHistory: dataList.filter(item =>
             item.isAgree === "Đồng ý" || item.isAgree === "Không đồng ý"
           ),
           isAgree: data.isAgree || "Chờ phản hồi",
@@ -162,7 +162,7 @@ const ParentVaccineConfirmation = () => {
     try {
       await submitConsentForm(payload);
       message.success('Gửi xác nhận thành công!');
-      
+
       // Cập nhật state local
       setConsentForm({
         ...consentForm,
@@ -170,17 +170,17 @@ const ParentVaccineConfirmation = () => {
         reason: values.reason || "",
         hasAllergy: values.hasAllergy || ""
       });
-      
+
       // Không còn form pending nữa
       setHasPendingForm(false);
-      
+
       // Reset form sau khi submit thành công
       form.resetFields();
-      
+
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          'Gửi xác nhận thất bại!';
+      const errorMessage = error.response?.data?.message ||
+        error.response?.data?.error ||
+        'Gửi xác nhận thất bại!';
       message.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -200,11 +200,15 @@ const ParentVaccineConfirmation = () => {
       <h2>Thông Báo Tiêm Chủng</h2>
       {hasConsentForm && hasPendingForm ? (
         <>
-          <p><strong>Họ tên học sinh:</strong> {consentForm?.fullNameOfStudent}</p>
-          <p><strong>Lớp:</strong> {consentForm?.className}</p>
+          <div className="info-row1">
+            <span><strong>Họ tên học sinh:</strong> {consentForm?.fullNameOfStudent}</span>
+            <span><strong>Lớp:</strong> {consentForm?.className}</span>
+          </div>
           <p><strong>Vắc xin đăng ký:</strong> {consentForm?.vaccineName}</p>
-          <p><strong>Ngày tiêm dự kiến:</strong> {consentForm?.scheduledDate}</p>
-          <p><strong>Địa điểm tiêm:</strong> {consentForm?.location}</p>
+          <div className="info-row">
+            <span><strong>Ngày tiêm dự kiến:</strong> {consentForm?.scheduledDate}</span>
+            <span><strong>Địa điểm tiêm:</strong> {consentForm?.location}</span>
+          </div>
         </>
       ) : (
         <p className="no-schedule">Chưa có lịch tiêm cần duyệt</p>
@@ -214,9 +218,8 @@ const ParentVaccineConfirmation = () => {
 
   const renderHistoryInfo = () => (
     <li className="history-card">
-      <span className={`status-badge ${
-        consentForm?.isAgree === "Đồng ý" ? "status-success" : "status-error"
-      }`}>
+      <span className={`status-badge ${consentForm?.isAgree === "Đồng ý" ? "status-success" : "status-error"
+        }`}>
         {consentForm?.isAgree}
       </span>
       <div className="history-card-row">
@@ -274,9 +277,6 @@ const ParentVaccineConfirmation = () => {
           {/* Hiển thị form khi có form đang chờ phản hồi */}
           {hasConsentForm && hasPendingForm && (
             <div className="vaccine-form">
-              {/* <h3 style={{color: '#1890ff', marginBottom: '20px'}}>
-                📝 Vui lòng xác nhận thông tin tiêm chủng
-              </h3> */}
               <Form
                 form={form}
                 layout="vertical"
@@ -286,10 +286,10 @@ const ParentVaccineConfirmation = () => {
                   reason: consentForm?.reason || ""
                 }}
               >
-                <Form.Item name="hasAllergy" label="Dị ứng (nếu có):">
-                  <Input.TextArea 
-                    placeholder="Nhập dị ứng (nếu có)..." 
-                    autoSize={{ minRows: 3, maxRows: 5 }} 
+                <Form.Item name="hasAllergy" label="Dị ứng (nếu có):" className="short-textarea">
+                  <Input.TextArea
+                    placeholder="Nhập dị ứng (nếu có)..."
+                    autoSize={{ minRows: 1, maxRows: 2 }}
                   />
                 </Form.Item>
 
@@ -311,9 +311,9 @@ const ParentVaccineConfirmation = () => {
                       label="Lý do từ chối (bắt buộc):"
                       rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
                     >
-                      <Input.TextArea 
-                        placeholder="Nhập lý do từ chối..." 
-                        autoSize={{ minRows: 3 }} 
+                      <Input.TextArea
+                        placeholder="Nhập lý do từ chối..."
+                        autoSize={{ minRows: 1, maxRows: 2 }}
                       />
                     </Form.Item>
                   )}
@@ -332,19 +332,18 @@ const ParentVaccineConfirmation = () => {
             <h3>Lịch sử tiêm chủng</h3>
             <ul>
               {/* Hiển thị form hiện tại nếu đã xử lý */}
-              {hasConsentForm && 
-               !hasPendingForm &&
-               consentForm?.isAgree && 
-               (consentForm.isAgree === "Đồng ý" || consentForm.isAgree === "Không đồng ý") && 
-               renderHistoryInfo()}
-              
+              {hasConsentForm &&
+                !hasPendingForm &&
+                consentForm?.isAgree &&
+                (consentForm.isAgree === "Đồng ý" || consentForm.isAgree === "Không đồng ý") &&
+                renderHistoryInfo()}
+
               {/* Hiển thị lịch sử từ vaccineHistory */}
               {consentForm?.vaccineHistory?.length > 0 &&
                 consentForm.vaccineHistory.map((item, index) => (
                   <li key={index} className="history-card">
-                    <span className={`status-badge ${
-                      item.isAgree === "Đồng ý" ? "status-success" : "status-error"
-                    }`}>
+                    <span className={`status-badge ${item.isAgree === "Đồng ý" ? "status-success" : "status-error"
+                      }`}>
                       {item.isAgree || "Không rõ"}
                     </span>
                     <div className="history-card-row">
@@ -359,7 +358,7 @@ const ParentVaccineConfirmation = () => {
                     </div>
                   </li>
                 ))}
-              
+
               {/* Hiển thị thông báo trống */}
               {(!hasConsentForm || (!hasPendingForm && (!consentForm?.vaccineHistory || consentForm.vaccineHistory.length === 0))) && (
                 <div className="empty-history">Không còn lịch sử tiêm chủng nào khác.</div>
