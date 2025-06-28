@@ -1,0 +1,186 @@
+/* Health-Check-Batch.css (đồng bộ style với vaccination-batch) */
+
+.health-check-batch-container {
+  padding: 24px;
+  background-color: #f7f8fc;
+}
+
+.health-check-batch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background-color: #69CD32;
+  border-radius: 12px;
+}
+
+.health-check-batch-header h2 {
+  margin: 17px;
+  font-size: 25px;
+  font-weight: 600;
+  color: #fff;
+  padding-bottom: 17px;
+}
+
+.health-check-batch-header p {
+  margin: 0;
+  color: #6c757d;
+}
+
+.health-check-batch-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  flex-wrap: wrap;
+}
+
+.health-check-batch-create-btn {
+  background: linear-gradient(to right, #1890ff, #52c41a);
+  border: none;
+  box-shadow: 0 4px 10px rgba(24, 144, 255, 0.3);
+  margin: 17px;
+}
+
+.health-check-batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.health-check-batch-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  border: 1px solid #e8e8e8;
+  transition: box-shadow 0.3s ease;
+}
+
+.health-check-batch-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.health-check-batch-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.health-check-batch-card-header .ant-typography {
+  margin: 0;
+}
+
+.health-check-batch-card-header h4.ant-typography {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0056b3;
+}
+
+.health-check-batch-card-header .ant-badge-status-text {
+  font-weight: 500;
+}
+
+.health-check-batch-card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  color: #495057;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.health-check-batch-card-info .ant-space-item {
+  font-size: 14px;
+}
+
+.health-check-batch-card-info .anticon {
+  color: #1890ff;
+  font-size: 16px;
+}
+
+.health-check-batch-progress-card {
+  background-color: #f9fafb;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.health-check-batch-progress-card .ant-card-head {
+  border-bottom: none;
+  padding: 16px 20px 0;
+  min-height: auto;
+}
+
+.health-check-batch-progress-card .ant-card-head-title {
+  padding: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.health-check-batch-progress-card .ant-card-body {
+  padding: 16px 20px;
+}
+
+.health-check-batch-progress-list {
+  width: 100%;
+}
+
+.health-check-progress-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.health-check-progress-item .ant-typography {
+  color: #495057;
+}
+
+.health-check-progress-item .ant-badge-status-text {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.health-check-progress-item-value {
+  font-weight: 600;
+  color: #212529;
+}
+
+.health-check-batch-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .health-check-batch-list {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .health-check-batch-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .health-check-batch-card-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .health-check-batch-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+}

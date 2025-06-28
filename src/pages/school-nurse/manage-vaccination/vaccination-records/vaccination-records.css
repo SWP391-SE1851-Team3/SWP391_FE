@@ -1,0 +1,127 @@
+/* vaccination-records.css - giống consent-management/vaccination-batch, chỉ khác tên class */
+
+.vaccination-records-container {
+  padding: 24px;
+  background-color: #f7f8fc;
+}
+
+.vaccination-records-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background-color: #69CD32;
+  border-radius: 12px;
+}
+
+.vaccination-records-header h2 {
+  margin: 17px;
+  font-size: 25px;
+  font-weight: 600;
+  color: #fff;
+  padding-bottom: 17px;
+}
+
+.vaccination-records-header p {
+  margin: 0;
+  color: #6c757d;
+}
+
+.vaccination-records-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  flex-wrap: wrap;
+}
+
+.vaccination-records-create-btn {
+  background: linear-gradient(to right, #1890ff, #52c41a);
+  border: none;
+  box-shadow: 0 4px 10px rgba(24, 144, 255, 0.3);
+  margin: 17px;
+}
+
+.vaccination-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.records-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  border: 1px solid #e8e8e8;
+  transition: box-shadow 0.3s ease;
+}
+
+.records-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.records-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.records-card-header .ant-typography {
+  margin: 0;
+}
+
+.records-card-header h4.ant-typography {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0056b3;
+}
+
+.records-card-header .ant-badge-status-text {
+  font-weight: 500;
+}
+
+.records-card-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 32px;
+  margin-bottom: 20px;
+  color: #495057;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .records-card-info {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.records-card-info .ant-space-item {
+  font-size: 14px;
+}
+
+.records-card-info .anticon {
+  color: #1890ff;
+  font-size: 16px;
+}
+
+.records-card-alert {
+  margin: 16px 0 0 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.records-card-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+} 

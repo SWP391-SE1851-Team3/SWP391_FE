@@ -1,0 +1,851 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  PlusOutlined, 
+  CalendarOutlined, 
+  EnvironmentOutlined, 
+  TeamOutlined, 
+  EditOutlined, 
+  DeleteOutlined, 
+  SendOutlined 
+} from '@ant-design/icons';
+import { 
+  Button, 
+  Card, 
+  Modal, 
+  Form, 
+  Input, 
+  Select, 
+  DatePicker,
+  Badge, 
+  Space, 
+  Typography, 
+  message,
+  Spin,
+  Row,
+  Col
+} from 'antd';
+import './Vaccination-batch.css';
+import moment from 'moment';
+
+import { createVaccinationBatch, getVaccineTypeByName, getVaccinationBatches, updateVaccinationBatch, sendConsentFormByClassName } from '../../../../api/vaccinationAPI';
+
+const { Title, Text } = Typography;
+const { TextArea } = Input;
+const { Option } = Select;
+
+const VaccinationScheduleManager = () => {
+  const [form] = Form.useForm();
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // State for filtering and searching
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [vaccineFilter, setVaccineFilter] = useState('all');
+  const [filteredSchedules, setFilteredSchedules] = useState([]);
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [vaccineOptions, setVaccineOptions] = useState([]);
+  const [loadingVaccines, setLoadingVaccines] = useState(false);
+
+  // State for edit modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [editForm] = Form.useForm();
+
+  // State for consent modal
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
+  const [consentForm] = Form.useForm();
+  const [sendingConsent, setSendingConsent] = useState(false);
+  const [selectedBatchForConsent, setSelectedBatchForConsent] = useState(null);
+  const [consentDateRange, setConsentDateRange] = useState([null, null]);
+
+  // Function to get vaccine name by ID
+  const getVaccineNameById = async (vaccineTypeID) => {
+    try {
+      const res = await getVaccineTypeByName('');
+      if (Array.isArray(res.data)) {
+        const vaccine = res.data.find(v => v.id === vaccineTypeID);
+        return vaccine ? vaccine.name : 'Không xác định';
+      }
+      return 'Không xác định';
+    } catch (error) {
+      console.error('❌ [Vaccination Schedule] Lỗi khi lấy tên vaccine:', error);
+      return 'Không xác định';
+    }
+  };
+
+  const fetchSchedules = async () => {
+    try {
+      setLoading(true);
+      const res = await getVaccinationBatches();
+      if (res.data && Array.isArray(res.data)) {
+        // Get all vaccine types first
+        const vaccineTypesRes = await getVaccineTypeByName('');
+        const vaccineTypes = Array.isArray(vaccineTypesRes.data) ? vaccineTypesRes.data : [];
+        
+        const formattedSchedules = res.data.map((item) => {
+          // Find vaccine name by vaccineTypeID
+          const vaccine = vaccineTypes.find(v => v.id === item.vaccineTypeID);
+          const vaccineName = vaccine ? vaccine.name : 'Không xác định';
+          
+          return {
+            batchID: item.batchID,
+            vaccine: vaccineName, 
+            vaccineBatch: item.dot,
+            scheduledDate: new Date(item.scheduled_date).toLocaleDateString('vi-VN'),
+            originalScheduledDate: item.scheduled_date,
+            location: item.location,
+            status: item.status,
+            studentsCount: item.quantity_received || 0,
+            notes: item.notes,
+            consentsSent: false,
+            approvedConsents: 0,
+            vaccineTypeID: item.vaccineTypeID,
+            created_by_nurse_id: item.created_by_nurse_id,
+            created_by_nurse_name: item.created_by_nurse_name,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            edit_nurse_id: item.edit_nurse_id,
+            edit_nurse_name: item.edit_nurse_name,
+          };
+        });
+        setSchedules(formattedSchedules);
+      }
+    } catch (error) {
+      message.error('Không thể tải danh sách đợt tiêm chủng.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Lấy danh sách đợt tiêm khi component được mount
+  useEffect(() => {
+    fetchSchedules();
+  }, []);
+
+  // Filter and search logic
+  useEffect(() => {
+    let result = schedules;
+
+    if (searchTerm) {
+      result = result.filter(schedule =>
+        (schedule.vaccineBatch || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      result = result.filter(schedule => schedule.status === statusFilter);
+    }
+
+    if (vaccineFilter !== 'all') {
+      result = result.filter(schedule => schedule.vaccine === vaccineFilter);
+    }
+
+    setFilteredSchedules(result);
+  }, [schedules, searchTerm, statusFilter, vaccineFilter]);
+
+  // Lấy danh sách vaccine khi mở modal
+  useEffect(() => {
+    if (isCreateModalOpen) {
+      setLoadingVaccines(true);
+      getVaccineTypeByName('')
+        .then(res => {
+          if (Array.isArray(res.data)) {
+            setVaccineOptions(res.data);
+          } else {
+            setVaccineOptions([]);
+          }
+        })
+        .catch(() => setVaccineOptions([]))
+        .finally(() => setLoadingVaccines(false));
+      
+      const fullName = localStorage.getItem('fullname') || 'Y tá Mặc định';
+      form.setFieldsValue({ nurse_name: fullName });
+    }
+  }, [isCreateModalOpen, form]);
+
+  // Khi chọn loại vaccine, tự động lấy vaccineTypeID
+  const handleVaccineChange = (vaccineName, targetForm = form) => {
+    const selectedVaccine = vaccineOptions.find(vaccine => vaccine.name === vaccineName);
+    if (selectedVaccine) {
+      const vaccineId = selectedVaccine.id;
+      targetForm.setFieldsValue({ vaccineTypeID: vaccineId });
+      console.log('✅ [Vaccination Schedule] Đã chọn vaccine:', { name: selectedVaccine.name, id: vaccineId });
+      return vaccineId;
+    } else {
+      targetForm.setFieldsValue({ vaccineTypeID: '' });
+      console.warn('⚠️ [Vaccination Schedule] Không tìm thấy vaccine:', vaccineName);
+      return null;
+    }
+  };
+
+  const handleCreateSchedule = async () => {
+    try {
+      const values = await form.validateFields();
+      const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+      const nurseName = localStorage.getItem('fullname') || 'Y tá Mặc định';
+      const vaccineTypeID = Number(values.vaccineTypeID || 0);
+      const quantityReceived = Number(values.quantity_received);
+      const scheduledDate = values.scheduledDate.toISOString();
+
+      const payload = {
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_by_nurse_id: nurseId,
+        created_by_nurse_name: nurseName,
+        edit_nurse_id: nurseId,
+        edit_nurse_name: nurseName,
+        dot: String(values.vaccine_batch || ''),
+        quantity_received: quantityReceived,
+        scheduled_date: scheduledDate,
+        location: String(values.location || ''),
+        status: String(values.status || 'pending'),
+        notes: String(values.notes || ''),
+        vaccineTypeID: vaccineTypeID
+      };
+
+      console.log('🚀 [Vaccination Schedule] Gửi payload tạo đợt tiêm:', payload);
+      const response = await createVaccinationBatch(payload);
+      
+      // Log the entire response from the server to check the keys
+      console.log('✅ [Vaccination Schedule] Phản hồi từ server khi tạo mới:', response.data);
+      
+      const newBatchData = response.data;
+
+      // Find vaccine name from existing options
+      const vaccine = vaccineOptions.find(v => v.id === newBatchData.vaccineTypeID);
+      const vaccineName = vaccine ? vaccine.name : 'Không xác định';
+
+      // Format the new batch from response to match the state structure
+      const formattedNewBatch = {
+        batchID: newBatchData.batchID,
+        vaccine: vaccineName,
+        vaccineBatch: newBatchData.dot,
+        scheduledDate: new Date(newBatchData.scheduled_date).toLocaleDateString('vi-VN'),
+        originalScheduledDate: newBatchData.scheduled_date,
+        location: newBatchData.location,
+        nurseId: newBatchData.nurse_id,
+        nurseName: newBatchData.nurse_name,
+        status: newBatchData.status,
+        studentsCount: newBatchData.quantity_received || 0,
+        notes: newBatchData.notes,
+        consentsSent: false,
+        approvedConsents: 0,
+        vaccineTypeID: newBatchData.vaccineTypeID,
+        created_at: newBatchData.created_at,
+        updated_at: newBatchData.updated_at,
+        edit_nurse_id: newBatchData.edit_nurse_id,
+        edit_nurse_name: newBatchData.edit_nurse_name,
+      };
+
+      // Add the new schedule to the state without re-fetching
+      setSchedules(prevSchedules => [formattedNewBatch, ...prevSchedules]);
+
+      form.resetFields();
+      setIsCreateModalOpen(false);
+      message.success('Đợt tiêm chủng đã được tạo thành công');
+    } catch (error) {
+      message.error('Vui lòng điền đầy đủ thông tin bắt buộc hoặc có lỗi khi tạo đợt tiêm');
+    }
+  };
+
+  const handleSendConsents = (scheduleId) => {
+    setSchedules(schedules.map(schedule => 
+      schedule.batchID === scheduleId 
+        ? { ...schedule, consentsSent: true }
+        : schedule
+    ));
+    message.success('Phiếu đồng ý đã được gửi đến tất cả phụ huynh');
+  };
+
+  const handleConfirmSchedule = (scheduleId) => {
+    setSchedules(schedules.map(schedule => 
+      schedule.batchID === scheduleId 
+        ? { ...schedule, status: 'confirmed' }
+        : schedule
+    ));
+    message.success('Lịch tiêm đã được xác nhận');
+  };
+
+  // Handle edit schedule
+  const handleEdit = async (schedule) => {
+    setSelectedSchedule(schedule);
+    // Lấy danh sách vaccine types trước khi set form
+    const res = await getVaccineTypeByName('');
+    if (Array.isArray(res.data)) {
+      setVaccineOptions(res.data);
+    } else {
+      setVaccineOptions([]);
+    }
+    // Convert original date to moment object for DatePicker
+    const momentDate = moment(schedule.originalScheduledDate);
+    editForm.setFieldsValue({
+      batchId: schedule.batchID,
+      vaccine: schedule.vaccine, // Sử dụng tên vaccine
+      vaccineTypeID: schedule.vaccineTypeID, // Use the stored vaccineTypeID
+      vaccine_batch: schedule.vaccineBatch, // Set vaccine batch
+      quantity_received: schedule.studentsCount,
+      scheduledDate: momentDate, // DatePicker expects a moment object
+      location: schedule.location,
+      status: schedule.status,
+      nurse_name: schedule.created_by_nurse_name, // Điền tên y tá tạo
+      notes: schedule.notes || ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Handle update schedule
+  const handleUpdateSchedule = async () => {
+    try {
+      const values = await editForm.validateFields();
+      const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+      const nurseName = localStorage.getItem('fullname') || 'Y tá Mặc định';
+      const batchId = editForm.getFieldValue('batchId');
+      const vaccineTypeID = Number(values.vaccineTypeID || 0);
+      const quantityReceived = Number(values.quantity_received);
+      const scheduledDate = values.scheduledDate.toISOString();
+
+      // Chỉ gửi đúng các trường cần thiết cho API
+      const payload = {
+        created_at: selectedSchedule.created_at, // giữ nguyên ngày tạo cũ
+        updated_at: new Date().toISOString(),
+        edit_nurse_id: nurseId,
+        dot: String(values.vaccine_batch || ''),
+        quantity_received: quantityReceived,
+        scheduled_date: scheduledDate,
+        location: String(values.location || ''),
+        status: String(values.status || 'pending'),
+        notes: String(values.notes || ''),
+        edit_nurse_name: nurseName,
+        batchID: batchId,
+        vaccineTypeID: vaccineTypeID
+      };
+
+      console.log('🚀 [Vaccination Schedule] Gửi payload cập nhật đợt tiêm:', payload);
+      const response = await updateVaccinationBatch(batchId, payload);
+      const updatedBatchData = response.data;
+
+      // Find vaccine name from existing options
+      const vaccine = vaccineOptions.find(v => v.id === updatedBatchData.vaccineTypeID);
+      const vaccineName = vaccine ? vaccine.name : 'Không xác định';
+
+      const formattedUpdatedBatch = {
+        ...selectedSchedule, // Preserve existing fields like consentsSent
+        batchID: updatedBatchData.batchID,
+        vaccine: vaccineName,
+        vaccineBatch: updatedBatchData.dot,
+        scheduledDate: new Date(updatedBatchData.scheduled_date).toLocaleDateString('vi-VN'),
+        originalScheduledDate: updatedBatchData.scheduled_date,
+        location: updatedBatchData.location,
+        status: updatedBatchData.status,
+        studentsCount: updatedBatchData.quantity_received || 0,
+        notes: updatedBatchData.notes,
+        vaccineTypeID: updatedBatchData.vaccineTypeID,
+        created_at: updatedBatchData.created_at,
+        updated_at: updatedBatchData.updated_at,
+        edit_nurse_id: updatedBatchData.edit_nurse_id,
+        edit_nurse_name: updatedBatchData.edit_nurse_name,
+      };
+
+      setSchedules(prevSchedules => 
+        prevSchedules.map(schedule => 
+          schedule.batchID === formattedUpdatedBatch.batchID ? formattedUpdatedBatch : schedule
+        )
+      );
+
+      editForm.resetFields();
+      setIsEditModalOpen(false);
+      setSelectedSchedule(null);
+      message.success('Đợt tiêm chủng đã được cập nhật thành công');
+    } catch (error) {
+      console.error('❌ [Vaccination Schedule] Lỗi khi cập nhật đợt tiêm:', error);
+      message.error('Vui lòng điền đầy đủ thông tin bắt buộc hoặc có lỗi khi cập nhật đợt tiêm');
+    }
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false);
+    setSelectedSchedule(null);
+    editForm.resetFields();
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return 'warning';
+      case 'confirmed': return 'success';
+      case 'completed': return 'processing';
+      default: return 'default';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending': return 'Chờ xác nhận';
+      case 'confirmed': return 'Đã xác nhận';
+      case 'completed': return 'Hoàn thành';
+      default: return status;
+    }
+  };
+
+  // Unique vaccine names for filter dropdown
+  const uniqueVaccineNames = [...new Set(schedules.map(s => s.vaccine).filter(Boolean))];
+
+  const handleOpenConsentModal = (schedule) => {
+    setSelectedBatchForConsent(schedule);
+    setConsentDateRange([null, null]);
+    consentForm.setFieldsValue({
+      className: '',
+      batchId: schedule.batchID,
+      sendDate: null,
+      expireDate: null,
+      status: 'pending',
+    });
+    setIsConsentModalOpen(true);
+  };
+
+  const handleSendConsentForm = async () => {
+    try {
+      setSendingConsent(true);
+      const values = await consentForm.validateFields();
+      let sendDate = consentDateRange[0] ? consentDateRange[0].toISOString() : '';
+      let expireDate = consentDateRange[1] ? consentDateRange[1].toISOString() : '';
+      await sendConsentFormByClassName({ ...values, sendDate, expireDate });
+      message.success('Gửi phiếu đồng ý thành công!');
+      setIsConsentModalOpen(false);
+      consentForm.resetFields();
+    } catch (error) {
+      message.error('Gửi phiếu đồng ý thất bại!');
+    } finally {
+      setSendingConsent(false);
+    }
+  };
+
+  return (
+    <div className="vaccination-schedule-container">
+      <div className="vaccination-schedule-header">
+        <div>
+          <Title level={2} >Quản lý Đợt tiêm chủng</Title>
+        
+        </div>
+        
+        <Button 
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setIsCreateModalOpen(true)}
+          className="vaccination-schedule-create-btn"
+        >
+          Tạo đợt tiêm mới
+        </Button>
+      </div>
+
+      <div className="vaccination-schedule-filters">
+        <Input.Search
+          placeholder="Tìm kiếm đợt tiêm..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          onSearch={value => setSearchTerm(value)}
+          style={{ width: 300 }}
+          allowClear
+        />
+        <Select
+          value={vaccineFilter}
+          onChange={value => setVaccineFilter(value)}
+          style={{ width: 220 }}
+        >
+          <Option value="all">Tất cả loại vaccine</Option>
+          {uniqueVaccineNames.map(vaccineName => (
+            <Option key={vaccineName} value={vaccineName}>
+              {vaccineName}
+            </Option>
+          ))}
+        </Select>
+        <Select
+          value={statusFilter}
+          onChange={value => setStatusFilter(value)}
+          style={{ width: 180 }}
+        >
+          <Option value="all">Tất cả trạng thái</Option>
+          <Option value="pending">Chờ xác nhận</Option>
+          <Option value="confirmed">Đã xác nhận</Option>
+          <Option value="completed">Hoàn thành</Option>
+        </Select>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <div className="vaccination-schedule-list">
+          {filteredSchedules.map((schedule) => (
+            <div key={schedule.batchID} className="vaccination-schedule-card">
+              <div className="vaccination-schedule-card-header">
+                <div>
+                  <Title level={4}>{schedule.vaccineBatch || 'Chưa có đợt'}</Title>
+                  <Text type="secondary">
+                    Loại: {schedule.vaccine} | Y tá tạo: {schedule.created_by_nurse_name}
+                  </Text>
+                </div>
+                <Badge 
+                  status={getStatusColor(schedule.status)} 
+                  text={getStatusText(schedule.status)}
+                />
+              </div>
+
+              <div className="vaccination-schedule-card-info">
+                <Space><CalendarOutlined /><Text>Ngày tiêm: {schedule.scheduledDate}</Text></Space>
+                <Space><EnvironmentOutlined /><Text>Địa điểm: {schedule.location}</Text></Space>
+                <Space><TeamOutlined /><Text>{schedule.studentsCount} liều vắc xin</Text></Space>
+              </div>
+
+              <div className="vaccination-schedule-card-info" style={{ marginTop: 8 }}>
+                <Space>
+                  <Text strong>Y tá chỉnh sửa:</Text> <Text>{schedule.edit_nurse_name || '-'}</Text>
+                </Space>
+                <Space>
+                  <Text strong>Ngày tạo:</Text> <Text>{schedule.created_at ? (() => { const d = new Date(schedule.created_at); const vn = new Date(d.getTime() + 7*60*60*1000); return vn.toLocaleString('vi-VN'); })() : '-'}</Text>
+                </Space>
+              </div>
+
+              {(schedule.notes || schedule.updated_at) && (
+                <div className="vaccination-schedule-card-info" style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>
+                    <Text type="secondary">Ghi chú:</Text> <Text>{schedule.notes || '-'}</Text>
+                  </span>
+                  <span>
+                    <Text strong>Cập nhật:</Text> <Text>{schedule.updated_at ? (() => { const d = new Date(schedule.updated_at); const vn = new Date(d.getTime() + 7*60*60*1000); return vn.toLocaleString('vi-VN'); })() : '-'}</Text>
+                  </span>
+                </div>
+              )}
+
+              <div className="vaccination-schedule-actions">
+                {!schedule.consentsSent && (
+                  <Button 
+                    icon={<SendOutlined />}
+                    onClick={() => handleOpenConsentModal(schedule)}
+                  >
+                    Gửi phiếu đồng ý
+                  </Button>
+                )}
+                
+                {schedule.consentsSent && schedule.status === 'pending' && (
+                  <Button 
+                    type="primary"
+                    onClick={() => handleConfirmSchedule(schedule.batchID)}
+                  >
+                    Xác nhận lịch tiêm
+                  </Button>
+                )}
+
+                <Button 
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(schedule)}
+                >
+                  Chỉnh sửa
+                </Button>
+                
+               
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Modal
+        title="Tạo đợt tiêm chủng mới"
+        open={isCreateModalOpen}
+        onCancel={() => {
+          setIsCreateModalOpen(false);
+          form.resetFields();
+        }}
+        onOk={handleCreateSchedule}
+        okText="Tạo đợt tiêm"
+        cancelText="Hủy"
+      >
+        <Form
+          form={form}
+          layout="vertical"
+        >
+          <Form.Item
+            name="vaccine"
+            label="Loại vaccine"
+            rules={[{ required: true, message: 'Vui lòng chọn loại vaccine' }]}
+          >
+            <Select
+              placeholder="Chọn loại vaccine"
+              loading={loadingVaccines}
+              onChange={(value) => handleVaccineChange(value, form)}
+              showSearch
+              filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+            >
+              {vaccineOptions.map((vaccine) => (
+                <Option key={vaccine.id} value={vaccine.name}>{vaccine.name}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          {/* Hidden field to store vaccineTypeID */}
+          <Form.Item name="vaccineTypeID" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="vaccine_batch"
+            label="Đợt vaccine"
+            rules={[{ required: true, message: 'Vui lòng nhập đợt vaccine' }]}
+          >
+            <Input placeholder="Nhập đợt vaccine (VD: Đợt 1, Đợt 2, v.v.)" />
+          </Form.Item>
+
+          <Form.Item
+            name="quantity_received"
+            label="Số lượng vaccine nhận"
+            rules={[{ required: true, message: 'Vui lòng nhập số lượng vaccine nhận' }]}
+          >
+            <Input type="number" min={1} placeholder="Nhập số lượng vaccine nhận" />
+          </Form.Item>
+
+          <Form.Item
+            name="scheduledDate"
+            label="Ngày tiêm"
+            rules={[{ required: true, message: 'Vui lòng chọn ngày tiêm' }]}
+          >
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="location"
+            label="Địa điểm"
+            initialValue="Phòng y tế trường"
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="status"
+            label="Trạng thái"
+            rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+            initialValue="pending"
+          >
+            <Select>
+              <Option value="pending">Chờ xác nhận</Option>
+              <Option value="confirmed">Đã xác nhận</Option>
+              <Option value="completed">Hoàn thành</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="nurse_name"
+            label="Y tá phụ trách"
+            initialValue={localStorage.getItem('fullname') || 'Y tá Mặc định'}
+          >
+            <Input 
+              disabled 
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="notes"
+            label="Ghi chú"
+          >
+            <TextArea rows={4} placeholder="Ghi chú thêm về đợt tiêm..." />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chỉnh sửa đợt tiêm chủng</span>}
+        open={isEditModalOpen}
+        onCancel={handleCancelEdit}
+        onOk={handleUpdateSchedule}
+        okText="Cập nhật"
+        cancelText="Hủy"
+        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 32, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}
+      >
+        <Form
+          form={editForm}
+          layout="vertical"
+          style={{ maxWidth: 700, margin: '0 auto' }}
+        >
+          <Form.Item
+            name="batchId"
+            label={<span style={{ fontWeight: 600 }}>Mã đợt tiêm</span>}
+            style={{ marginBottom: 18 }}
+            hidden
+          >
+            <Input disabled style={{ borderRadius: 8 }} />
+          </Form.Item>
+          <Row gutter={16}>
+            
+              <Form.Item
+                name="vaccine"
+                label={<span style={{ fontWeight: 600 }}>Loại vaccine</span>}
+                rules={[{ required: true, message: 'Vui lòng chọn loại vaccine' }]}
+                style={{ marginBottom: 18 }}
+              >
+                <Select
+                  placeholder="Chọn loại vaccine"
+                  loading={loadingVaccines}
+                  onChange={(value) => handleVaccineChange(value, editForm)}
+                  showSearch
+                  filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+                  style={{ borderRadius: 8 }}
+                >
+                  {vaccineOptions.map((vaccine) => (
+                    <Option key={vaccine.id} value={vaccine.name}>{vaccine.name}</Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            
+            <Col span={12}>
+              <Form.Item name="vaccineTypeID" hidden>
+                <Input />
+              </Form.Item>
+              <Form.Item
+                name="vaccine_batch"
+                label={<span style={{ fontWeight: 600 }}>Đợt vaccine</span>}
+                rules={[{ required: true, message: 'Vui lòng nhập đợt vaccine' }]}
+                style={{ marginBottom: 18 }}
+              >
+                <Input placeholder="Nhập đợt vaccine (VD: Đợt 1, Đợt 2, v.v.)" style={{ borderRadius: 8 }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="nurse_name"
+                label={<span style={{ fontWeight: 600 }}>Y tá phụ trách</span>}
+                style={{ marginBottom: 18 }}
+              >
+                <Input disabled style={{ borderRadius: 8, background: '#f0f5ff' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="quantity_received"
+                label={<span style={{ fontWeight: 600 }}>Số lượng vaccine nhận</span>}
+                rules={[{ required: true, message: 'Vui lòng nhập số lượng vaccine nhận' }]}
+                style={{ marginBottom: 18 }}
+              >
+                <Input type="number" min={1} placeholder="Nhập số lượng vaccine nhận" style={{ borderRadius: 8 }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="scheduledDate"
+                label={<span style={{ fontWeight: 600 }}>Ngày tiêm</span>}
+                rules={[{ required: true, message: 'Vui lòng chọn ngày tiêm' }]}
+                style={{ marginBottom: 18 }}
+              >
+                <DatePicker style={{ width: '100%', borderRadius: 8 }} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="location"
+                label={<span style={{ fontWeight: 600 }}>Địa điểm</span>}
+                style={{ marginBottom: 18 }}
+              >
+                <Input style={{ borderRadius: 8 }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="status"
+                label={<span style={{ fontWeight: 600 }}>Trạng thái</span>}
+                rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+                style={{ marginBottom: 18 }}
+              >
+                <Select style={{ borderRadius: 8 }}>
+                  <Option value="pending">Chờ xác nhận</Option>
+                  <Option value="confirmed">Đã xác nhận</Option>
+                  <Option value="completed">Hoàn thành</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          
+          <Form.Item
+            name="notes"
+            label={<span style={{ fontWeight: 600 }}>Ghi chú</span>}
+            style={{ marginBottom: 0 }}
+          >
+            <TextArea rows={4} placeholder="Ghi chú thêm về đợt tiêm..." style={{ borderRadius: 8 }} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Consent Modal */}
+      <Modal
+        title="Gửi phiếu đồng ý theo lớp"
+        open={isConsentModalOpen}
+        onCancel={() => setIsConsentModalOpen(false)}
+        onOk={handleSendConsentForm}
+        okText="Gửi phiếu"
+        confirmLoading={sendingConsent}
+        cancelText="Hủy"
+      >
+        <Form form={consentForm} layout="vertical">
+          <Form.Item
+            name="className"
+            label="Tên lớp"
+            rules={[{ required: true, message: 'Vui lòng chọn tên lớp' }]}
+          >
+            <Select
+              placeholder="Chọn lớp"
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+            >
+              <Select.Option value="Lớp 5A">Lớp 5A</Select.Option>
+              <Select.Option value="Lớp 4B">Lớp 4B</Select.Option>
+              <Select.Option value="Lớp 3C">Lớp 3C</Select.Option>
+              <Select.Option value="Lớp 2A">Lớp 2A</Select.Option>
+              <Select.Option value="Lớp 1B">Lớp 1B</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="batchId"
+            label="Mã đợt tiêm"
+            rules={[{ required: true, message: 'Vui lòng nhập mã đợt tiêm' }]}
+          >
+            <Input disabled />
+          </Form.Item>
+          <Form.Item
+            label="Chọn khoảng thời gian gửi phiếu"
+            required
+          >
+            <DatePicker.RangePicker
+              showTime
+              style={{ width: '100%' }}
+              value={consentDateRange}
+              onChange={setConsentDateRange}
+              format="YYYY-MM-DD HH:mm"
+              placeholder={["Ngày gửi phiếu", "Ngày hết hạn"]}
+            />
+          </Form.Item>
+          <Form.Item
+            name="status"
+            label="Trạng thái"
+            rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}
+            initialValue="pending"
+          >
+            <Select>
+              <Option value="pending">Chờ phản hồi</Option>
+              <Option value="sent">Đã gửi</Option>
+              <Option value="expired">Hết hạn</Option>
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+};
+
+export default VaccinationScheduleManager;

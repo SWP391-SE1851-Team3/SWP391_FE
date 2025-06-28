@@ -29,7 +29,7 @@
 .logo-image {
   height: 40px;
   width: auto;
-  border-radius: 4px;
+  border-radius: 50px;
 }
 
 .logo-text {
@@ -86,12 +86,25 @@
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
+  min-width: 0;
+}
+
+.welcome-message {
+  color: #1890ff;
+  font-weight: 600;
+  margin-right: 2px;
+  display: inline-block;
+  font-size: 15px;
+  white-space: nowrap;
 }
 
 .username {
   color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
   margin-right: 8px;
+  font-size: 15px;
+  white-space: nowrap;
 }
 
 .notification-badge {

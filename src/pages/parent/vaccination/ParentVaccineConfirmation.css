@@ -327,6 +327,21 @@
     display: block;
     margin-bottom: 12px;
   }
+
+  .page-header {
+  margin-bottom: 30px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e6f0ff;
+  position: relative;
+}
+
+.page-header h2 {
+  color: #1890ff;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+  padding-bottom: 8px;
+  text-align: left;
 }
 
 @media (max-width: 480px) {
@@ -350,3 +365,4 @@
     min-width: auto;
   }
 }
+

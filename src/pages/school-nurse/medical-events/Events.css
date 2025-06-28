@@ -249,6 +249,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-top: 32px;
+
 }
 
 .summary-card {
@@ -450,4 +451,24 @@
   .detail-item .label {
     margin-bottom: 8px;
   }
+}
+
+.supplies-table .ant-table-thead > tr > th {
+  background-color: #f0f7f0;
+  color: #2c5530;
+  font-weight: 600;
+  border-bottom: 2px solid #e6f7e6;
+}
+
+.supplies-table .ant-table-tbody > tr:hover > td {
+  background-color: #f6ffed;
+}
+
+.supplies-table .ant-table-row {
+  transition: all 0.3s ease;
+}
+
+.supplies-table .ant-table-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
 }
