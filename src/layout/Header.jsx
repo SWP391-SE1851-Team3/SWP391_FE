@@ -3,7 +3,6 @@ import { Layout, Menu, Avatar, Badge, Button, message } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
 import { BellOutlined, LogoutOutlined, LoginOutlined } from '@ant-design/icons';
-import { Menu, Avatar, Badge, Button, message } from 'antd';
 import { useVaccination } from '../context/VaccinationContext';
 const { Header } = Layout;
 import './Header.css';
