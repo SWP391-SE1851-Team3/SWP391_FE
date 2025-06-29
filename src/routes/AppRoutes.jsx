@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Login from '../pages/login';
-import Home from '../pages/home';
+import Home from '../pages/home/HomePage'; // hoặc import Home from '../pages/home/Home';
 import MainLayout from '../layout/MainLayout';
 import PrivateRoute from './ProtectedRoute';
 import StudentHealthRecord from '../pages/parent/health-records';
@@ -11,9 +11,13 @@ import HealthCheckNotification from '../pages/parent/health-check';
 import ParentVaccineConfirmation from '../pages/parent/vaccination';
 import MedicalEvents from '../pages/school-nurse/medical-events';
 import NursePage from '../pages/school-nurse';
-
 import ManageMedication from '../pages/school-nurse/manage-medication';
-
+import ManageVaccination from '../pages/school-nurse/manage-vaccination';
+<<<<<<< HEAD
+import ManagerPage from '../pages/manager';
+=======
+import HealthCheckNurse from '../pages/school-nurse/manage-health-check';
+>>>>>>> e2e56f12c1363454251e61341b0e99a4ca5a9685
 const AppRoutes = () => {
   return (
     <Routes>
@@ -28,6 +32,11 @@ const AppRoutes = () => {
         <Route path="parent" element={
           <PrivateRoute>
             <ParentPage />
+          </PrivateRoute>
+        } />
+        <Route path="manager" element={
+          <PrivateRoute>
+            <ManagerPage />
           </PrivateRoute>
         } />
         <Route path="health-records" element={
@@ -65,6 +74,17 @@ const AppRoutes = () => {
         <Route path='manage-medication' element={
           <PrivateRoute>
             <ManageMedication />
+          </PrivateRoute>
+        } />
+
+        <Route path='manage-vaccination' element={
+          <PrivateRoute>
+            <ManageVaccination />
+          </PrivateRoute>
+        } />
+         <Route path='manage-health-check' element={
+          <PrivateRoute>
+            <HealthCheckNurse />
           </PrivateRoute>
         } />
       </Route>

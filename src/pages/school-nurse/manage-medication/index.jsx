@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   Input,
@@ -13,7 +13,9 @@ import {
   Col,
   Pagination,
   Avatar,
-  Modal
+  Modal,
+  Form,
+  message
 } from 'antd';
 import {
   SearchOutlined,
@@ -26,89 +28,102 @@ import {
   CloseCircleTwoTone,
   ClockCircleTwoTone
 } from '@ant-design/icons';
+import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails } from '../../../api/medicalSubmissionNurse';
 import './Medication.css';
 
 const { Title } = Typography;
 const { Option } = Select;
 
 const MedicationManagement = () => {
+  const [currentPage1, setCurrentPage1] = useState(1);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [data, setData] = useState([
-    {
-      key: '1',
-      id: 1,
-      student: 'Nguyễn Văn A - Lớp 1A',
-      medication: 'Paracetamol',
-      status: 'pending',
-      time: '09:40 AM, 24/05/2025',
-      actions: ['view', 'confirm', 'cancel']
-    },
-    {
-      key: '2',
-      id: 2,
-      student: 'Nguyễn Thị B - Lớp 2B',
-      medication: 'Vitamin C',
-      status: 'pending',
-      time: '08:30 AM, 24/05/2025',
-      actions: ['view', 'confirm', 'cancel']
-    },
-    {
-      key: '3',
-      id: 3,
-      student: 'Trần Văn C - Lớp 1B',
-      medication: 'Thuốc nhỏ mắt',
-      status: 'confirmed',
-      time: '15:20 PM, 23/05/2025',
-      actions: ['view']
-    },
-    {
-      key: '4',
-      id: 4,
-      student: 'Lê Thị D - Lớp 2A',
-      medication: 'Thuốc ho',
-      status: 'expired',
-      time: '10:15 AM, 23/05/2025',
-      actions: ['view']
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [rejectForm] = Form.useForm();
+  const [rejectingId, setRejectingId] = useState(null);
+  const [timelineRejectModalVisible, setTimelineRejectModalVisible] = useState(false);
+  const [timelineRejectForm] = Form.useForm();
+  const [timelineRejectingId, setTimelineRejectingId] = useState(null);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [timelineData, setTimelineData] = useState([]);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  useEffect(() => {
+    fetchMedicationSubmissions();
+  }, []);
+
+  const mapStatusToFE = (status) => {
+    switch (status) {
+      case 'APPROVED':
+        return 'confirmed';
+      case 'REJECTED':
+        return 'expired';
+      case 'ADMINISTERED':
+        return 'completed';
+      case 'PENDING':
+        return 'pending';
+      default:
+        return status?.toLowerCase?.() || status;
     }
-  ]);
-  const [timelineData, setTimelineData] = useState([
-    {
-      time: '12:00 PM',
-      student: 'Nguyễn Văn A',
-      medication: 'Paracetamol - 1 viên sau bữa trua',
-      status: 'pending',
-      color: 'orange',
-      id: 1
-    },
-    {
-      time: '09:00 AM',
-      student: 'Trần Văn C',
-      medication: 'Thuốc nhỏ mắt - 1 giọt mỗi mắt sau bữa sáng',
-      status: 'pending',
-      color: 'orange',
-      id: 3
-    },
-    {
-      time: '15:00 PM',
-      student: 'Nguyễn Thị B',
-      medication: 'Vitamin C - 1 viên sau bữa chiều',
-      status: 'pending',
-      color: 'orange',
-      id: 2
-    },
-    {
-      time: '16:00 PM',
-      student: 'Phạm Văn D',
-      medication: 'Kháng sinh - 1 viên sau bữa tối',
-      status: 'pending',
-      color: 'orange',
-      id: 5
+  };
+
+  const mapStatusToBE = (status) => {
+    switch (status) {
+      case 'confirmed':
+        return 'APPROVED';
+      case 'expired':
+        return 'REJECTED';
+      case 'completed':
+        return 'ADMINISTERED';
+      case 'pending':
+        return 'PENDING';
+      default:
+        return status?.toUpperCase?.() || status;
     }
-  ]);
+  };
+
+  const fetchMedicationSubmissions = async () => {
+    try {
+      setLoading(true);
+      const submissions = await getMedicationSubmissions();
+      const formattedData = submissions.map((submission, index) => ({
+        key: index.toString(),
+        id: index + 1,
+        student: submission.studentName,
+        className: submission.className || '',
+        medication: submission.medicationDetails.map(m => m.medicineName).join(', '),
+        status: mapStatusToFE(submission.status),
+        time: new Date(submission.submissionDate).toLocaleString('vi-VN'),
+        actions: mapStatusToFE(submission.status) === 'pending' ? ['view', 'confirm', 'cancel'] : ['view'],
+        rejectReason: '',
+        medicationDetails: submission.medicationDetails
+      }));
+      setData(formattedData);
+
+      // Không lọc theo ngày nữa, lấy tất cả submissions cho timelineData
+      const todayTimeline = submissions
+        .map((submission, idx) => ({
+          id: idx + 1,
+          time: new Date(submission.submissionDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+          student: submission.studentName,
+          medication: submission.medicationDetails.map(m => `${m.medicineName} - ${m.dosage || ''} ${m.timeToUse ? `(${m.timeToUse})` : ''}`).join(', '),
+          status: mapStatusToFE(submission.status),
+          color: 'orange',
+          rejectReason: submission.rejectReason || ''
+        }));
+      setTimelineData(todayTimeline);
+    } catch (error) {
+      message.error('Failed to fetch medication submissions');
+      console.error('Error fetching submissions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filtered data for the table
   const getFilteredData = () => {
@@ -127,7 +142,7 @@ const MedicationManagement = () => {
     }
 
     if (classFilter) {
-      filtered = filtered.filter((item) => item.student.includes(classFilter));
+      filtered = filtered.filter((item) => item.className === classFilter);
     }
 
     return filtered;
@@ -145,14 +160,18 @@ const MedicationManagement = () => {
   const getStatusTag = (status) => {
     switch (status) {
       case 'pending':
-        return <Tag color="orange">Chờ xác nhận</Tag>;
+        return <Tag color="orange">Chờ nhận thuốc</Tag>;
       case 'confirmed':
-        return <Tag color="green">Đã xác nhận</Tag>;
+        return <Tag color="green">Đã nhận thuốc</Tag>;
       case 'expired':
-        return <Tag color="red">Đã từ chối</Tag>;
+        return <Tag color="red">Từ chối thuốc</Tag>;
+      case 'completed':
+        return <Tag color="blue">Đã phát thuốc</Tag>;
+      case 'uncompleted':
+        return <Tag color="volcano">Chưa phát thuốc</Tag>;
       default:
         return <Tag>{status}</Tag>;
-    } 
+    }
   };
 
   const getActionButtons = (record) => {
@@ -184,7 +203,13 @@ const MedicationManagement = () => {
       title: 'Học sinh',
       dataIndex: 'student',
       key: 'student',
-      width: '25%'
+      width: '20%'
+    },
+    {
+      title: 'Lớp',
+      dataIndex: 'className',
+      key: 'className',
+      width: '10%'
     },
     {
       title: 'Tên thuốc',
@@ -208,54 +233,137 @@ const MedicationManagement = () => {
     {
       title: 'Hành động',
       key: 'actions',
-      width: '20%',
-      render: (_, record) => getActionButtons(record)
+      width: '15%',
+      render: (_, record) => (
+        <Space>
+          <Button 
+            icon={<EyeOutlined />} 
+            size="small" 
+            onClick={() => handleViewDetails(record)}
+          >
+          </Button>
+          {record.status === 'pending' && (
+            <>
+              <Button
+                type="primary"
+                size="small"
+                icon={<CheckOutlined />}
+                onClick={() => handleUpdateStatus(record.id, 'confirmed')}
+              >
+              </Button>
+              <Button
+                danger
+                size="small"
+                icon={<CloseOutlined />}
+                onClick={() => handleUpdateStatus(record.id, 'expired')}
+              >
+              </Button>
+            </>
+          )}
+          {(record.status === 'confirmed' || record.status === 'expired') && (
+            <Button
+              size="small"
+              icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
+              onClick={() => handleUpdateStatus(record.id, 'pending')}
+            >
+              Chuyển về chờ xử lý
+            </Button>
+          )}
+        </Space>
+      )
     }
   ];
 
-  const handleUpdateStatus = (id, newStatus) => {
+  const handleUpdateStatus = async (id, newStatus) => {
     const statusTextMap = {
       'confirmed': 'xác nhận hoàn thành',
       'expired': 'từ chối phiếu',
-      'completed': 'xác nhận hoàn thành',
+      'completed': 'xác nhận đã phát thuốc',
       'uncompleted': 'chuyển sang chưa hoàn thành',
       'pending': 'chuyển về chờ xử lý'
     };
 
-    //Xác nhận chuyển trạng thái ==================================================
+    if (newStatus === 'expired') {
+      setRejectingId(id);
+      setRejectModalVisible(true);
+      return;
+    }
+
+    if (newStatus === 'uncompleted') {
+      setTimelineRejectingId(id);
+      setTimelineRejectModalVisible(true);
+      return;
+    }
+
     Modal.confirm({
       title: 'Xác nhận thay đổi trạng thái',
       content: `Bạn có chắc chắn muốn ${statusTextMap[newStatus] || 'thay đổi trạng thái'}?`,
       okText: 'Đồng ý',
       cancelText: 'Hủy',
-      onOk: () => {
-        setData(prev =>
-          prev.map(item => item.id === id ? { ...item, status: newStatus } : item)
-        );
-        setTimelineData(prev =>
-          prev.map(item => {
-            return item.id === id ? { ...item, status: newStatus } : item;
-          })
-        );
+      onOk: async () => {
+        try {
+          await updateMedicationStatus(id, mapStatusToBE(newStatus));
+          message.success('Cập nhật trạng thái thành công');
+          fetchMedicationSubmissions();
+        } catch (error) {
+          message.error('Cập nhật trạng thái thất bại');
+          console.error('Error updating status:', error);
+        }
       }
     });
-    //========================================================================
   };
 
-  const handleViewDetails = (record) => {
+  const handleReject = () => {
+    rejectForm.validateFields().then(async values => {
+      try {
+        await updateMedicationStatus(rejectingId, mapStatusToBE('expired'), values.reason);
+        message.success('Đã từ chối phiếu thành công');
+        fetchMedicationSubmissions();
+      } catch (error) {
+        message.error('Từ chối phiếu thất bại');
+      }
+      setRejectModalVisible(false);
+      rejectForm.resetFields();
+    });
+  };
+
+  const handleTimelineReject = () => {
+    timelineRejectForm.validateFields().then(async values => {
+      try {
+        await updateMedicationStatus(timelineRejectingId, mapStatusToBE('uncompleted'), values.reason);
+        message.success('Đã cập nhật trạng thái và lưu lý do từ chối thành công');
+        fetchMedicationSubmissions();
+      } catch (error) {
+        message.error('Cập nhật trạng thái thất bại');
+      }
+      setTimelineRejectModalVisible(false);
+      timelineRejectForm.resetFields();
+    });
+  };
+
+  const handleViewDetails = async (record) => {
     setSelectedRecord(record);
     setIsModalVisible(true);
+    setDetailData(null);
+    if (record && record.id) {
+      setDetailLoading(true);
+      try {
+        const details = await getMedicationSubmissionDetails(record.id);
+        setDetailData(details);
+      } catch (error) {
+        message.error('Không lấy được chi tiết phiếu gửi thuốc');
+      } finally {
+        setDetailLoading(false);
+      }
+    }
   };
 
   return (
-
     <div className="medical-management-app">
-    
       <div className="app-header">
         <Title level={2} className="app-title">Quản lý Phiếu Gửi Thuốc</Title>
       </div>
 
-      {/*============================ Danh sách phiếu gửi thuốc========================================= */}
       <Card
         className="main-card"
         title="Danh sách phiếu gửi thuốc"
@@ -274,16 +382,18 @@ const MedicationManagement = () => {
             </Col>
             <Col>
               <Select
-                placeholder="Tất cả loại ..."
+                placeholder="Tất cả trạng thái ..."
                 value={statusFilter}
                 onChange={setStatusFilter}
                 style={{ minWidth: 170 }}
                 allowClear
               >
-                <Option value="">Tất cả loại</Option>
-                <Option value="pending">Chờ xác nhận</Option>
-                <Option value="confirmed">Đã xác nhận</Option>
-                <Option value="expired">Đã từ chối</Option>
+                <Option value="">Tất cả trạng thái</Option>
+                <Option value="pending">Chờ nhận thuốc</Option>
+                <Option value="confirmed">Đã nhận thuốc</Option>
+                <Option value="expired">Từ chối thuốc</Option>
+                <Option value="completed">Đã phát thuốc</Option>
+                <Option value="uncompleted">Chưa phát thuốc</Option>
               </Select>
             </Col>
             <Col>
@@ -295,10 +405,11 @@ const MedicationManagement = () => {
                 allowClear
               >
                 <Option value="">Tất cả trạng thái</Option>
-                <Option value="1A">Lớp 1A</Option>
-                <Option value="1B">Lớp 1B</Option>
-                <Option value="2A">Lớp 2A</Option>
-                <Option value="2B">Lớp 2B</Option>
+                <Option value="Lớp 5A">Lớp 5A</Option>
+                <Option value="Lớp 4B">Lớp 4B</Option>
+                <Option value="Lớp 3C">Lớp 3C</Option>
+                <Option value="Lớp 2A">Lớp 2A</Option>
+                <Option value="Lớp 1B">Lớp 1B</Option>
               </Select>
             </Col>
           </Row>
@@ -309,13 +420,15 @@ const MedicationManagement = () => {
           dataSource={displayedData}
           pagination={false}
           className="events-table"
+          loading={loading}
         />
 
         <div className="pagination-section">
           <Pagination
-            current={1}
+            current={currentPage1}
             total={displayedData.length}
             pageSize={10}
+            onChange={(page) => setCurrentPage1(page)}
             showSizeChanger={false}
             showQuickJumper={false}
           />
@@ -346,7 +459,15 @@ const MedicationManagement = () => {
             let statusText = '';
             if (item.status === 'completed') statusText = 'Đã hoàn thành';
             else if (item.status === 'uncompleted') statusText = 'Chưa hoàn thành';
-            else statusText = 'Chờ xử lý';
+            else if (item.status === 'confirmed') statusText = 'Đã nhận thuốc';
+            else if (item.status === 'expired') statusText = 'Từ chối thuốc';
+            else statusText = 'Chờ nhận thuốc';
+
+            // Tìm trạng thái ở danh sách (data) theo id
+            const listRecord = data.find(d => d.id === item.id);
+            const listStatus = listRecord ? listRecord.status : null;
+            // Chỉ cho phép cập nhật trạng thái nếu trạng thái ở danh sách là 'confirmed'
+            const allowUpdate = listStatus === 'confirmed';
 
             return (
               <Timeline.Item key={idx} dot={
@@ -359,39 +480,37 @@ const MedicationManagement = () => {
                       {item.status === 'completed' && <CheckCircleTwoTone twoToneColor="#52c41a" style={{marginRight: 4}} />}
                       {item.status === 'uncompleted' && <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{marginRight: 4}} />}
                       {item.status === 'pending' && <ClockCircleTwoTone twoToneColor="#faad14" style={{marginRight: 4}} />}
+                      {item.status === 'confirmed' && <CheckCircleTwoTone twoToneColor="#1890ff" style={{marginRight: 4}} />}
+                      {item.status === 'expired' && <CloseCircleTwoTone twoToneColor="#d4380d" style={{marginRight: 4}} />}
                       {statusText}
                     </span>
                     <div className="timeline-actions">
-                      {item.status === 'pending' && (
-                        <>
-                          <Button
-                            size="small"
-                            type="primary"
-                            icon={<CheckOutlined style={{ color: '#52c41a' }} />}
-                            onClick={() => handleUpdateStatus(item.id, 'completed')}
-                          />
-                          <Button
-                            size="small"
-                            danger
-                            icon={<CloseOutlined />}
-                            onClick={() => handleUpdateStatus(item.id, 'uncompleted')}
-                          />
-                        </>
-                      )}
-                      {item.status === 'completed' && (
+                      {allowUpdate && <>
+                        <Button
+                          size="small"
+                          icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}
+                          onClick={() => handleUpdateStatus(item.id, 'completed')}
+                          type="primary"
+                        ></Button>
+                        <Button
+                          size="small"
+                          icon={<CloseCircleTwoTone twoToneColor="#ff4d4f" />}
+                          onClick={() => handleUpdateStatus(item.id, 'uncompleted')}
+                          danger
+                        ></Button>
+                      </>}
+                      {(item.status === 'completed' || item.status === 'uncompleted') && (
                         <Button
                           size="small"
                           icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
                           onClick={() => handleUpdateStatus(item.id, 'pending')}
-                        />
+                        ></Button>
                       )}
-                      {item.status === 'uncompleted' && (
-                        <Button
-                          size="small"
-                          icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
-                          onClick={() => handleUpdateStatus(item.id, 'pending')}
-                        />
-                      )}
+                      <Button
+                        size="small"
+                        icon={<EyeOutlined />}
+                        onClick={() => handleViewDetails(item)}
+                      ></Button>
                     </div>
                   </div>
                   <div className="timeline-body">
@@ -416,9 +535,82 @@ const MedicationManagement = () => {
             <p><strong>Tên thuốc:</strong> {selectedRecord.medication}</p>
             <p><strong>Trạng thái:</strong> {getStatusTag(selectedRecord.status)}</p>
             <p><strong>Thời gian gửi:</strong> {selectedRecord.time}</p>
-            {/* Add more details as needed */}
+            {selectedRecord.status === 'expired' && selectedRecord.rejectReason && (
+              <p><strong>Lý do từ chối:</strong> {selectedRecord.rejectReason}</p>
+            )}
+            {selectedRecord.status === 'uncompleted' && selectedRecord.rejectReason && (
+              <p><strong>Lý do từ chối:</strong> {selectedRecord.rejectReason}</p>
+            )}
+            {detailLoading && <p>Đang tải chi tiết...</p>}
+            {detailData && !Array.isArray(detailData) && (
+              <div style={{marginTop: 16}}>
+                {detailData.nurseName && <p><strong>Y tá nhận:</strong> {detailData.nurseName}</p>}
+                {detailData.studentClass && <p><strong>Lớp:</strong> {detailData.studentClass}</p>}
+                {detailData.submissionDate && <p><strong>Ngày gửi:</strong> {new Date(detailData.submissionDate).toLocaleString('vi-VN')}</p>}
+                {detailData.medicineImage && <p><strong>Ảnh thuốc:</strong> <img src={detailData.medicineImage} alt="medicine" style={{maxWidth: 120}} /></p>}
+                {detailData.medicationDetails && Array.isArray(detailData.medicationDetails) && detailData.medicationDetails.length > 0 && (
+                  <div style={{marginTop: 16}}>
+                    <strong>Chi tiết thuốc:</strong>
+                    <ul>
+                      {detailData.medicationDetails.map((item) => (
+                        <li key={item.medicationDetailId} style={{marginBottom: 8}}>
+                          <div><strong>Tên thuốc:</strong> {item.medicineName}</div>
+                          <div><strong>Liều dùng:</strong> {item.dosage}</div>
+                          <div><strong>Thời gian sử dụng:</strong> {item.timeToUse}</div>
+                          <div><strong>Ghi chú:</strong> {item.note}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title="Xác nhận từ chối phiếu"
+        open={rejectModalVisible}
+        onOk={handleReject}
+        onCancel={() => {
+          setRejectModalVisible(false);
+          rejectForm.resetFields();
+        }}
+        okText="Xác nhận"
+        cancelText="Hủy"
+      >
+        <Form form={rejectForm}>
+          <Form.Item
+            name="reason"
+            label="Lý do từ chối"
+            rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phiếu..." />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Xác nhận từ chối phát thuốc"
+        open={timelineRejectModalVisible}
+        onOk={handleTimelineReject}
+        onCancel={() => {
+          setTimelineRejectModalVisible(false);
+          timelineRejectForm.resetFields();
+        }}
+        okText="Xác nhận"
+        cancelText="Hủy"
+      >
+        <Form form={timelineRejectForm}>
+          <Form.Item
+            name="reason"
+            label="Lý do từ chối"
+            rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phát thuốc..." />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
