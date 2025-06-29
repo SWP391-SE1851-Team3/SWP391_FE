@@ -13,11 +13,9 @@ import MedicalEvents from '../pages/school-nurse/medical-events';
 import NursePage from '../pages/school-nurse';
 import ManageMedication from '../pages/school-nurse/manage-medication';
 import ManageVaccination from '../pages/school-nurse/manage-vaccination';
-<<<<<<< HEAD
 import ManagerPage from '../pages/manager';
-=======
 import HealthCheckNurse from '../pages/school-nurse/manage-health-check';
->>>>>>> e2e56f12c1363454251e61341b0e99a4ca5a9685
+
 const AppRoutes = () => {
   return (
     <Routes>
