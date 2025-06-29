@@ -159,7 +159,7 @@ const VaccinationScheduleManager = () => {
         })
         .catch(() => setVaccineOptions([]))
         .finally(() => setLoadingVaccines(false));
-      
+      form.resetFields();
       const fullName = localStorage.getItem('fullname') || 'Y tá Mặc định';
       form.setFieldsValue({ nurse_name: fullName });
     }
@@ -200,7 +200,7 @@ const VaccinationScheduleManager = () => {
         quantity_received: quantityReceived,
         scheduled_date: scheduledDate,
         location: String(values.location || ''),
-        status: String(values.status || 'pending'),
+        status: values.status || 'Chờ xác nhận',
         notes: String(values.notes || ''),
         vaccineTypeID: vaccineTypeID
       };
@@ -211,37 +211,8 @@ const VaccinationScheduleManager = () => {
       // Log the entire response from the server to check the keys
       console.log('✅ [Vaccination Schedule] Phản hồi từ server khi tạo mới:', response.data);
       
-      const newBatchData = response.data;
-
-      // Find vaccine name from existing options
-      const vaccine = vaccineOptions.find(v => v.id === newBatchData.vaccineTypeID);
-      const vaccineName = vaccine ? vaccine.name : 'Không xác định';
-
-      // Format the new batch from response to match the state structure
-      const formattedNewBatch = {
-        batchID: newBatchData.batchID,
-        vaccine: vaccineName,
-        vaccineBatch: newBatchData.dot,
-        scheduledDate: new Date(newBatchData.scheduled_date).toLocaleDateString('vi-VN'),
-        originalScheduledDate: newBatchData.scheduled_date,
-        location: newBatchData.location,
-        nurseId: newBatchData.nurse_id,
-        nurseName: newBatchData.nurse_name,
-        status: newBatchData.status,
-        studentsCount: newBatchData.quantity_received || 0,
-        notes: newBatchData.notes,
-        consentsSent: false,
-        approvedConsents: 0,
-        vaccineTypeID: newBatchData.vaccineTypeID,
-        created_at: newBatchData.created_at,
-        updated_at: newBatchData.updated_at,
-        edit_nurse_id: newBatchData.edit_nurse_id,
-        edit_nurse_name: newBatchData.edit_nurse_name,
-      };
-
-      // Add the new schedule to the state without re-fetching
-      setSchedules(prevSchedules => [formattedNewBatch, ...prevSchedules]);
-
+      // Sau khi tạo mới thành công, reload lại danh sách từ server
+      await fetchSchedules();
       form.resetFields();
       setIsCreateModalOpen(false);
       message.success('Đợt tiêm chủng đã được tạo thành công');
@@ -262,7 +233,7 @@ const VaccinationScheduleManager = () => {
   const handleConfirmSchedule = (scheduleId) => {
     setSchedules(schedules.map(schedule => 
       schedule.batchID === scheduleId 
-        ? { ...schedule, status: 'confirmed' }
+        ? { ...schedule, status: 'Đã xác nhận' }
         : schedule
     ));
     message.success('Lịch tiêm đã được xác nhận');
@@ -315,7 +286,7 @@ const VaccinationScheduleManager = () => {
         quantity_received: quantityReceived,
         scheduled_date: scheduledDate,
         location: String(values.location || ''),
-        status: String(values.status || 'pending'),
+        status: values.status || 'Chờ xác nhận',
         notes: String(values.notes || ''),
         edit_nurse_name: nurseName,
         batchID: batchId,
@@ -373,18 +344,18 @@ const VaccinationScheduleManager = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'warning';
-      case 'confirmed': return 'success';
-      case 'completed': return 'processing';
+      case 'Chờ xác nhận': return 'warning';
+      case 'Đã xác nhận': return 'success';
+      case 'Hoàn thành': return 'processing';
       default: return 'default';
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'pending': return 'Chờ xác nhận';
-      case 'confirmed': return 'Đã xác nhận';
-      case 'completed': return 'Hoàn thành';
+      case 'Chờ xác nhận': return 'Chờ xác nhận';
+      case 'Đã xác nhận': return 'Đã xác nhận';
+      case 'Hoàn thành': return 'Hoàn thành';
       default: return status;
     }
   };
@@ -400,7 +371,7 @@ const VaccinationScheduleManager = () => {
       batchId: schedule.batchID,
       sendDate: null,
       expireDate: null,
-      status: 'pending',
+      status: 'Chờ xác nhận',
     });
     setIsConsentModalOpen(true);
   };
@@ -467,9 +438,9 @@ const VaccinationScheduleManager = () => {
           style={{ width: 180 }}
         >
           <Option value="all">Tất cả trạng thái</Option>
-          <Option value="pending">Chờ xác nhận</Option>
-          <Option value="confirmed">Đã xác nhận</Option>
-          <Option value="completed">Hoàn thành</Option>
+          <Option value="Chờ xác nhận">Chờ xác nhận</Option>
+          <Option value="Đã xác nhận">Đã xác nhận</Option>
+          <Option value="Hoàn thành">Hoàn thành</Option>
         </Select>
       </div>
 
@@ -489,8 +460,15 @@ const VaccinationScheduleManager = () => {
                   </Text>
                 </div>
                 <Badge 
-                  status={getStatusColor(schedule.status)} 
-                  text={getStatusText(schedule.status)}
+                  status={(() => {
+                    switch (schedule.status) {
+                      case 'Đã xác nhận': return 'success';
+                      case 'Hoàn thành': return 'processing';
+                      case 'Chờ xác nhận': return 'warning';
+                      default: return 'default';
+                    }
+                  })()} 
+                  text={schedule.status}
                 />
               </div>
 
@@ -530,7 +508,7 @@ const VaccinationScheduleManager = () => {
                   </Button>
                 )}
                 
-                {schedule.consentsSent && schedule.status === 'pending' && (
+                {schedule.consentsSent && schedule.status === 'Chờ xác nhận' && (
                   <Button 
                     type="primary"
                     onClick={() => handleConfirmSchedule(schedule.batchID)}
@@ -627,12 +605,12 @@ const VaccinationScheduleManager = () => {
             name="status"
             label="Trạng thái"
             rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-            initialValue="pending"
+            initialValue="Chờ xác nhận"
           >
             <Select>
-              <Option value="pending">Chờ xác nhận</Option>
-              <Option value="confirmed">Đã xác nhận</Option>
-              <Option value="completed">Hoàn thành</Option>
+              <Option value="Chờ xác nhận">Chờ xác nhận</Option>
+              <Option value="Đã xác nhận">Đã xác nhận</Option>
+              <Option value="Hoàn thành">Hoàn thành</Option>
             </Select>
           </Form.Item>
 
@@ -763,9 +741,9 @@ const VaccinationScheduleManager = () => {
                 style={{ marginBottom: 18 }}
               >
                 <Select style={{ borderRadius: 8 }}>
-                  <Option value="pending">Chờ xác nhận</Option>
-                  <Option value="confirmed">Đã xác nhận</Option>
-                  <Option value="completed">Hoàn thành</Option>
+                  <Option value="Chờ xác nhận">Chờ xác nhận</Option>
+                  <Option value="Đã xác nhận">Đã xác nhận</Option>
+                  <Option value="Hoàn thành">Hoàn thành</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -834,12 +812,12 @@ const VaccinationScheduleManager = () => {
             name="status"
             label="Trạng thái"
             rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}
-            initialValue="pending"
+            initialValue="Chờ xác nhận"
           >
             <Select>
-              <Option value="pending">Chờ phản hồi</Option>
-              <Option value="sent">Đã gửi</Option>
-              <Option value="expired">Hết hạn</Option>
+              <Option value="Chờ xác nhận">Chờ xác nhận</Option>
+              <Option value="Đã xác nhận">Đã xác nhận</Option>
+              <Option value="Hoàn thành">Hoàn thành</Option>
             </Select>
           </Form.Item>
         </Form>

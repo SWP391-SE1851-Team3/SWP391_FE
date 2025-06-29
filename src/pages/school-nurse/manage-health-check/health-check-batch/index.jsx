@@ -86,6 +86,34 @@ const HealthCheckBatchManager = () => {
     fetchBatches();
   }, []);
 
+  // Map trạng thái DB sang UI
+  const mapStatus = (status) => {
+    switch (status) {
+      case 'SCHEDULED':
+        return 'Đã lên lịch';
+      case 'COMPLETED':
+        return 'Đã xác nhận';
+      case 'CANCELLED':
+        return 'Đã từ chối';
+      default:
+        return status;
+    }
+  };
+
+  // Map trạng thái UI sang DB (dùng cho filter, form)
+  const mapStatusToDB = (status) => {
+    switch (status) {
+      case 'Đã lên lịch':
+        return 'SCHEDULED';
+      case 'Đã xác nhận':
+        return 'COMPLETED';
+      case 'Đã từ chối':
+        return 'CANCELLED';
+      default:
+        return status;
+    }
+  };
+
   // Filter and search logic
   useEffect(() => {
     let result = batches;
@@ -95,7 +123,7 @@ const HealthCheckBatchManager = () => {
       );
     }
     if (statusFilter !== 'all') {
-      result = result.filter(batch => batch.status === statusFilter);
+      result = result.filter(batch => batch.status === mapStatusToDB(statusFilter));
     }
     setFilteredBatches(result);
   }, [batches, searchTerm, statusFilter]);
@@ -119,7 +147,7 @@ const HealthCheckBatchManager = () => {
         name: values.batchName,
         location: values.location,
         notes: values.notes,
-        status: values.status,
+        status: mapStatusToDB(values.status),
         create_at: now,
         update_at: now,
         nurseName: nurseName,
@@ -164,7 +192,7 @@ const HealthCheckBatchManager = () => {
       scheduledDate: batch.scheduledDate ? moment(batch.scheduledDate) : null,
       location: batch.location,
       notes: batch.notes,
-      status: batch.status,
+      status: mapStatus(batch.status),
     });
   };
 
@@ -181,7 +209,7 @@ const HealthCheckBatchManager = () => {
         name: values.batchName,
         location: values.location,
         notes: values.notes,
-        status: values.status,
+        status: mapStatusToDB(values.status),
         update_at: now,
         updatedByNurseID: nurseID,
         updatedByNurseName: nurseName,
@@ -276,8 +304,9 @@ const HealthCheckBatchManager = () => {
           style={{ width: 180 }}
         >
           <Option value="all">Tất cả trạng thái</Option>
-          <Option value="pending">Chờ xử lý</Option>
-          <Option value="confirmed">Đã xác nhận</Option>
+          <Option value="Đã lên lịch">Đã lên lịch</Option>
+          <Option value="Đã xác nhận">Đã xác nhận</Option>
+          <Option value="Đã từ chối">Đã từ chối</Option>
         </Select>
       </div>
 
@@ -297,8 +326,8 @@ const HealthCheckBatchManager = () => {
                   </Text>
                 </div>
                 <Badge 
-                  status={batch.status === 'confirmed' ? 'success' : (batch.status === 'pending' ? 'warning' : 'default')} 
-                  text={batch.status === 'pending' ? 'Chờ xử lý' : (batch.status === 'confirmed' ? 'Đã xác nhận' : batch.status)}
+                  status={batch.status === 'COMPLETED' ? 'success' : (batch.status === 'SCHEDULED' ? 'warning' : (batch.status === 'CANCELLED' ? 'error' : 'default'))} 
+                  text={mapStatus(batch.status)}
                 />
               </div>
 
@@ -370,10 +399,11 @@ const HealthCheckBatchManager = () => {
             <Form.Item name="notes" label="Ghi chú">
               <TextArea />
             </Form.Item>
-            <Form.Item name="status" label="Trạng thái" initialValue="pending">
+            <Form.Item name="status" label="Trạng thái" initialValue="Đã lên lịch">
               <Select>
-                <Option value="pending">Chờ xử lý</Option>
-                <Option value="confirmed">Đã xác nhận</Option>
+                <Option value="Đã lên lịch">Đã lên lịch</Option>
+                <Option value="Đã xác nhận">Đã xác nhận</Option>
+                <Option value="Đã từ chối">Đã từ chối</Option>
               </Select>
             </Form.Item>
           </Form>
@@ -404,8 +434,9 @@ const HealthCheckBatchManager = () => {
             </Form.Item>
             <Form.Item name="status" label="Trạng thái">
               <Select>
-                <Option value="pending">Chờ xử lý</Option>
-                <Option value="confirmed">Đã xác nhận</Option>
+                <Option value="Đã lên lịch">Đã lên lịch</Option>
+                <Option value="Đã xác nhận">Đã xác nhận</Option>
+                <Option value="Đã từ chối">Đã từ chối</Option>
               </Select>
             </Form.Item>
           </Form>

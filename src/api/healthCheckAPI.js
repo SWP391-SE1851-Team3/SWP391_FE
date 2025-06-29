@@ -57,3 +57,50 @@ export const createHealthConsentForClass = async (data) => {
     throw error;
   }
 };
+
+// Lấy danh sách hồ sơ khám sức khỏe
+export const getAllHealthCheckResults = async () => {
+  try {
+    const response = await axios.get('http://localhost:8080/api/health-check-results/all');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching health check results:', error);
+    throw error;
+  }
+};
+
+// Lấy chi tiết hồ sơ khám sức khỏe của học sinh theo ID
+export const getHealthCheckResultsByStudentID = async (studentID) => {
+  try {
+    const response = await axios.get(`http://localhost:8080/api/health-check-results/student/${studentID}`);
+    console.log('Health Check Results for Student:', response.data); // Ghi log dữ liệu trả về
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching health check results for student:', error);
+    throw error;
+  }
+};
+
+// Tạo mới hồ sơ khám sức khỏe
+export const createHealthCheckResult = async (data) => {
+  try {
+    const response = await axios.post('http://localhost:8080/api/health-check-results/create', data);
+    console.log('API trả về:', response.data); // Log dữ liệu trả về từ API
+    return response.data; // Đảm bảo trả về đúng dữ liệu
+  } catch (error) {
+    console.error('Error creating health check result:', error);
+    throw error;
+  }
+};
+
+// Cập nhật hồ sơ khám sức khỏe
+export const updateHealthCheckResult = async (checkID, nurseId, data) => {
+  try {
+    const response = await axios.put(`http://localhost:8080/api/health-check-results/${checkID}?nurseID=${nurseId}`, data);
+    console.log('Updated Health Check Result:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating health check result:', error);
+    throw error;
+  }
+};

@@ -67,7 +67,7 @@ const VaccinationRecords = () => {
           studentID: item.studentID,
           studentName: item.studentName,
           className: item.className,
-          batchID: item.batchID,
+          batchID: item.bacthID || item.batchID || '',
           vaccineName: item.vaccineName,
           symptoms: item.symptoms,
           severity: item.severity,
@@ -79,6 +79,7 @@ const VaccinationRecords = () => {
           createNurseName: item.createNurseName,
           editNurseID: item.editNurseID,
           editNurseName: item.editNurseName,
+          vaccineBatchName: item.vaccineBatchName || item.dot || item.vaccine_batch || '',
         }));
         setRecords(mapped);
       } catch (err) {
@@ -133,7 +134,7 @@ const VaccinationRecords = () => {
         studentID: item.studentID,
         studentName: item.studentName,
         className: item.className,
-        batchID: item.batchID,
+        batchID: item.bacthID || item.batchID || '',
         vaccineName: item.vaccineName,
         symptoms: item.symptoms,
         severity: item.severity,
@@ -145,6 +146,7 @@ const VaccinationRecords = () => {
         createNurseName: item.createNurseName,
         editNurseID: item.editNurseID,
         editNurseName: item.editNurseName,
+        vaccineBatchName: item.vaccineBatchName || item.dot || item.vaccine_batch || '',
       }));
       setRecords(mapped);
     } catch (error) {
@@ -193,7 +195,7 @@ const VaccinationRecords = () => {
     editForm.setFieldsValue({
       studentId: record.studentId || record.studentID,
       vaccineBatchId: record.vaccineBatchId || record.batchID,
-      vaccineBatchName: record.vaccineName || record.vaccineName,
+      vaccineBatchName: record.vaccineName,
       symptoms: record.symptoms,
       severity: record.severity,
       notes: record.notes,
@@ -242,7 +244,7 @@ const VaccinationRecords = () => {
         studentID: item.studentID,
         studentName: item.studentName,
         className: item.className,
-        batchID: item.batchID,
+        batchID: item.bacthID || item.batchID || '',
         vaccineName: item.vaccineName,
         symptoms: item.symptoms,
         severity: item.severity,
@@ -255,6 +257,7 @@ const VaccinationRecords = () => {
         
         editNurseID: item.editNurseID,
         editNurseName: item.editNurseName,
+        vaccineBatchName: item.vaccineBatchName || item.dot || item.vaccine_batch || '',
       }));
       setRecords(mapped);
     } catch (error) {
@@ -394,7 +397,8 @@ const VaccinationRecords = () => {
       </div>
 
       <Modal
-        title="Ghi nhận kết quả tiêm chủng"
+        
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Ghi nhận kết quả tiêm chủng</span>}
         open={isCreateModalOpen}
         onCancel={() => {
           setIsCreateModalOpen(false);
@@ -403,98 +407,117 @@ const VaccinationRecords = () => {
         onOk={handleCreateRecord}
         okText="Ghi nhận"
         cancelText="Hủy"
+        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        width={1000}
       >
-        <Form
-          form={form}
-          layout="vertical"
-        >
-          <Form.Item name="studentId" label="Mã học sinh" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="className" label="Lớp" rules={[{ required: true, message: 'Vui lòng nhập lớp' }]}>
-            <Select placeholder="Chọn lớp" onChange={handleClassChange} allowClear>
-              <Option value="Lớp 5A">Lớp 5A</Option>
-              <Option value="Lớp 4B">Lớp 4B</Option>
-              <Option value="Lớp 3C">Lớp 3C</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="studentName" label="Tên học sinh" rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}>
-            <Select placeholder="Chọn học sinh" allowClear onChange={value => {
-              const selected = studentOptions.find(s => s.fullName === value);
-              form.setFieldsValue({
-                studentId: selected ? selected.studentID : '',
-                parentID: selected ? selected.parentID : ''
-              });
-            }}>
-              {studentOptions.map((student) => (
-                <Option key={student.studentID} value={student.fullName}>
-                  {student.fullName}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="parentID" label="Mã phụ huynh" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="vaccineBatchId" label="Mã lô vaccine" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="vaccineBatchName" label="Tên lô vaccine">
-            <Select
-              
-              onChange={async value => {
-                try {
-                  const res = await getVaccineTypeByName(value);
-                  if (Array.isArray(res.data) && res.data.length > 0) {
-                    // Giả sử lấy id đầu tiên nếu có nhiều
-                    form.setFieldsValue({ vaccineBatchId: res.data[0].id });
-                  } else {
-                    form.setFieldsValue({ vaccineBatchId: '' });
-                  }
-                } catch {
-                  form.setFieldsValue({ vaccineBatchId: '' });
-                }
-              }}
-            >
-              {vaccineOptions.map((vaccine) => (
-                <Option key={vaccine.id} value={vaccine.name}>{vaccine.name}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="symptoms" label="Triệu chứng">
-            <Input />
-          </Form.Item>
-          <Form.Item name="severity" label="Mức độ">
-            <Input />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <Input />
-          </Form.Item>
-          <Form.Item name="observation_notes" label="Ghi chú theo dõi">
-            <Input />
-          </Form.Item>
-          <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[{ required: true, message: 'Vui lòng nhập thời gian theo dõi' }]}>
-            <Input type="datetime-local" />
-          </Form.Item>
-          <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}>
-            <Select placeholder="Chọn trạng thái">
-              <Option value="Hoàn thành">Hoàn thành</Option>
-              <Option value="Đang theo dõi">Đang theo dõi</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="createNurseName" label="Tên y tá tạo" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="createNurseID" label="Mã y tá tạo" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="editNurseName" label="Tên y tá chỉnh sửa" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="editnurseID" label="Mã y tá chỉnh sửa" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-        </Form>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <Form
+            form={form}
+            layout="vertical"
+          >
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="className" label="Lớp" rules={[{ required: true, message: 'Vui lòng nhập lớp' }]}> 
+                  <Select placeholder="Chọn lớp" onChange={handleClassChange} allowClear>
+                    <Option value="Lớp 5A">Lớp 5A</Option>
+                    <Option value="Lớp 4B">Lớp 4B</Option>
+                    <Option value="Lớp 3C">Lớp 3C</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="studentName" label="Tên học sinh" rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}> 
+                  <Select placeholder="Chọn học sinh" allowClear onChange={value => {
+                    const selected = studentOptions.find(s => s.fullName === value);
+                    form.setFieldsValue({
+                      studentId: selected ? selected.studentID : '',
+                      parentID: selected ? selected.parentID : ''
+                    });
+                  }}>
+                    {studentOptions.map((student) => (
+                      <Option key={student.studentID} value={student.fullName}>
+                        {student.fullName}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="vaccineBatchId" label="Mã lô vaccine">
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="vaccineBatchName" label="Tên vaccine">
+                  <Select>
+                    {vaccineOptions.map((vaccine) => (
+                      <Option key={vaccine.id} value={vaccine.name}>{vaccine.name}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="symptoms" label="Triệu chứng">
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="severity" label="Mức độ">
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[{ required: true, message: 'Vui lòng nhập thời gian theo dõi' }]}> 
+                  <Input type="datetime-local" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}> 
+                  <Select placeholder="Chọn trạng thái">
+                    <Option value="Hoàn thành">Hoàn thành</Option>
+                    <Option value="Đang theo dõi">Đang theo dõi</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="notes" label="Ghi chú">
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="observation_notes" label="Ghi chú theo dõi">
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item name="studentId" label="Mã học sinh" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="parentID" label="Mã phụ huynh" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="createNurseName" label="Tên y tá tạo" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="createNurseID" label="Mã y tá tạo" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="editNurseName" label="Tên y tá chỉnh sửa" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="editnurseID" label="Mã y tá chỉnh sửa" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
 
       <Modal
@@ -557,7 +580,8 @@ const VaccinationRecords = () => {
       </Modal>
 
       <Modal
-        title="Cập nhật hồ sơ tiêm chủng"
+    
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Cập nhật hồ sơ tiêm chủng</span>}
         open={isEditModalOpen}
         onCancel={() => {
           setIsEditModalOpen(false);
@@ -567,57 +591,89 @@ const VaccinationRecords = () => {
         onOk={handleUpdateRecord}
         okText="Cập nhật"
         cancelText="Hủy"
+        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        width={1000}
       >
-        <Form
-          form={editForm}
-          layout="vertical"
-        >
-          <Form.Item name="studentId" label="Mã học sinh" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="studentName" label="Tên học sinh">
-            <Input disabled/>
-          </Form.Item>
-          <Form.Item name="className" label="Lớp">
-            <Input disabled/>
-          </Form.Item>
-          <Form.Item name="vaccineBatchId" label="Mã lô vaccine" style={{ display: 'none' }}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="vaccineBatchName" label="Tên lô vaccine">
-            <Input />
-          </Form.Item>
-          <Form.Item name="symptoms" label="Triệu chứng">
-            <Input />
-          </Form.Item>
-          <Form.Item name="severity" label="Mức độ">
-            <Input />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <Input />
-          </Form.Item>
-          <Form.Item name="observation_notes" label="Ghi chú theo dõi">
-            <Input />
-          </Form.Item>
-          <Form.Item name="observation_time" label="Thời gian theo dõi">
-            <Input type="datetime-local" />
-          </Form.Item>
-          <Form.Item name="status" label="Trạng thái">
-            <Select>
-              <Option value="Hoàn thành">Hoàn thành</Option>
-              <Option value="Đang theo dõi">Đang theo dõi</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="parentID" label="Mã phụ huynh" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="editNurseID" label="Mã y tá chỉnh sửa" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="editNurseName" label="Tên y tá chỉnh sửa">
-            <Input disabled />
-          </Form.Item>
-        </Form>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <Form
+            form={editForm}
+            layout="vertical"
+          >
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="studentName" label="Tên học sinh">
+                  <Input disabled/>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="className" label="Lớp">
+                  <Input disabled/>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="vaccineBatchId" label="Mã lô vaccine" style={{ display: 'none' }}>
+                  <Input />
+                </Form.Item>
+                <Form.Item name="vaccineBatchName" label="Tên vaccine">
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="symptoms" label="Triệu chứng">
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="severity" label="Mức độ">
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="observation_time" label="Thời gian theo dõi">
+                  <Input type="datetime-local" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="status" label="Trạng thái">
+                  <Select>
+                    <Option value="Hoàn thành">Hoàn thành</Option>
+                    <Option value="Đang theo dõi">Đang theo dõi</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="notes" label="Ghi chú">
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item name="observation_notes" label="Ghi chú theo dõi">
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item name="studentId" label="Mã học sinh" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="parentID" label="Mã phụ huynh" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="editNurseID" label="Mã y tá chỉnh sửa" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="editNurseName" label="Tên y tá chỉnh sửa">
+              <Input disabled />
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
     </div>
   );
