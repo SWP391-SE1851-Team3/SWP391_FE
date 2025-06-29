@@ -44,16 +44,19 @@ const ConsentManagement = () => {
           studentName: item.fullNameOfStudent || '',
           parentName: item.fullNameOfParent || '',
           vaccine: item.vaccineName || '',
-          scheduledDate: item.localDate || (item.scheduledDate ? item.scheduledDate.substring(0, 10) : ''),
-          consentStatus: item.status === 'pending' ? 'chờ xác nhận' : item.status === 'approved' ? 'đã xác nhận' : item.status === 'rejected' ? 'từ chối' : item.status || '',
+          scheduledDate: item.scheduledDate ? item.scheduledDate.substring(0, 10) : '',
           sentDate: item.send_date ? item.send_date.substring(0, 10) : '',
-          responseDate: item.expire_date ? item.expire_date.substring(0, 10) : '',
-          reason: item.reason || '',
+          expireDate: item.expire_date ? item.expire_date.substring(0, 10) : '',
           className: item.className || '',
+          location: item.location || '',
+          status: item.status || '',
+          reason: item.reason || '',
+          isAgree: item.isAgree || '',
           hasAllergy: item.hasAllergy || '',
-          isAgree: item.isAgree || ''
+          batchID: item.bacthID || '',
         }));
         setConsents(mapped);
+        console.log('consents:', mapped);
       } catch (err) {
         setConsents([]);
         message.error('Không thể tải danh sách phiếu đồng ý');
@@ -65,7 +68,7 @@ const ConsentManagement = () => {
   const filteredConsents = consents.filter(consent => {
     const matchesSearch = consent.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          consent.parentName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || consent.consentStatus === statusFilter;
+    const matchesStatus = statusFilter === 'all' || consent.status === statusFilter;
     const matchesClass = classFilter === 'all' || consent.className === classFilter;
     
     return matchesSearch && matchesStatus && matchesClass;
@@ -73,18 +76,18 @@ const ConsentManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'chờ xác nhận': return 'warning';
-      case 'đã xác nhận': return 'success';
-      case 'từ chối': return 'error';
+      case 'Chờ xác nhận': return 'warning';
+      case 'Đã xác nhận': return 'success';
+      case 'Từ chối': return 'error';
       default: return 'default';
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'chờ xác nhận': return 'Chờ xác nhận';
-      case 'đã xác nhận': return 'Đã xác nhận';
-      case 'từ chối': return 'Từ chối';
+      case 'Chờ xác nhận': return 'Chờ xác nhận';
+      case 'Đã xác nhận': return 'Đã xác nhận';
+      case 'Từ chối': return 'Từ chối';
       default: return status;
     }
   };
@@ -105,9 +108,9 @@ const ConsentManagement = () => {
 
   const stats = {
     total: consents.length,
-    pending: consents.filter(c => c.consentStatus === 'chờ xác nhận').length,
-    approved: consents.filter(c => c.consentStatus === 'đã xác nhận').length,
-    rejected: consents.filter(c => c.consentStatus === 'từ chối').length
+    pending: consents.filter(c => c.status === 'Chờ xác nhận').length,
+    approved: consents.filter(c => c.status === 'Đã xác nhận').length,
+    rejected: consents.filter(c => c.status === 'Từ chối').length
   };
 
   return (
@@ -178,9 +181,9 @@ const ConsentManagement = () => {
               placeholder="Trạng thái"
             >
               <Option value="all">Tất cả trạng thái</Option>
-              <Option value="chờ xác nhận">Chờ xác nhận</Option>
-              <Option value="đã xác nhận">Đã xác nhận</Option>
-              <Option value="từ chối">Từ chối</Option>
+              <Option value="Chờ xác nhận">Chờ xác nhận</Option>
+              <Option value="Đã xác nhận">Đã xác nhận</Option>
+              <Option value="Từ chối">Từ chối</Option>
             </Select>
           </Col>
           <Col span={6}>
@@ -191,9 +194,11 @@ const ConsentManagement = () => {
               placeholder="Lớp học"
             >
               <Option value="all">Tất cả lớp</Option>
-              <Option value="6A">Lớp 6A</Option>
-              <Option value="6B">Lớp 6B</Option>
-              <Option value="6C">Lớp 6C</Option>
+              <Select.Option value="Lớp 5A">Lớp 5A</Select.Option>
+              <Select.Option value="Lớp 4B">Lớp 4B</Select.Option>
+              <Select.Option value="Lớp 3C">Lớp 3C</Select.Option>
+              <Select.Option value="Lớp 2A">Lớp 2A</Select.Option>
+              <Select.Option value="Lớp 1B">Lớp 1B</Select.Option>
             </Select>
           </Col>
           <Col span={6}>
@@ -216,20 +221,27 @@ const ConsentManagement = () => {
                 </Text>
               </div>
               <Badge 
-                status={getStatusColor(consent.consentStatus)} 
-                text={getStatusText(consent.consentStatus)}
+                status={getStatusColor(consent.status)} 
+                text={getStatusText(consent.status)}
               />
             </div>
 
             <div className="consent-card-info">
               <Space><Text type="secondary">Vaccine:</Text> <Text>{consent.vaccine}</Text></Space>
+              <Space><Text type="secondary">Lớp:</Text> <Text>{consent.className}</Text></Space>
+              <Space><Text type="secondary">Địa điểm:</Text> <Text>{consent.location}</Text></Space>
+              <Space><Text type="secondary">Đồng ý tiêm:</Text> <Text>{consent.isAgree}</Text></Space>
+              <Space><Text type="secondary">Batch ID:</Text> <Text>{consent.batchID}</Text></Space>
+            </div>
+
+            <div className="consent-card-info">
               <Space><Text type="secondary">Ngày tiêm:</Text> <Text>{consent.scheduledDate}</Text></Space>
               <Space><Text type="secondary">Gửi phiếu:</Text> <Text>{consent.sentDate}</Text></Space>
             </div>
 
-            {consent.responseDate && (
+            {consent.expireDate && (
               <div className="consent-card-info">
-                <Space><Text type="secondary">Ngày phản hồi:</Text> <Text>{consent.responseDate}</Text></Space>
+                <Space><Text type="secondary">Ngày hết hạn phản hồi:</Text> <Text>{consent.expireDate}</Text></Space>
               </div>
             )}
 
@@ -249,7 +261,7 @@ const ConsentManagement = () => {
               >
                 Xem chi tiết
               </Button>
-              {consent.consentStatus === 'chờ xác nhận' && (
+              {consent.status === 'Chờ xác nhận' && (
                 <Button 
                   icon={<SendOutlined />}
                   onClick={() => handleResendConsent(consent.id)}
@@ -295,7 +307,7 @@ const ConsentManagement = () => {
               <Col span={12}>
                 <Text type="secondary">Ngày tiêm dự kiến:</Text>
                 <br />
-                <Text strong>{selectedConsent.localDate || (selectedConsent.scheduledDate ? selectedConsent.scheduledDate.substring(0, 10) : '')}</Text>
+                <Text strong>{selectedConsent.scheduledDate || (selectedConsent.scheduledDate ? selectedConsent.scheduledDate.substring(0, 10) : '')}</Text>
               </Col>
               <Col span={12}>
                 <Text type="secondary">Ngày gửi phiếu:</Text>
