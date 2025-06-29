@@ -2,7 +2,9 @@ import React, { useEffect } from 'react';
 import { Layout, Menu, Avatar, Badge, Button, message } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
-import { LogoutOutlined, LoginOutlined } from '@ant-design/icons';
+import { BellOutlined, LogoutOutlined, LoginOutlined } from '@ant-design/icons';
+import { Menu, Avatar, Badge, Button, message } from 'antd';
+import { useVaccination } from '../context/VaccinationContext';
 const { Header } = Layout;
 import './Header.css';
 
@@ -45,6 +47,9 @@ const HeaderLayout = () => {
   const role = Number(localStorage.getItem('role')) || 1;
   const menuItems = getMenuByRole(role);
   const userName = localStorage.getItem('email') || 'Người dùng';
+
+  const { newVaccinationCount } = useVaccination();
+
   const fullName = localStorage.getItem('fullname');
 
 
@@ -77,25 +82,22 @@ const HeaderLayout = () => {
           <span className="logo-text">Y tế Học đường</span>
         </div>
 
-        <Menu
-
-          mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
-
-          selectedKeys={[
-            menuItems.find(item => location.pathname.startsWith(item.path))?.path || '/'
-          ]}
-          className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
-
-          items={menuItems.map(item => ({
-            key: item.path,
-            label: <Link to={item.path}>{item.label}</Link>
-          }))}
-        />
-
+<Menu
+  mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
+  selectedKeys={[
+    menuItems.find(item => location.pathname.startsWith(item.path))?.path || '/'
+  ]}
+  className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
+  items={menuItems.map(item => ({
+    key: item.path,
+    label: <Link to={item.path}>{item.label}</Link>
+  }))}
+/>
 
         <div className="user-controls">
           {isAuthenticated ? (
             <>
+
               <div className="welcome-message">
                 {fullName ? `Xin chào, ${fullName}` : `Xin chào, ${userName}`}
               </div>
