@@ -23,8 +23,9 @@ const ROLE_MENUS = {
   ],
   3: [
     { key: 'home', label: 'Trang chủ', path: '/' },
-    { key: 'user-management', label: 'Quản lý người dùng', path: '/users' },
-    { key: 'school-management', label: 'Quản lý trường học', path: '/schools' },
+    { key: 'user-management', label: 'Quản lý người dùng', path: '/manager-users' },
+    { key: 'school-management', label: 'Quản lý trường học', path: '/manager-school' },
+    { key: 'manage-dashboard', label: 'Biểu Đồ Báo Cáo', path: '/manager-dashboard' },
     { key: 'system-settings', label: 'Cài đặt hệ thống', path: '/settings' },
   ]
 };
