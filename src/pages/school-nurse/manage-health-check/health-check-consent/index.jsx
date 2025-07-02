@@ -10,6 +10,7 @@ const HealthCheckConsent = () => {
   const [consents, setConsents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [classFilter, setClassFilter] = useState('all');
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedConsent, setSelectedConsent] = useState(null);
 
@@ -29,14 +30,15 @@ const HealthCheckConsent = () => {
   const filteredConsents = consents.filter(consent => {
     const matchesSearch = consent.studentName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || consent.isAgreed === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesClass = classFilter === 'all' || consent.className === classFilter;
+    return matchesSearch && matchesStatus && matchesClass;
   });
 
   const getStatusColor = (isAgreed) => {
     switch (isAgreed) {
       case 'Chờ phản hồi': return 'warning';
-      case 'Đã đồng ý': return 'success';
-      case 'Đã từ chối': return 'error';
+      case 'Đồng ý': return 'success';
+      case 'Từ chối': return 'error';
       default: return 'default';
     }
   };
@@ -46,8 +48,8 @@ const HealthCheckConsent = () => {
   const stats = {
     total: consents.length,
     pending: consents.filter(c => c.isAgreed === 'Chờ phản hồi').length,
-    agreed: consents.filter(c => c.isAgreed === 'Đã đồng ý').length,
-    rejected: consents.filter(c => c.isAgreed === 'Đã từ chối').length
+    agreed: consents.filter(c => c.isAgreed === 'Đồng ý').length,
+    rejected: consents.filter(c => c.isAgreed === 'Từ chối').length
   };
 
   return (
@@ -63,18 +65,39 @@ const HealthCheckConsent = () => {
         <Col span={6}><Card><Statistic title="Đã đồng ý" value={stats.agreed} valueStyle={{ color: '#52c41a' }} /></Card></Col>
         <Col span={6}><Card><Statistic title="Đã từ chối" value={stats.rejected} valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
       </Row>
-      <Card className="health-check-consent-filters" style={{ marginBottom: 24 }} title="Bộ lọc">
-        <Row gutter={16}>
-          <Col span={6}><Input placeholder="Tìm kiếm học sinh, phụ huynh..." prefix={<SearchOutlined />} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} allowClear /></Col>
-          <Col span={6}><Select style={{ width: '100%' }} value={statusFilter} onChange={setStatusFilter} placeholder="Trạng thái">
+      <div className="health-check-consent-filters">
+        <Input.Search
+          placeholder="Tìm kiếm học sinh, phụ huynh..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          onSearch={value => setSearchTerm(value)}
+          style={{ width: 300 }}
+          allowClear
+        />
+        <Select 
+        style={{ width: 180 }} 
+        value={statusFilter} 
+        onChange={setStatusFilter} 
+        placeholder="Trạng thái">
             <Option value="all">Tất cả trạng thái</Option>
             <Option value="Chờ phản hồi">Chờ phản hồi</Option>
-            <Option value="Đã đồng ý">Đã đồng ý</Option>
-            <Option value="Đã từ chối">Đã từ chối</Option>
-          </Select></Col>
-          <Col span={6}><Button icon={<FilterOutlined />} block>Áp dụng bộ lọc</Button></Col>
-        </Row>
-      </Card>
+            <Option value="Đồng ý">Đồng ý</Option>
+            <Option value="Từ chối">Từ chối</Option>
+          </Select>
+        <Select
+          style={{ width: 180, marginLeft: 12 }}
+          value={classFilter}
+          onChange={setClassFilter}
+          placeholder="Lọc theo lớp"
+        >
+          <Option value="all">Tất cả lớp</Option>
+          <Option value="Lớp 5A">Lớp 5A</Option>
+          <Option value="Lớp 4B">Lớp 4B</Option>
+          <Option value="Lớp 3C">Lớp 3C</Option>
+          <Option value="Lớp 2A">Lớp 2A</Option>
+          <Option value="Lớp 1B">Lớp 1B</Option>
+        </Select>
+      </div>
       <div className="health-check-consent-list">
         {filteredConsents.map((consent) => (
           <div key={consent.formID} className="health-check-consent-card">
@@ -96,11 +119,24 @@ const HealthCheckConsent = () => {
             </div>
             {consent.notes && (
               <div style={{ marginTop: 4 }}>
-                <Alert message="Ghi chú" description={consent.notes} type="info" className="health-check-consent-card-alert" />
+                <Alert message="Phản hồi của phụ huynh: " description={consent.notes} type="info" className="health-check-consent-card-alert" />
               </div>
             )}
             <div className="health-check-consent-card-actions">
-              <Button icon={<EyeOutlined />} onClick={() => { setSelectedConsent(consent); setIsDetailModalOpen(true); }}>Xem chi tiết</Button>
+              <Button 
+              icon={<EyeOutlined />} 
+              onClick={() => { setSelectedConsent(consent); setIsDetailModalOpen(true); }}
+              >
+                Xem chi tiết
+              </Button>
+              {consent.isAgreed === 'Chờ phản hồi' && (
+                <Button 
+                  icon={<SendOutlined />}
+                  onClick={() => handleResendConsent(consent.id)}
+                >
+                  Gửi lại
+                </Button>
+              )}
             </div>
           </div>
         ))}
@@ -140,7 +176,7 @@ const HealthCheckConsent = () => {
                 <Text>{selectedConsent.expire_date ? selectedConsent.expire_date.replace('T', ' ').substring(0, 16) : ''}</Text>
               </Col>
               <Col span={24} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong>Ghi chú:</Text><br />
+                <Text type="secondary" strong>Phản hồi của phụ huynh: </Text><br />
                 <Text>{selectedConsent.notes}</Text>
               </Col>
             </Row>

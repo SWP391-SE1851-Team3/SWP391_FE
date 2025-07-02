@@ -6,7 +6,8 @@ import {
   TeamOutlined, 
   EditOutlined, 
   DeleteOutlined, 
-  SendOutlined 
+  SendOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { 
   Button, 
@@ -76,7 +77,9 @@ const HealthCheckBatchManager = () => {
           create_at: item.create_at,
           update_at: item.update_at,
         }));
-        setBatches(mapped);
+        // Sắp xếp theo ngày giảm dần (mới nhất lên đầu)
+        const sorted = mapped.sort((a, b) => new Date(b.scheduledDate) - new Date(a.scheduledDate));
+        setBatches(sorted);
       } catch (error) {
         message.error('Không thể tải danh sách đợt khám sức khỏe');
       } finally {
@@ -160,22 +163,26 @@ const HealthCheckBatchManager = () => {
       const res = await createHealthCheckSchedule(data);
       console.log('[CREATE] Dữ liệu trả về từ BE:', res);
       message.success('Tạo đợt khám thành công!');
-      setBatches(prev => [
-        {
-          id: res.health_ScheduleID,
-          batchName: res.name,
-          scheduledDate: res.schedule_Date,
-          location: res.location,
-          notes: res.notes,
-          status: res.status,
-          nurseName: res.nurseName,
-          createdByNurseName: res.createdByNurseName,
-          updatedByNurseName: res.updatedByNurseName,
-          create_at: res.create_at,
-          update_at: res.update_at,
-        },
-        ...prev
-      ]);
+      setBatches(prev => {
+        const newList = [
+          {
+            id: res.health_ScheduleID,
+            batchName: res.name,
+            scheduledDate: res.schedule_Date,
+            location: res.location,
+            notes: res.notes,
+            status: res.status,
+            nurseName: res.nurseName,
+            createdByNurseName: res.createdByNurseName,
+            updatedByNurseName: res.updatedByNurseName,
+            create_at: res.create_at,
+            update_at: res.update_at,
+          },
+          ...prev
+        ];
+        // Sắp xếp lại sau khi thêm mới
+        return newList.sort((a, b) => new Date(b.scheduledDate) - new Date(a.scheduledDate));
+      });
       setIsCreateModalOpen(false);
       form.resetFields();
     } catch (error) {
@@ -252,22 +259,51 @@ const HealthCheckBatchManager = () => {
         message.error('Vui lòng chọn khoảng thời gian gửi và hết hạn!');
         return;
       }
-      const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
-      const data = {
-        className: values.className,
-        healthScheduleId: selectedBatchForConsent.id,
-        sendDate: consentDateRange[0].toISOString(),
-        expireDate: consentDateRange[1].toISOString(),
-        isAgreed: values.isAgreed,
-        notes: values.notes,
-        createByNurseId: nurseId
-      };
-      await createHealthConsentForClass(data);
-      message.success('Gửi phiếu xác nhận thành công!');
-      setIsConsentModalOpen(false);
-      setSelectedBatchForConsent(null);
-      consentForm.resetFields();
-      setConsentDateRange([]);
+      // Hiển thị xác nhận lại thông tin
+      Modal.confirm({
+        title: <span style={{fontWeight:900, fontSize:20, color:'#52c41a'}}><ExclamationCircleOutlined style={{color:'#faad14', marginRight:8}}/>Xác nhận gửi phiếu</span>,
+        icon: null,
+        content: (
+          <div style={{textAlign:'center', padding:'12px 0'}}>
+            <Typography.Paragraph style={{fontSize:20, marginBottom:19}}>
+              Vui lòng kiểm tra lại thông tin :
+            </Typography.Paragraph>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'start', gap:12}}>
+              <Typography.Text strong style={{fontSize:16, color:'#1890ff'}}>Lớp: {values.className}</Typography.Text>
+              <Typography.Text style={{fontSize:16}}>
+                <b>Thời gian gửi phiếu:</b> <span style={{color:'#52c41a'}}>{consentDateRange[0]?.format('DD/MM/YYYY HH:mm')}</span>
+              </Typography.Text>
+              <Typography.Text style={{fontSize:16}}>
+                <b>Thời gian hết hạn:</b> <span style={{color:'#fa541c'}}>{consentDateRange[1]?.format('DD/MM/YYYY HH:mm')}</span>
+              </Typography.Text>
+            </div>
+          </div>
+        ),
+        okText: <span style={{fontWeight:600}}>Xác nhận gửi</span>,
+        cancelText: 'Hủy',
+        okButtonProps: { style: { background: '#52c41a', borderColor: '#52c41a' } },
+        cancelButtonProps: { style: { background: '#fff' } },
+        centered: true,
+        onOk: async () => {
+          const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+          console.log('[GỬI PHIẾU] createByNurseId:', nurseId);
+          const data = {
+            className: values.className,
+            healthScheduleId: selectedBatchForConsent.id,
+            sendDate: consentDateRange[0].toISOString(),
+            expireDate: consentDateRange[1].toISOString(),
+            isAgreed: values.isAgreed,
+            notes: values.notes,
+            createByNurseId: nurseId
+          };
+          await createHealthConsentForClass(data);
+          message.success('Gửi phiếu xác nhận thành công!');
+          setIsConsentModalOpen(false);
+          setSelectedBatchForConsent(null);
+          consentForm.resetFields();
+          setConsentDateRange([]);
+        }
+      });
     } catch (error) {
       message.error('Gửi phiếu xác nhận thất bại!');
     }
@@ -391,21 +427,24 @@ const HealthCheckBatchManager = () => {
               <Input />
             </Form.Item>
             <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker 
+                style={{ width: '100%' }} 
+                disabledDate={current => current && current < new Date().setHours(0,0,0,0)}
+              />
             </Form.Item>
-            <Form.Item name="location" label="Địa điểm">
+            <Form.Item name="location" label="Địa điểm" rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}>
               <Input />
             </Form.Item>
             <Form.Item name="notes" label="Ghi chú">
               <TextArea />
             </Form.Item>
             <Form.Item name="status" label="Trạng thái" initialValue="Đã lên lịch">
-              <Select>
+              <Select disabled>
                 <Option value="Đã lên lịch">Đã lên lịch</Option>
                 <Option value="Đã xác nhận">Đã xác nhận</Option>
                 <Option value="Đã từ chối">Đã từ chối</Option>
               </Select>
-            </Form.Item>
+            </Form.Item >
           </Form>
         </div>
       </Modal>
@@ -424,7 +463,10 @@ const HealthCheckBatchManager = () => {
               <Input />
             </Form.Item>
             <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker 
+                style={{ width: '100%' }} 
+                disabledDate={current => current && current < new Date().setHours(0,0,0,0)}
+              />
             </Form.Item>
             <Form.Item name="location" label="Địa điểm">
               <Input />
@@ -433,7 +475,7 @@ const HealthCheckBatchManager = () => {
               <TextArea />
             </Form.Item>
             <Form.Item name="status" label="Trạng thái">
-              <Select>
+              <Select disabled>
                 <Option value="Đã lên lịch">Đã lên lịch</Option>
                 <Option value="Đã xác nhận">Đã xác nhận</Option>
                 <Option value="Đã từ chối">Đã từ chối</Option>
@@ -453,7 +495,7 @@ const HealthCheckBatchManager = () => {
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form form={consentForm} layout="vertical">
-            <Form.Item name="className" label="Tên lớp" rules={[{ required: true, message: 'Vui lòng nhập tên lớp' }]}> 
+            <Form.Item name="className" label="Tên lớp" rules={[{ required: true, message: 'Vui lòng chọn tên lớp' }]}> 
               <Select placeholder="Chọn lớp" showSearch optionFilterProp="children">
                 <Option value="Lớp 5A">Lớp 5A</Option>
                 <Option value="Lớp 4B">Lớp 4B</Option>
@@ -462,7 +504,7 @@ const HealthCheckBatchManager = () => {
                 <Option value="Lớp 1B">Lớp 1B</Option>
               </Select>
             </Form.Item>
-            <Form.Item label="Chọn khoảng thời gian gửi phiếu" required>
+            <Form.Item label="Chọn khoảng thời gian gửi phiếu" required name="consentDateRange" rules={[{ required: true, message: 'Vui lòng chọn khoảng thời gian gửi phiếu' }]}> 
               <DatePicker.RangePicker
                 showTime
                 style={{ width: '100%' }}
@@ -472,11 +514,11 @@ const HealthCheckBatchManager = () => {
                 placeholder={["Ngày gửi phiếu", "Ngày hết hạn"]}
               />
             </Form.Item>
-            <Form.Item name="isAgreed" label="Trạng thái xác nhận" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}> 
-              <Select>
+            <Form.Item name="isAgreed" label="Trạng thái xác nhận" initialValue="Chờ phản hồi"> 
+              <Select disabled>
                 <Option value="Chờ phản hồi">Chờ phản hồi</Option>
-                <Option value="Đã đồng ý">Đã đồng ý</Option>
-                <Option value="Đã từ chối">Đã từ chối</Option>
+                <Option value="Đồng ý">Đồng ý</Option>
+                <Option value="Từ chối">Từ chối</Option>
               </Select>
             </Form.Item>
             <Form.Item name="notes" label="Ghi chú">
