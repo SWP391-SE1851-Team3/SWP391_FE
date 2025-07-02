@@ -11,6 +11,7 @@ const HealthCheckRecord = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [students, setStudents] = useState([]);
@@ -35,16 +36,16 @@ const HealthCheckRecord = () => {
           checkType: 'Khám tổng quát', // Mặc định vì không có trong response mới
           checkDate: item.create_at ? item.create_at.split('T')[0] : '',
           nurseName: item.createdByNurseName || '',
-          status: 'completed',
+          status: item.status || '', // Lấy status từ API
           notes: '', // Không có trong response mới
           height: item.height,
           weight: item.weight,
+          bmi: item.bmi !== undefined && item.bmi !== null ? +(+item.bmi).toFixed(2) : undefined,
           visionLeft: item.visionLeft,
           visionRight: item.visionRight,
           hearing: item.hearing,
           dentalCheck: item.dentalCheck,
           temperature: item.temperature,
-          bmi: item.bmi,
           overallResult: item.overallResult,
           parentName: '', // Không có trong response mới
           parentID: '', // Không có trong response mới
@@ -68,7 +69,8 @@ const HealthCheckRecord = () => {
                          record.checkType.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClass = classFilter === 'all' || record.className === classFilter;
     const matchesType = typeFilter === 'all' || record.checkType === typeFilter;
-    return matchesSearch && matchesClass && matchesType;
+    const matchesStatus = statusFilter === 'all' || record.status === statusFilter;
+    return matchesSearch && matchesClass && matchesType && matchesStatus;
   });
 
   const stats = {
@@ -93,6 +95,9 @@ const HealthCheckRecord = () => {
     setTimeout(() => {
       updateForm.setFieldsValue({
         ...record,
+        height: !record.height || record.height === 0 ? undefined : record.height,
+        weight: !record.weight || record.weight === 0 ? undefined : record.weight,
+        bmi: !record.bmi || record.bmi === 0 ? undefined : record.bmi,
         update_at: record.update_at ? record.update_at.split('T')[0] : '',
       });
     }, 0);
@@ -118,16 +123,16 @@ const HealthCheckRecord = () => {
         checkType: 'Khám tổng quát',
         checkDate: item.create_at ? item.create_at.split('T')[0] : '',
         nurseName: item.createdByNurseName || '',
-        status: 'completed',
+        status: item.status || '',
         notes: '',
         height: item.height,
         weight: item.weight,
+        bmi: item.bmi !== undefined && item.bmi !== null ? +(+item.bmi).toFixed(2) : undefined,
         visionLeft: item.visionLeft,
         visionRight: item.visionRight,
         hearing: item.hearing,
         dentalCheck: item.dentalCheck,
         temperature: item.temperature,
-        bmi: item.bmi,
         overallResult: item.overallResult,
         parentName: '',
         parentID: '',
@@ -150,13 +155,17 @@ const HealthCheckRecord = () => {
       const height = parseFloat(allValues.height);
       const weight = parseFloat(allValues.weight);
       if (height > 0 && weight > 0) {
-        const bmi = +(weight / (height * height)).toFixed(2);
+        // Tính BMI với chiều cao nhập vào là cm
+        const bmi = +((weight / (height * height)) * 10000).toFixed(2);
         updateForm.setFieldsValue({ bmi });
       } else {
         updateForm.setFieldsValue({ bmi: undefined });
       }
     }
   };
+
+  // Thêm hàm kiểm tra giá trị rỗng hoặc 0
+  const isEmpty = v => v === null || v === undefined || v === '' || v === 0;
 
   return (
     <div className='health-check-records-container'>
@@ -172,32 +181,58 @@ const HealthCheckRecord = () => {
         <Col span={8}><Card><Statistic title="Tuần này" value={stats.thisWeek} valueStyle={{ color: '#52c41a' }} /></Card></Col>
       </Row>
       {/* Filters */}
-      <Card style={{ marginBottom: '24px' }}>
-        <Title level={5}>Bộ lọc</Title>
-        <Row gutter={16}>
-          <Col span={6}><Input placeholder="Tìm kiếm học sinh, loại khám..." prefix={<SearchOutlined />} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></Col>
-          <Col span={6}><Select style={{ width: '100%' }} value={classFilter} onChange={setClassFilter} placeholder="Lớp học"><Option value="all">Tất cả lớp</Option>
+    
+      <div className="health-check-records-filters">
+        <Input.Search
+          placeholder="Tìm kiếm học sinh, loại khám..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          onSearch={value => setSearchTerm(value)}
+          style={{ width: 300 }}
+          allowClear
+        />
+        <Select 
+        style={{ width: 180 }} value={classFilter} onChange={setClassFilter} placeholder="Lớp học">
+          <Option value="all">Tất cả lớp học</Option>
           <Option value="Lớp 5A">Lớp 5A</Option>
-                <Option value="Lớp 4B">Lớp 4B</Option>
-                <Option value="Lớp 3C">Lớp 3C</Option>
-                <Option value="Lớp 2A">Lớp 2A</Option>
-                <Option value="Lớp 1B">Lớp 1B</Option>
-          </Select></Col>
-          <Col span={6}><Select style={{ width: '100%' }} value={typeFilter} onChange={setTypeFilter} placeholder="Loại khám"><Option value="all">Tất cả loại khám</Option>{checkTypes.map(type => (<Option key={type} value={type}>{type}</Option>))}</Select></Col>
-          <Col span={6}><Button icon={<FilterOutlined />} block>Áp dụng bộ lọc</Button></Col>
-        </Row>
-      </Card>
+          <Option value="Lớp 4B">Lớp 4B</Option>
+          <Option value="Lớp 3C">Lớp 3C</Option>
+          <Option value="Lớp 2A">Lớp 2A</Option>
+          <Option value="Lớp 1B">Lớp 1B</Option>
+        </Select>
+        <Select
+          style={{ width: 180, marginLeft: 12 }}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          placeholder="Trạng thái"
+        >
+          <Option value="all">Tất cả trạng thái</Option>
+          <Option value="Chờ ghi nhận">Chờ ghi nhận</Option>
+          <Option value="Đã hoàn thành">Đã hoàn thành</Option>
+          <Option value="Cần tư vấn y tế">Cần tư vấn y tế</Option>
+        </Select>
+      </div>
       {/* Records List */}
       <div className="health-check-records-list">
         {filteredRecords.map((record) => (
           <div key={record.id} className="health-check-record-card">
             <div className="health-check-record-card-header">
               <div><Title level={4}>{record.studentName}</Title><Text type="secondary">Lớp: {record.className} | Loại khám: {record.checkType}</Text></div>
-              <Badge status={record.status === 'completed' ? 'success' : (record.status === 'pending' ? 'warning' : 'default')} text={record.status || ''} />
+              <Badge 
+                status={record.status === 'Đã hoàn thành' ? 'success' : record.status === 'Cần tư vấn y tế' ? 'error' : record.status === 'Chờ ghi nhận' ? 'warning' : 'default'}
+                text={
+                  record.status === 'Đã hoàn thành'
+                    ? 'Đã hoàn thành'
+                    : record.status === 'Cần tư vấn y tế'
+                    ? 'Cần tư vấn y tế'
+                    : record.status === 'Chờ ghi nhận'
+                    ? 'Chờ ghi nhận'
+                    : ''}
+              />
             </div>
             <div className="health-check-record-card-info">
               <Space><Text type="secondary">Ngày khám:</Text> <Text>{record.checkDate}</Text></Space>
-              <Space><Text type="secondary">Y tá:</Text> <Text>{record.nurseName}</Text></Space>
+              <Space><Text type="secondary">Y tá tạo hồ sơ:</Text> <Text>{record.nurseName}</Text></Space>
             </div>
             <div className="health-check-record-card-info">
               <Space><Text type="secondary">Ngày cập nhật:</Text> <Text>{record.update_at ? record.update_at.split('T')[0] : ''}</Text></Space>
@@ -220,23 +255,35 @@ const HealthCheckRecord = () => {
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
         {selectedRecord && (
           <div>
-            <Row gutter={16}>
-              <Col span={12}><Text type="secondary">Tên học sinh:</Text><br /><Text strong>{selectedRecord.studentName}</Text></Col>
-              <Col span={12}><Text type="secondary">Lớp :</Text><br /><Text strong>{selectedRecord.className}</Text></Col>
-              <Col span={12}><Text type="secondary">Loại khám :</Text><br /><Text strong>{selectedRecord.checkType}</Text></Col>
-              <Col span={12}><Text type="secondary">Chiều cao:</Text><br /><Text strong>{selectedRecord.height}</Text></Col>
-              <Col span={12}><Text type="secondary">Cân nặng :</Text><br /><Text strong>{selectedRecord.weight}</Text></Col>
-              <Col span={12}><Text type="secondary">BMI :</Text><br /><Text strong>{selectedRecord.bmi}</Text></Col>
-              <Col span={12}><Text type="secondary">Nhiệt độ :</Text><br /><Text strong>{selectedRecord.temperature}</Text></Col>
-              <Col span={12}><Text type="secondary">Thính lực :</Text><br /><Text strong>{selectedRecord.hearing}</Text></Col>
-              <Col span={12}><Text type="secondary">Răng miệng :</Text><br /><Text strong>{selectedRecord.dentalCheck}</Text></Col>
-              <Col span={12}><Text type="secondary">Thị lực trái :</Text><br /><Text strong>{selectedRecord.visionLeft}</Text></Col>
-              <Col span={12}><Text type="secondary">Thị lực phải :</Text><br /><Text strong>{selectedRecord.visionRight}</Text></Col>
-                <Col span={12}><Text type="secondary">Kết luận chung :</Text><br /><Text strong>{selectedRecord.overallResult}</Text></Col>
-              <Col span={12}><Text type="secondary">Ngày khám :</Text><br /><Text strong>{selectedRecord.checkDate}</Text></Col>
-              <Col span={12}><Text type="secondary">Ngày cập nhật :</Text><br /><Text strong>{selectedRecord.update_at ? selectedRecord.update_at.split('T')[0] : ''}</Text></Col>
-              <Col span={12}><Text type="secondary">Y tá tạo :</Text><br /><Text strong>{selectedRecord.nurseName}</Text></Col>
-              <Col span={12}><Text type="secondary">Y tá cập nhật :</Text><br /><Text strong>{selectedRecord.updatedByNurseName}</Text></Col>
+            <Row gutter={[24, 16]}>
+              {/* Thông tin học sinh */}
+              <Col span={12}><Text strong>Tên học sinh:</Text><br /><Text>{selectedRecord.studentName}</Text></Col>
+              <Col span={12}><Text strong>Lớp:</Text><br /><Text>{selectedRecord.className}</Text></Col>
+              <Col span={12}>
+                <Text strong>Loại khám:</Text>{'  '}
+                <Text>{selectedRecord.checkType}</Text>
+           
+                </Col>
+            </Row>
+            <div style={{margin: '18px 0 10px 0'}}><Text strong style={{fontSize:16, color:'#52c41a'}}>- Chỉ số đo lường:</Text></div>
+            <Row gutter={[24, 16]}>
+              <Col span={8}><Text strong>Chiều cao (cm):</Text><br /><Text>{selectedRecord.height}</Text></Col>
+              <Col span={8}><Text strong>Cân nặng (kg):</Text><br /><Text>{selectedRecord.weight}</Text></Col>
+              <Col span={8}><Text strong>BMI:</Text><br /><Text>{selectedRecord.bmi}</Text></Col>
+              <Col span={8}><Text strong>Nhiệt độ (°C):</Text><br /><Text>{selectedRecord.temperature}</Text></Col>
+              <Col span={8}><Text strong>Thị lực trái:</Text><br /><Text>{selectedRecord.visionLeft}</Text></Col>
+              <Col span={8}><Text strong>Thị lực phải:</Text><br /><Text>{selectedRecord.visionRight}</Text></Col>
+              <Col span={8}><Text strong>Thính lực:</Text><br /><Text>{selectedRecord.hearing}</Text></Col>
+              <Col span={8}><Text strong>Răng miệng:</Text><br /><Text>{selectedRecord.dentalCheck}</Text></Col>
+            </Row>
+            <div style={{margin: '18px 0 10px 0'}}><Text strong style={{fontSize:16, color:'#faad14'}}>- Kết luận & Thông tin khác:</Text></div>
+            <Row gutter={[24, 16]}>
+              <Col span={12}><Text strong>Kết luận chung:</Text><br /><Text>{selectedRecord.overallResult}</Text></Col>
+              <Col span={12}><Text strong>Trạng thái:</Text><br /><Text>{selectedRecord.status}</Text></Col>
+              <Col span={12}><Text strong>Ngày khám:</Text><br /><Text>{selectedRecord.checkDate}</Text></Col>
+              <Col span={12}><Text strong>Ngày cập nhật:</Text><br /><Text>{selectedRecord.update_at ? selectedRecord.update_at.split('T')[0] : ''}</Text></Col>
+              <Col span={12}><Text strong>Y tá tạo:</Text><br /><Text>{selectedRecord.nurseName}</Text></Col>
+              <Col span={12}><Text strong>Y tá cập nhật:</Text><br /><Text>{selectedRecord.updatedByNurseName}</Text></Col>
             </Row>
           </div>
         )}
@@ -250,11 +297,12 @@ const HealthCheckRecord = () => {
         okText="Ghi nhận"
         cancelText="Hủy"
         bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        width={600}
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form layout="vertical" form={updateForm} onValuesChange={handleAutoBMI}>
             <Row gutter={16}>
-              <Col span={8}><Form.Item name="height" label="Chiều cao (m)" rules={[{ required: true, message: 'Vui lòng nhập chiều cao' }]}><Input type="number" step="0.01" /></Form.Item></Col>
+              <Col span={8}><Form.Item name="height" label="Chiều cao (cm)" rules={[{ required: true, message: 'Vui lòng nhập chiều cao' }]}><Input type="number" step="0.01" /></Form.Item></Col>
               <Col span={8}><Form.Item name="weight" label="Cân nặng (kg)" rules={[{ required: true, message: 'Vui lòng nhập cân nặng' }]}><Input type="number" step="0.01" /></Form.Item></Col>
               <Col span={8}><Form.Item name="bmi" label="BMI" rules={[{ required: true, message: 'Vui lòng nhập BMI' }]}><Input type="number" step="0.01" /></Form.Item></Col>
             </Row>
@@ -265,21 +313,32 @@ const HealthCheckRecord = () => {
             </Row>
             <Row gutter={16}>
               <Col span={12}><Form.Item name="dentalCheck" label="Răng miệng" rules={[{ required: true, message: 'Vui lòng nhập răng miệng' }]}><Input /></Form.Item></Col>
-              <Col span={12}><Form.Item name="temperature" label="Nhiệt độ" rules={[{ required: true, message: 'Vui lòng nhập nhiệt độ' }]}><Input /></Form.Item></Col>
+              <Col span={12}><Form.Item name="temperature" label="Nhiệt độ (°C)" rules={[{ required: true, message: 'Vui lòng nhập nhiệt độ' }]}><Input /></Form.Item></Col>
             </Row>
             <Row gutter={16}>
               <Col span={24}><Form.Item name="overallResult" label="Kết luận chung" rules={[{ required: true, message: 'Vui lòng nhập kết luận chung' }]}><Input /></Form.Item></Col>
             </Row>
             <Row gutter={16}>
               <Col span={12}>
-                <Form.Item name="update_at" label="Ngày cập nhật">
+                <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}> 
+                  <Select>
+                    
+                    <Option value="Đã hoàn thành">Đã hoàn thành</Option>
+                    <Option value="Cần tư vấn y tế">Cần tư vấn y tế</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="update_at" label="Ngày cập nhật" style={{display: 'none'}}>
                   <Input
                     disabled
                     value={updateForm.getFieldValue('update_at') ? (updateForm.getFieldValue('update_at').split('T')[0]) : ''}
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}><Form.Item name="updatedByNurseName" label="Y tá cập nhật"><Input disabled /></Form.Item></Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}><Form.Item name="updatedByNurseName" label="Y tá cập nhật" style={{display: 'none'}}><Input disabled /></Form.Item></Col>
             </Row>
           </Form>
         </div>
