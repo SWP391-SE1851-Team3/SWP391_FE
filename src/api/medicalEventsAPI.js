@@ -70,7 +70,7 @@ export const getEventDetailsByEndpoint = async (eventId, setLoading) => {
 // Get all event names
 export const getEventNames = async () => {
   try {
-    const response = await axios.get(`${API_BASE}/all`);
+    const response = await axios.get(`${API_BASE}/getAllEventTypeName`);
     // Transform the response to match the expected structure
     const formattedData = response.data.map(item => ({
       eventTypeId: item.eventTypeId || 0,

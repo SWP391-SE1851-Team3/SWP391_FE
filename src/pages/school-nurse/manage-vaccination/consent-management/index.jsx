@@ -49,7 +49,7 @@ const ConsentManagement = () => {
           expireDate: item.expire_date ? item.expire_date.substring(0, 10) : '',
           className: item.className || '',
           location: item.location || '',
-          status: item.status || '',
+          status: mapStatusToUI(item.status || ''),
           reason: item.reason || '',
           isAgree: item.isAgree || '',
           hasAllergy: item.hasAllergy || '',
@@ -68,16 +68,22 @@ const ConsentManagement = () => {
   const filteredConsents = consents.filter(consent => {
     const matchesSearch = consent.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          consent.parentName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || consent.status === statusFilter;
+    let matchesStatus = true;
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'Đã phê duyệt') {
+        matchesStatus = consent.status === 'Đã phê duyệt' || consent.status === 'ĐÃ PHÊ DUYỆT';
+      } else {
+        matchesStatus = consent.status === statusFilter;
+      }
+    }
     const matchesClass = classFilter === 'all' || consent.className === classFilter;
-    
     return matchesSearch && matchesStatus && matchesClass;
   });
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'Chờ xác nhận': return 'warning';
-      case 'Đã xác nhận': return 'success';
+      case 'Đã phê duyệt': return 'success';
       case 'Từ chối': return 'error';
       default: return 'default';
     }
@@ -86,7 +92,7 @@ const ConsentManagement = () => {
   const getStatusText = (status) => {
     switch (status) {
       case 'Chờ xác nhận': return 'Chờ xác nhận';
-      case 'Đã xác nhận': return 'Đã xác nhận';
+      case 'Đã phê duyệt': return 'Đã phê duyệt';
       case 'Từ chối': return 'Từ chối';
       default: return status;
     }
@@ -109,8 +115,18 @@ const ConsentManagement = () => {
   const stats = {
     total: consents.length,
     pending: consents.filter(c => c.status === 'Chờ xác nhận').length,
-    approved: consents.filter(c => c.status === 'Đã xác nhận').length,
+    approved: consents.filter(c => c.status === 'Đã phê duyệt').length,
     rejected: consents.filter(c => c.status === 'Từ chối').length
+  };
+
+  // Mapping status for UI <-> API
+  const mapStatusToUI = (status) => {
+    if (status === 'ĐÃ PHÊ DUYỆT') return 'Đã phê duyệt';
+    return status;
+  };
+  const mapStatusToAPI = (status) => {
+    if (status === 'Đã phê duyệt') return 'ĐÃ PHÊ DUYỆT';
+    return status;
   };
 
   return (
@@ -144,7 +160,7 @@ const ConsentManagement = () => {
         <Col span={6}>
           <Card>
             <Statistic 
-              title="Đã xác nhận" 
+              title="Đã phê duyệt" 
               value={stats.approved}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -182,7 +198,7 @@ const ConsentManagement = () => {
             >
               <Option value="all">Tất cả trạng thái</Option>
               <Option value="Chờ xác nhận">Chờ xác nhận</Option>
-              <Option value="Đã xác nhận">Đã xác nhận</Option>
+              <Option value="Đã phê duyệt">Đã phê duyệt</Option>
               <Option value="Từ chối">Từ chối</Option>
             </Select>
           </Col>
