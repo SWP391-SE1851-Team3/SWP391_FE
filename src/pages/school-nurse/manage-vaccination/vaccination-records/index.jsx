@@ -62,24 +62,24 @@ const VaccinationRecords = () => {
         const res = await geVaccinationRecords();
         console.log('DEBUG RAW DATA:', res.data);
         const mapped = (res.data || []).map(item => ({
-          id: item.vaccinationRecordID,
-          vaccinationRecordID: item.vaccinationRecordID,
-          studentID: item.studentID,
-          studentName: item.studentName,
-          className: item.className,
-          batchID: item.bacthID || item.batchID || '',
-          vaccineName: item.vaccineName,
+          notes: item.notes,
+          observation_time: item.observation_time,
           symptoms: item.symptoms,
           severity: item.severity,
-          notes: item.notes,
           observation_notes: item.observation_notes,
-          observation_time: item.observation_time,
           status: item.status,
+          className: item.className,
+          consentId: item.consentId,
+          parentID: item.parentID,
+          batchID: item.batchID,
+          vaccineName: item.vaccineName,
+          vaccinationRecordID: item.vaccinationRecordID,
+          studentID: item.studentID,
           createNurseID: item.createNurseID,
-          createNurseName: item.createNurseName,
           editNurseID: item.editNurseID,
+          createNurseName: item.createNurseName,
           editNurseName: item.editNurseName,
-          vaccineBatchName: item.vaccineBatchName || item.dot || item.vaccine_batch || '',
+          studentName: item.studentName
         }));
         setRecords(mapped);
       } catch (err) {
@@ -129,24 +129,24 @@ const VaccinationRecords = () => {
       // Reload danh sách sau khi tạo mới
       const res = await geVaccinationRecords();
       const mapped = (res.data || []).map(item => ({
-        id: item.vaccinationRecordID,
-        vaccinationRecordID: item.vaccinationRecordID,
-        studentID: item.studentID,
-        studentName: item.studentName,
-        className: item.className,
-        batchID: item.bacthID || item.batchID || '',
-        vaccineName: item.vaccineName,
+        notes: item.notes,
+        observation_time: item.observation_time,
         symptoms: item.symptoms,
         severity: item.severity,
-        notes: item.notes,
         observation_notes: item.observation_notes,
-        observation_time: item.observation_time,
         status: item.status,
+        className: item.className,
+        consentId: item.consentId,
+        parentID: item.parentID,
+        batchID: item.batchID,
+        vaccineName: item.vaccineName,
+        vaccinationRecordID: item.vaccinationRecordID,
+        studentID: item.studentID,
         createNurseID: item.createNurseID,
-        createNurseName: item.createNurseName,
         editNurseID: item.editNurseID,
+        createNurseName: item.createNurseName,
         editNurseName: item.editNurseName,
-        vaccineBatchName: item.vaccineBatchName || item.dot || item.vaccine_batch || '',
+        studentName: item.studentName
       }));
       setRecords(mapped);
     } catch (error) {
@@ -207,6 +207,7 @@ const VaccinationRecords = () => {
       editNurseID: editNurseID,
       studentName: record.studentName,
       editNurseName: editNurseName,
+      consentId: record.consentId
     });
   };
 
@@ -226,10 +227,11 @@ const VaccinationRecords = () => {
         observation_time: values.observation_time,
         status: values.status,
         className: values.className,
+        consentId: values.consentId !== undefined ? values.consentId : (editingRecord?.consentId || undefined),
         parentID: values.parentID,
         editNurseID: values.editNurseID,
-        studentName: values.studentName,
         editNurseName: values.editNurseName,
+        studentName: values.studentName
       };
       await updateVaccinationRecord(recordId, updateData);
       setIsEditModalOpen(false);
@@ -239,25 +241,24 @@ const VaccinationRecords = () => {
       // Reload danh sách sau khi cập nhật
       const res = await geVaccinationRecords();
       const mapped = (res.data || []).map(item => ({
-        id: item.vaccinationRecordID,
-        vaccinationRecordID: item.vaccinationRecordID,
-        studentID: item.studentID,
-        studentName: item.studentName,
-        className: item.className,
-        batchID: item.bacthID || item.batchID || '',
-        vaccineName: item.vaccineName,
+        notes: item.notes,
+        observation_time: item.observation_time,
         symptoms: item.symptoms,
         severity: item.severity,
-        notes: item.notes,
         observation_notes: item.observation_notes,
-        observation_time: item.observation_time,
         status: item.status,
+        className: item.className,
+        consentId: item.consentId,
+        parentID: item.parentID,
+        batchID: item.batchID,
+        vaccineName: item.vaccineName,
+        vaccinationRecordID: item.vaccinationRecordID,
+        studentID: item.studentID,
         createNurseID: item.createNurseID,
-        createNurseName: item.createNurseName,
-        
         editNurseID: item.editNurseID,
+        createNurseName: item.createNurseName,
         editNurseName: item.editNurseName,
-        vaccineBatchName: item.vaccineBatchName || item.dot || item.vaccine_batch || '',
+        studentName: item.studentName
       }));
       setRecords(mapped);
     } catch (error) {
@@ -419,9 +420,11 @@ const VaccinationRecords = () => {
               <Col span={12}>
                 <Form.Item name="className" label="Lớp" rules={[{ required: true, message: 'Vui lòng nhập lớp' }]}> 
                   <Select placeholder="Chọn lớp" onChange={handleClassChange} allowClear>
-                    <Option value="Lớp 5A">Lớp 5A</Option>
-                    <Option value="Lớp 4B">Lớp 4B</Option>
-                    <Option value="Lớp 3C">Lớp 3C</Option>
+                  <Select.Option value="Lớp 5A">Lớp 5A</Select.Option>
+              <Select.Option value="Lớp 4B">Lớp 4B</Select.Option>
+              <Select.Option value="Lớp 3C">Lớp 3C</Select.Option>
+              <Select.Option value="Lớp 2A">Lớp 2A</Select.Option>
+              <Select.Option value="Lớp 1B">Lớp 1B</Select.Option>
                   </Select>
                 </Form.Item>
               </Col>
@@ -672,6 +675,7 @@ const VaccinationRecords = () => {
             <Form.Item name="editNurseName" label="Tên y tá chỉnh sửa">
               <Input disabled />
             </Form.Item>
+            
           </Form>
         </div>
       </Modal>

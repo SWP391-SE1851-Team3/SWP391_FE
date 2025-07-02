@@ -104,3 +104,25 @@ export const updateHealthCheckResult = async (checkID, nurseId, data) => {
     throw error;
   }
 };
+
+// Lấy danh sách tư vấn y tế của học sinh
+export const getAllHealthConsultations = async () => {
+  try {
+    const response = await axios.get('http://localhost:8080/api/health-consultation/all');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching health consultations:', error);
+    throw error;
+  }
+};
+
+// Cập nhật tư vấn y tế
+export const updateHealthConsultation = async (consultID, data) => {
+  try {
+    const response = await axios.put(`http://localhost:8080/api/health-consultation/${consultID}`, data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating health consultation:', error);
+    throw error;
+  }
+};

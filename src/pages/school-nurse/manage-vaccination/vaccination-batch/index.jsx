@@ -816,8 +816,8 @@ const VaccinationScheduleManager = () => {
           >
             <Select>
               <Option value="Chờ xác nhận">Chờ xác nhận</Option>
-              <Option value="Đã xác nhận">Đã xác nhận</Option>
-              <Option value="Hoàn thành">Hoàn thành</Option>
+              <Option value="Đã phê duyệt">Đã phê duyệt</Option>
+              <Option value="Từ chối">Từ chối</Option>
             </Select>
           </Form.Item>
         </Form>
