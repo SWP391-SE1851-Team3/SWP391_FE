@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './healthCheckNotification.css';
 import { getStudentsByParent } from '../../../api/consent_form';
-import { 
-  getHealthConsentByParent, 
-  updateHealthConsent, 
-  getHealthCheckResultsByStudent 
+import {
+  getHealthConsentByParent,
+  updateHealthConsent,
+  getHealthCheckResultsByStudent
 } from '../../../api/healthCheck_parent';
 import { message, Form, Input, Radio, Button, Spin, Modal } from 'antd';
 
@@ -53,10 +53,10 @@ const ParentHealthCheck = () => {
 
   const processExpiredForms = (forms) => {
     return forms.map(form => {
-      const isPending = !form.isAgreed || 
-        form.isAgreed === "" || 
-        form.isAgreed === "Chờ phản hồi";
-      
+      const isPending = !form.isAgreed ||
+        form.isAgreed === "" ||
+        form.isAgreed.toLowerCase() === "chờ phản hồi";
+
       if (isPending && isFormExpired(form.expire_date)) {
         return {
           ...form,
@@ -75,7 +75,7 @@ const ParentHealthCheck = () => {
       message.error("Không tìm thấy studentId!");
       return;
     }
-    
+
     setSelectedStudent(student);
     setLoadingForm(true);
 
@@ -83,15 +83,15 @@ const ParentHealthCheck = () => {
       // Lấy thông tin health consent theo parentId
       const consentRes = await getHealthConsentByParent(parentId);
       const allConsentForms = Array.isArray(consentRes) ? consentRes : (consentRes.data ? consentRes.data : []);
-      
+
       // Lọc các form của học sinh hiện tại
-      let studentConsentForms = allConsentForms.filter(form => 
+      let studentConsentForms = allConsentForms.filter(form =>
         Number(form.studentID) === studentId
       );
 
       // Xử lý các form hết hạn
       studentConsentForms = processExpiredForms(studentConsentForms);
-      
+
       // Lấy kết quả health check
       let healthResults = [];
       try {
@@ -117,10 +117,10 @@ const ParentHealthCheck = () => {
 
         // Tìm form "Chờ phản hồi" đầu tiên và chưa hết hạn
         const pendingForm = studentConsentForms.find(form => {
-          const isPending = !form.isAgreed || 
-            form.isAgreed === "" || 
-            form.isAgreed === "Chờ phản hồi";
-          const notExpired = !isFormExpired(form.expire_date);
+          const isPending = !form.isAgreed ||
+            form.isAgreed === "" ||
+            form.isAgreed.toLowerCase() === "chờ phản hồi";
+          const notExpired = !isFormExpired(form.expire_date);f
           return isPending && notExpired;
         });
 
@@ -152,7 +152,7 @@ const ParentHealthCheck = () => {
     } finally {
       setLoadingForm(false);
     }
-  };  
+  };
 
   const handleSubmit = async (values) => {
     // Kiểm tra lý do từ chối
@@ -194,7 +194,7 @@ const ParentHealthCheck = () => {
       setCurrentConsentForm(updatedForm);
 
       // Cập nhật trong danh sách forms
-      const updatedForms = healthConsentForms.map(form => 
+      const updatedForms = healthConsentForms.map(form =>
         form.formID === formId ? updatedForm : form
       );
       setHealthConsentForms(updatedForms);
@@ -285,9 +285,9 @@ const ParentHealthCheck = () => {
           <span className="history-label">Ngày tạo:</span> {formatDateTime(result.create_at)}
         </div>
         <div className="history-card-row">
-          <Button 
-            type="primary" 
-            size="small" 
+          <Button
+            type="primary"
+            size="small"
             onClick={() => handleViewResultDetails(result)}
             style={{ marginTop: '10px' }}
           >
@@ -301,9 +301,9 @@ const ParentHealthCheck = () => {
   const renderConsentHistory = () => {
     // Lọc các form đã xử lý (bao gồm cả form hết hạn được tự động chuyển thành "Từ chối")
     const processedForms = healthConsentForms.filter(form => {
-      const hasResponse = form.isAgreed && form.isAgreed !== "" && form.isAgreed !== "Chờ phản hồi";
-      const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed === "Chờ phản hồi") && isFormExpired(form.expire_date);
-      
+      const hasResponse = form.isAgreed && form.isAgreed !== "" && form.isAgreed.toLowerCase() !== "chờ phản hồi";
+      const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
+
       return hasResponse || isPendingButExpired;
     });
 
@@ -318,8 +318,8 @@ const ParentHealthCheck = () => {
       let displayNotes = form.notes;
 
       // Nếu form chưa được phản hồi nhưng đã hết hạn
-      const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed === "Chờ phản hồi") && isFormExpired(form.expire_date);
-      
+      const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
+
       if (isPendingButExpired) {
         displayStatus = "Từ chối";
         statusClass = "status-error";
@@ -507,12 +507,12 @@ const ParentHealthCheck = () => {
               <ul>
                 {renderConsentHistory()}
                 {healthConsentForms.filter(form => {
-                  const hasResponse = form.isAgreed && form.isAgreed !== "" && form.isAgreed !== "Chờ phản hồi";
-                  const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed === "Chờ phản hồi") && isFormExpired(form.expire_date);
+                  const hasResponse = form.isAgreed && form.isAgreed !== "" && form.isAgreed.toLowerCase() !== "chờ phản hồi";
+                  const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
                   return hasResponse || isPendingButExpired;
                 }).length === 0 && (
-                  <div className="empty-history">Chưa có lịch sử đồng ý kiểm tra sức khỏe.</div>
-                )}
+                    <div className="empty-history">Chưa có lịch sử đồng ý kiểm tra sức khỏe.</div>
+                  )}
               </ul>
             </div>
           )}
