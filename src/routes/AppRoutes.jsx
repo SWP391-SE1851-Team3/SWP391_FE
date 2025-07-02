@@ -40,6 +40,12 @@
             </PrivateRoute>
           } />
 
+          <Route path="manager" element={
+            <PrivateRoute>
+              <Home />
+            </PrivateRoute>
+          } />
+
           <Route path="manager-users" element={
             <PrivateRoute>
               <UserManagement />
