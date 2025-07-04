@@ -89,27 +89,35 @@
 
 .health-consultation-card-info {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0 32px;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 32px;
   margin-bottom: 20px;
   color: #495057;
   align-items: center;
 }
 
+.info-item {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.info-item .ant-typography:first-child {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.info-item .ant-typography:last-child {
+  font-size: 14px;
+  color: #262626;
+}
+
 @media (max-width: 768px) {
   .health-consultation-card-info {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 12px;
   }
-}
-
-.health-consultation-card-info .ant-space-item {
-  font-size: 14px;
-}
-
-.health-consultation-card-info .anticon {
-  color: #1890ff;
-  font-size: 16px;
 }
 
 .health-consultation-card-alert {

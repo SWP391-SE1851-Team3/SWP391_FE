@@ -39,7 +39,8 @@ const HealthConsultation = () => {
           createdByNurseName: item.createdByNurseName,
           updatedByNurseName: item.updatedByNurseName,
           updatedByNurseID: item.updatedByNurseID,
-          createdByNurseID: item.createdByNurseID
+          createdByNurseID: item.createdByNurseID,
+          location: item.location || ''
         })));
       } catch (err) {
         message.error('Lỗi khi tải danh sách tư vấn y tế');
@@ -115,18 +116,31 @@ const HealthConsultation = () => {
               <div><Title level={4}>{consultation.studentName}</Title><Text type="secondary">Lớp: {consultation.className}</Text></div>
               <Badge status={consultation.status === 'Đã hoàn thành' ? 'success' : (consultation.status === 'Đang chờ xử lý' ? 'warning' : 'default')} text={consultation.status || ''} />
             </div>
+            <div className="health-consultation-card-info">
+              <div className="info-item">
+                <Text type="secondary">Ngày tư vấn:</Text>
+                <Text>{consultation.consultDate ? consultation.consultDate.split('T')[0] : ''}</Text>
+              </div>
+              <div className="info-item">
+                <Text type="secondary">Địa điểm:</Text>
+                <Text>{consultation.location}</Text>
+              </div>
+            </div>
             <div className="health-consultation-card-info"><Space><Text type="secondary">Lý do tư vấn:</Text> <Text>{consultation.reason}</Text></Space></div>
-            <div className="health-consultation-card-info"><Space><Text type="secondary">Ngày tư vấn:</Text> <Text>{consultation.consultDate ? consultation.consultDate.split('T')[0] : ''}</Text></Space></div>
             <div className="health-consultation-card-info"><Space><Text type="secondary">Y tá tạo:</Text> <Text>{consultation.createdByNurseName}</Text></Space></div>
-            <div className="health-consultation-card-actions"><Button icon={<EyeOutlined />} onClick={() => { setSelectedConsultation(consultation); setDetailModalOpen(true); }}>Xem chi tiết</Button>
+            
+            <div className="health-consultation-card-actions">
+              <Button icon={<EyeOutlined />} onClick={() => { setSelectedConsultation(consultation); setDetailModalOpen(true); }}>Xem chi tiết</Button>
               <Button style={{marginLeft: 8}} onClick={() => { setEditingConsultation(consultation); setEditModalOpen(true); setTimeout(() => { editForm.setFieldsValue({
                 studentName: consultation.studentName,
                 status: consultation.status,
                 reason: consultation.reason,
                 scheduledDate: consultation.consultDate ? consultation.consultDate.split('T')[0] : '',
                 update_at: consultation.update_at ? consultation.update_at.split('T')[0] : '',
-                updatedByNurseName: consultation.updatedByNurseName
-              }); }, 0); }}>Chỉnh sửa</Button></div>
+                updatedByNurseName: consultation.updatedByNurseName,
+                location: consultation.location || ''
+              }); }, 0); }}>{!consultation.consultDate ? 'Lên lịch tư vấn' : 'Chỉnh sửa'}</Button>
+            </div>
           </div>
         ))}
       </div>
@@ -135,7 +149,7 @@ const HealthConsultation = () => {
         open={detailModalOpen}
         onCancel={() => setDetailModalOpen(false)}
         footer={null}
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
         {selectedConsultation && (
@@ -148,6 +162,7 @@ const HealthConsultation = () => {
               <Col span={12}><Text type="secondary">Ngày cập nhật:</Text><br /><Text strong>{selectedConsultation.update_at ? selectedConsultation.update_at.split('T')[0] : ''}</Text></Col>
               <Col span={12}><Text type="secondary">Y tá tạo:</Text><br /><Text strong>{selectedConsultation.createdByNurseName}</Text></Col>
               <Col span={12}><Text type="secondary">Y tá cập nhật:</Text><br /><Text strong>{selectedConsultation.updatedByNurseName}</Text></Col>
+              <Col span={12}><Text type="secondary">Địa điểm:</Text><br /><Text strong>{selectedConsultation.location}</Text></Col>
               <Col span={24}><Text type="secondary">Lý do tư vấn:</Text><br /><Text strong>{selectedConsultation.reason}</Text></Col>
             </Row>
           </div>
@@ -173,7 +188,8 @@ const HealthConsultation = () => {
               reason: values.reason,
               update_at: new Date().toISOString(),
               updatedByNurseName,
-              updatedByNurseID
+              updatedByNurseID,
+              location: values.location
             });
             message.success('Cập nhật tư vấn thành công!');
             setEditModalOpen(false);
@@ -195,7 +211,8 @@ const HealthConsultation = () => {
               createdByNurseName: item.createdByNurseName,
               updatedByNurseName: item.updatedByNurseName,
               updatedByNurseID: item.updatedByNurseID,
-              createdByNurseID: item.createdByNurseID
+              createdByNurseID: item.createdByNurseID,
+              location: item.location || ''
             })));
           } catch (err) {
             message.error('Cập nhật tư vấn thất bại!');
@@ -203,7 +220,7 @@ const HealthConsultation = () => {
         }}
         okText="Cập nhật"
         cancelText="Hủy"
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form layout="vertical" form={editForm}>
@@ -217,6 +234,7 @@ const HealthConsultation = () => {
               </Form.Item></Col>
               <Col span={12}><Form.Item name="scheduledDate" label="Ngày tư vấn" rules={[{ required: true, message: 'Vui lòng chọn ngày tư vấn' }]}><Input type="date" /></Form.Item></Col>
               <Col span={12}><Form.Item name="update_at" label="Ngày cập nhật"><Input disabled /></Form.Item></Col>
+              <Col span={12}><Form.Item name="location" label="Địa điểm" rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}><Input /></Form.Item></Col>
               <Col span={24}><Form.Item name="reason" label="Lý do tư vấn" rules={[{ required: true, message: 'Vui lòng nhập lý do tư vấn' }]}><Input.TextArea autoSize /></Form.Item></Col>
             </Row>
           </Form>

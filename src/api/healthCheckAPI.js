@@ -58,6 +58,17 @@ export const createHealthConsentForClass = async (data) => {
   }
 };
 
+// Tạo phiếu xác nhận cho nhiều lớp
+export const createHealthConsentForMultipleClasses = async (data) => {
+  try {
+    const response = await axios.post('http://localhost:8080/api/health-consent/create-for-multiple-classes', data);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating health consent for multiple classes:', error);
+    throw error;
+  }
+};
+
 // Lấy danh sách hồ sơ khám sức khỏe
 export const getAllHealthCheckResults = async () => {
   try {
