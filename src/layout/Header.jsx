@@ -26,7 +26,7 @@ const ROLE_MENUS = {
     { key: 'user-management', label: 'Quản lý người dùng', path: '/manager-users' },
     { key: 'school-management', label: 'Quản lý trường học', path: '/manager-school' },
     { key: 'manage-dashboard', label: 'Biểu Đồ Báo Cáo', path: '/manager-dashboard' },
-    { key: 'system-settings', label: 'Cài đặt hệ thống', path: '/settings' },
+    { key: 'manager-event', label: 'Quản Lý Sự Kiện', path: '/manager-event' },
   ]
 };
 
