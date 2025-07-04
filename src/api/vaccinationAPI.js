@@ -193,6 +193,19 @@ export const updateVaccinationRecord = async (vaccinationRecordID, data) => {
   }
 };
 
+// Cập nhật hồ sơ tiêm chủng theo vaccinationRecordID
+    export const updateVaccinationRecordById = async (vaccinationRecordID, data) => {
+      try {
+        console.log('🚀 [Vaccination API] Gửi lại hồ sơ tiêm chủng:', vaccinationRecordID, data);
+        const response = await axios.put(`/api/vaccination_records/editVaccineRecord/${vaccinationRecordID}`, data);
+        console.log('✅ [Vaccination API] Gửi lại hồ sơ tiêm chủng thành công:', response.data);
+        return response;
+      } catch (error) {
+        console.error('❌ [Vaccination API] Lỗi khi gửi lại hồ sơ tiêm chủng:', error);
+        throw error;
+      }
+    };
+
 // Lấy danh sách hồ sơ theo dõi sau tiêm của học sinh theo y tá
 export const getStudentVaccinationRecordsFollowedByNurse = async () => {
   try {

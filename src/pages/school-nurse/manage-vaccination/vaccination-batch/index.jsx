@@ -126,7 +126,8 @@ const VaccinationScheduleManager = () => {
 
   // Filter and search logic
   useEffect(() => {
-    let result = schedules;
+    // Sắp xếp schedules theo ngày tiêm mới nhất lên trên
+    let result = [...schedules].sort((a, b) => new Date(b.originalScheduledDate || b.scheduledDate) - new Date(a.originalScheduledDate || a.scheduledDate));
 
     if (searchTerm) {
       result = result.filter(schedule =>
@@ -187,7 +188,13 @@ const VaccinationScheduleManager = () => {
       const nurseName = localStorage.getItem('fullname') || 'Y tá Mặc định';
       const vaccineTypeID = Number(values.vaccineTypeID || 0);
       const quantityReceived = Number(values.quantity_received);
-      const scheduledDate = values.scheduledDate.toISOString();
+      let scheduledDate = '';
+      if (values.scheduledDate && typeof values.scheduledDate.toISOString === 'function') {
+        scheduledDate = values.scheduledDate.toISOString();
+      } else {
+        message.error('Vui lòng chọn ngày tiêm hợp lệ!');
+        return;
+      }
 
       const payload = {
         created_at: new Date().toISOString(),
@@ -346,7 +353,7 @@ const VaccinationScheduleManager = () => {
     switch (status) {
       case 'Chờ xác nhận': return 'warning';
       case 'Đã xác nhận': return 'success';
-      case 'Hoàn thành': return 'processing';
+      case 'Đã từ chối': return 'error';
       default: return 'default';
     }
   };
@@ -355,7 +362,7 @@ const VaccinationScheduleManager = () => {
     switch (status) {
       case 'Chờ xác nhận': return 'Chờ xác nhận';
       case 'Đã xác nhận': return 'Đã xác nhận';
-      case 'Hoàn thành': return 'Hoàn thành';
+      case 'Đã từ chối': return 'Đã từ chối';
       default: return status;
     }
   };
@@ -382,13 +389,49 @@ const VaccinationScheduleManager = () => {
       const values = await consentForm.validateFields();
       let sendDate = consentDateRange[0] ? consentDateRange[0].toISOString() : '';
       let expireDate = consentDateRange[1] ? consentDateRange[1].toISOString() : '';
-      await sendConsentFormByClassName({ ...values, sendDate, expireDate });
-      message.success('Gửi phiếu đồng ý thành công!');
-      setIsConsentModalOpen(false);
-      consentForm.resetFields();
+      // Hiển thị xác nhận lại thông tin trước khi gửi
+      Modal.confirm({
+        title: <span style={{fontWeight:900, fontSize:20, color:'#faad14'}}>Xác nhận gửi phiếu cho phụ huynh</span>,
+        icon: null,
+        content: (
+          <div style={{textAlign:'center', padding:'12px 0'}}>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'start', gap:12}}>
+            <Typography.Paragraph style={{fontSize:20, marginBottom:10}}>
+              Vui lòng kiểm tra lại thông tin :
+            </Typography.Paragraph> 
+              <Typography.Text strong style={{fontSize:16, color:'#722ed1'}}>Tên lớp: {values.className}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16, color:'#13c2c2'}}>Tên đợt tiêm: {selectedBatchForConsent?.vaccineBatch}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16, color:'#1890ff'}}>Địa điểm: {selectedBatchForConsent?.location}</Typography.Text>
+              <Typography.Text style={{fontSize:16}}>
+                <b>Thời gian gửi phiếu:</b> <span style={{color:'#52c41a'}}>{consentDateRange[0]?.format('DD/MM/YYYY HH:mm')}</span>
+              </Typography.Text>
+              <Typography.Text style={{fontSize:16}}>
+                <b>Thời gian hết hạn:</b> <span style={{color:'#fa541c'}}>{consentDateRange[1]?.format('DD/MM/YYYY HH:mm')}</span>
+              </Typography.Text>
+            </div>
+          </div>
+        ),
+        okText: <span style={{fontWeight:600}}>Xác nhận gửi</span>,
+        cancelText: 'Hủy',
+        okButtonProps: { style: { background: '#52c41a', borderColor: '#52c41a' } },
+        cancelButtonProps: { style: { background: '#fff' } },
+        centered: true,
+        onOk: async () => {
+          try {
+            await sendConsentFormByClassName({ ...values, sendDate, expireDate });
+            message.success('Gửi phiếu đồng ý thành công!');
+            setIsConsentModalOpen(false);
+            consentForm.resetFields();
+          } catch (error) {
+            message.error('Gửi phiếu đồng ý thất bại!');
+          } finally {
+            setSendingConsent(false);
+          }
+        },
+        onCancel: () => setSendingConsent(false)
+      });
     } catch (error) {
       message.error('Gửi phiếu đồng ý thất bại!');
-    } finally {
       setSendingConsent(false);
     }
   };
@@ -440,7 +483,7 @@ const VaccinationScheduleManager = () => {
           <Option value="all">Tất cả trạng thái</Option>
           <Option value="Chờ xác nhận">Chờ xác nhận</Option>
           <Option value="Đã xác nhận">Đã xác nhận</Option>
-          <Option value="Hoàn thành">Hoàn thành</Option>
+          <Option value="Đã từ chối">Đã từ chối</Option>
         </Select>
       </div>
 
@@ -463,7 +506,7 @@ const VaccinationScheduleManager = () => {
                   status={(() => {
                     switch (schedule.status) {
                       case 'Đã xác nhận': return 'success';
-                      case 'Hoàn thành': return 'processing';
+                      case 'Đã từ chối': return 'error';
                       case 'Chờ xác nhận': return 'warning';
                       default: return 'default';
                     }
@@ -498,33 +541,22 @@ const VaccinationScheduleManager = () => {
                 </div>
               )}
 
-              <div className="vaccination-schedule-actions">
-                {!schedule.consentsSent && (
-                  <Button 
+              <div className="vaccination-schedule-card-actions">
+                <Button 
+                  icon={<EditOutlined />} 
+                  onClick={() => handleEdit(schedule)}
+                >
+                  Chỉnh sửa
+                </Button>
+                {schedule.status === 'Đã xác nhận' && (
+                  <Button
                     icon={<SendOutlined />}
+                    style={{ marginLeft: 8 }}
                     onClick={() => handleOpenConsentModal(schedule)}
                   >
                     Gửi phiếu đồng ý
                   </Button>
                 )}
-                
-                {schedule.consentsSent && schedule.status === 'Chờ xác nhận' && (
-                  <Button 
-                    type="primary"
-                    onClick={() => handleConfirmSchedule(schedule.batchID)}
-                  >
-                    Xác nhận lịch tiêm
-                  </Button>
-                )}
-
-                <Button 
-                  icon={<EditOutlined />}
-                  onClick={() => handleEdit(schedule)}
-                >
-                  Chỉnh sửa
-                </Button>
-                
-               
               </div>
             </div>
           ))}
@@ -532,16 +564,17 @@ const VaccinationScheduleManager = () => {
       )}
 
       <Modal
-        title="Tạo đợt tiêm chủng mới"
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Tạo đợt tiêm chủng mới</span>}
         open={isCreateModalOpen}
-        onCancel={() => {
-          setIsCreateModalOpen(false);
-          form.resetFields();
-        }}
+        onCancel={() => setIsCreateModalOpen(false)}
         onOk={handleCreateSchedule}
         okText="Tạo đợt tiêm"
         cancelText="Hủy"
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        width={600}
       >
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+
         <Form
           form={form}
           layout="vertical"
@@ -571,46 +604,55 @@ const VaccinationScheduleManager = () => {
 
           <Form.Item
             name="vaccine_batch"
-            label="Đợt vaccine"
-            rules={[{ required: true, message: 'Vui lòng nhập đợt vaccine' }]}
+            label="Tên đợt vaccine"
+            rules={[{ required: true, message: 'Vui lòng nhập tên đợt vaccine' }]}
           >
-            <Input placeholder="Nhập đợt vaccine (VD: Đợt 1, Đợt 2, v.v.)" />
-          </Form.Item>
-
-          <Form.Item
-            name="quantity_received"
-            label="Số lượng vaccine nhận"
-            rules={[{ required: true, message: 'Vui lòng nhập số lượng vaccine nhận' }]}
-          >
-            <Input type="number" min={1} placeholder="Nhập số lượng vaccine nhận" />
-          </Form.Item>
-
-          <Form.Item
-            name="scheduledDate"
-            label="Ngày tiêm"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày tiêm' }]}
-          >
-            <DatePicker style={{ width: '100%' }} />
+            <Input placeholder="Nhập tên đợt vaccine" />
           </Form.Item>
 
           <Form.Item
             name="location"
             label="Địa điểm"
-            initialValue="Phòng y tế trường"
+            rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}
           >
             <Input />
           </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="quantity_received"
+                label="Số lượng vaccine nhận"
+                rules={[{ required: true, message: 'Vui lòng nhập số lượng vaccine nhận' }]}
+              >
+                <Input type="number" min={1} placeholder="Nhập số lượng vaccine nhận" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="scheduledDate"
+                label="Ngày tiêm"
+                rules={[{ required: true, message: 'Vui lòng chọn ngày tiêm' }]}
+              >
+                <DatePicker style={{ width: '100%' }} disabledDate={current => current && current < moment().startOf('day')} />
+              </Form.Item>
+            </Col>
+          </Row>
 
+          <Form.Item
+            name="notes"
+            label="Ghi chú"
+          >
+            <TextArea rows={4} placeholder="Ghi chú thêm về đợt tiêm..." />
+          </Form.Item>
           <Form.Item
             name="status"
             label="Trạng thái"
-            rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
             initialValue="Chờ xác nhận"
           >
-            <Select>
+            <Select disabled>
               <Option value="Chờ xác nhận">Chờ xác nhận</Option>
               <Option value="Đã xác nhận">Đã xác nhận</Option>
-              <Option value="Hoàn thành">Hoàn thành</Option>
+              <Option value="Đã từ chối">Đã từ chối</Option>
             </Select>
           </Form.Item>
 
@@ -623,14 +665,8 @@ const VaccinationScheduleManager = () => {
               disabled 
             />
           </Form.Item>
-
-          <Form.Item
-            name="notes"
-            label="Ghi chú"
-          >
-            <TextArea rows={4} placeholder="Ghi chú thêm về đợt tiêm..." />
-          </Form.Item>
         </Form>
+        </div>
       </Modal>
 
       {/* Edit Modal */}
@@ -641,8 +677,9 @@ const VaccinationScheduleManager = () => {
         onOk={handleUpdateSchedule}
         okText="Cập nhật"
         cancelText="Hủy"
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 32, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 32, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}
       >
+         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
         <Form
           form={editForm}
           layout="vertical"
@@ -684,11 +721,11 @@ const VaccinationScheduleManager = () => {
               </Form.Item>
               <Form.Item
                 name="vaccine_batch"
-                label={<span style={{ fontWeight: 600 }}>Đợt vaccine</span>}
-                rules={[{ required: true, message: 'Vui lòng nhập đợt vaccine' }]}
+                label={<span style={{ fontWeight: 600 }}>Tên đợt vaccine</span>}
+                rules={[{ required: true, message: 'Vui lòng nhập tên đợt vaccine' }]}
                 style={{ marginBottom: 18 }}
               >
-                <Input placeholder="Nhập đợt vaccine (VD: Đợt 1, Đợt 2, v.v.)" style={{ borderRadius: 8 }} />
+                <Input placeholder="Nhập tên đợt vaccine" style={{ borderRadius: 8 }} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -698,6 +735,33 @@ const VaccinationScheduleManager = () => {
                 style={{ marginBottom: 18 }}
               >
                 <Input disabled style={{ borderRadius: 8, background: '#f0f5ff' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="location"
+                label={<span style={{ fontWeight: 600 }}>Địa điểm</span>}
+                style={{ marginBottom: 18 }}
+              >
+                <Input style={{ borderRadius: 8 }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="status"
+                label={<span style={{ fontWeight: 600 }}>Trạng thái</span>}
+                rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
+                style={{ marginBottom: 18 }}
+                initialValue={"Chờ xác nhận"}
+              >
+                {/* <Select style={{ borderRadius: 8 }} disabled>
+                  <Option value="Chờ xác nhận">Chờ xác nhận</Option>
+                 
+                  <Option value="Đã từ chối">Đã từ chối</Option>
+                </Select> */}
+                <Input disabled/>
               </Form.Item>
             </Col>
           </Row>
@@ -719,36 +783,10 @@ const VaccinationScheduleManager = () => {
                 rules={[{ required: true, message: 'Vui lòng chọn ngày tiêm' }]}
                 style={{ marginBottom: 18 }}
               >
-                <DatePicker style={{ width: '100%', borderRadius: 8 }} />
+                <DatePicker style={{ width: '100%', borderRadius: 8 }} disabledDate={current => current && current < moment().startOf('day')} />
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="location"
-                label={<span style={{ fontWeight: 600 }}>Địa điểm</span>}
-                style={{ marginBottom: 18 }}
-              >
-                <Input style={{ borderRadius: 8 }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="status"
-                label={<span style={{ fontWeight: 600 }}>Trạng thái</span>}
-                rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-                style={{ marginBottom: 18 }}
-              >
-                <Select style={{ borderRadius: 8 }}>
-                  <Option value="Chờ xác nhận">Chờ xác nhận</Option>
-                  <Option value="Đã xác nhận">Đã xác nhận</Option>
-                  <Option value="Hoàn thành">Hoàn thành</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          
           <Form.Item
             name="notes"
             label={<span style={{ fontWeight: 600 }}>Ghi chú</span>}
@@ -757,18 +795,22 @@ const VaccinationScheduleManager = () => {
             <TextArea rows={4} placeholder="Ghi chú thêm về đợt tiêm..." style={{ borderRadius: 8 }} />
           </Form.Item>
         </Form>
+        </div>
       </Modal>
 
       {/* Consent Modal */}
       <Modal
-        title="Gửi phiếu đồng ý theo lớp"
+       
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Gửi phiếu đồng ý</span>}
         open={isConsentModalOpen}
-        onCancel={() => setIsConsentModalOpen(false)}
+        onCancel={() => setIsConsentModalOpen(false) }
         onOk={handleSendConsentForm}
         okText="Gửi phiếu"
         confirmLoading={sendingConsent}
         cancelText="Hủy"
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
+         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
         <Form form={consentForm} layout="vertical">
           <Form.Item
             name="className"
@@ -792,12 +834,14 @@ const VaccinationScheduleManager = () => {
             name="batchId"
             label="Mã đợt tiêm"
             rules={[{ required: true, message: 'Vui lòng nhập mã đợt tiêm' }]}
+            style={{ display: 'none' }}
           >
             <Input disabled />
           </Form.Item>
           <Form.Item
+            name="consentDateRange"
             label="Chọn khoảng thời gian gửi phiếu"
-            required
+            rules={[{ required: true, message: 'Vui lòng chọn khoảng thời gian gửi phiếu' }]}
           >
             <DatePicker.RangePicker
               showTime
@@ -806,6 +850,7 @@ const VaccinationScheduleManager = () => {
               onChange={setConsentDateRange}
               format="YYYY-MM-DD HH:mm"
               placeholder={["Ngày gửi phiếu", "Ngày hết hạn"]}
+              disabledDate={current => current && current < moment().startOf('day')}
             />
           </Form.Item>
           <Form.Item
@@ -814,13 +859,14 @@ const VaccinationScheduleManager = () => {
             rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}
             initialValue="Chờ xác nhận"
           >
-            <Select>
+            <Select disabled>
               <Option value="Chờ xác nhận">Chờ xác nhận</Option>
               <Option value="Đã phê duyệt">Đã phê duyệt</Option>
               <Option value="Từ chối">Từ chối</Option>
             </Select>
           </Form.Item>
         </Form>
+        </div>
       </Modal>
     </div>
   );

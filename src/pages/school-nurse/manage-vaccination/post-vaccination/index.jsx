@@ -45,31 +45,14 @@ const PostVaccinationObservation = () => {
         // Map dữ liệu trả về cho phù hợp với cấu trúc mới
         const mapped = (res.data || []).map(item => ({
           id: item.studentId,
-          vaccinationRecordID: item.vaccinationRecordID,
-          studentID: item.studentID,
+          studentId: item.studentId,
           studentName: item.fullName || '',
           className: item.className || '',
-          batchID: item.batchID,
-          vaccineName: item.vaccineTypeName || '',
-          symptoms: item.symptoms,
-          severity: item.severity,
-          notes: item.notes,
-          observation_notes: item.observation_notes,
-          observation_time: item.observation_time,
-          status: item.status || 'Đang theo dõi',
-          createNurseID: item.createNurseID,
-          createNurseName: item.createNurseName,
-          editNurseID: item.editNurseID,
-          editNurseName: item.editNurseName,
-          parentID: item.parentID,
-          vaccine: item.vaccineTypeName || '',
-          observationTime: item.observationTime ? new Date(item.observationTime).toLocaleString('vi-VN') : '',
           observationNotes: item.observationNotes || '',
-          nurseId: '',
-          nurseName: '',
-          followUpRequired: false,
-          followUpDate: '',
-          vaccinationDate: ''
+          vaccineTypeName: item.vaccineTypeName || '',
+          observationTime: item.observationTime,
+          status: item.status || '',
+          recordId: item.recordId
         }));
         setObservations(mapped);
       } catch (err) {
@@ -89,30 +72,10 @@ const PostVaccinationObservation = () => {
     return matchesSearch && matchesSeverity && matchesStatus;
   });
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'none': return 'success';
-      case 'mild': return 'warning';
-      case 'moderate': return 'processing';
-      case 'severe': return 'error';
-      default: return 'default';
-    }
-  };
-
-  const getSeverityText = (severity) => {
-    switch (severity) {
-      case 'none': return 'Không có';
-      case 'mild': return 'Nhẹ';
-      case 'moderate': return 'Vừa';
-      case 'severe': return 'Nặng';
-      default: return severity;
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'Hoàn thành': return 'success';
-      case 'Đang theo dõi': return 'processing';
+      case 'Cần theo dõi': return 'error';
       default: return 'default';
     }
   };
@@ -120,7 +83,7 @@ const PostVaccinationObservation = () => {
   const getStatusText = (status) => {
     switch (status) {
       case 'Hoàn thành': return 'Hoàn thành';
-      case 'Đang theo dõi': return 'Đang theo dõi';
+      case 'Cần theo dõi': return 'Cần theo dõi';
       default: return status;
     }
   };
@@ -137,11 +100,44 @@ const PostVaccinationObservation = () => {
     try {
       const recordId = observation.vaccinationRecordID || observation.id;
       const res = await getVaccinationRecordDetail(recordId);
-      setSelectedObservationDetail(res.data);
+      // Map dữ liệu về đúng format mới
+      const data = res.data || {};
+      setSelectedObservationDetail({
+        notes: data.notes,
+        observation_time: data.observation_time,
+        symptoms: data.symptoms,
+        severity: data.severity,
+        observation_notes: data.observation_notes,
+        status: data.status,
+        className: data.className,
+        consentId: data.consentId,
+        batchID: data.batchID,
+        vaccinationRecordID: data.vaccinationRecordID,
+        vaccineName: data.vaccineName,
+        studentID: data.studentID,
+        createNurseID: data.createNurseID,
+        createNurseName: data.createNurseName,
+        editNurseName: data.editNurseName,
+        editNurseID: data.editNurseID,
+        studentName: data.studentName
+      });
       setIsDetailModalOpen(true);
     } catch (err) {
       message.error('Không thể lấy chi tiết theo dõi sau tiêm');
     }
+  };
+
+  // Hàm format ngày giờ dd/MM/yyyy HH:mm
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
   return (
@@ -154,7 +150,7 @@ const PostVaccinationObservation = () => {
 
       {/* Statistics */}
       <Row gutter={16} style={{ marginBottom: '24px' }}>
-        <Col span={6}>
+        <Col span={8}>
           <Card>
             <Statistic 
               title="Tổng số quan sát" 
@@ -163,7 +159,7 @@ const PostVaccinationObservation = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col span={8}>
           <Card>
             <Statistic 
               title="Không phản ứng" 
@@ -173,7 +169,7 @@ const PostVaccinationObservation = () => {
           </Card>
         </Col>
         
-        <Col span={6}>
+        <Col span={8}>
           <Card>
             <Statistic 
               title="Đang theo dõi" 
@@ -185,60 +181,50 @@ const PostVaccinationObservation = () => {
       </Row>
 
       {/* Filters */}
-      <Card title="Bộ lọc" className="post-vaccination-filters">
-        <Row gutter={16}>
-          <Col span={6}>
+
+        <div className="post-vaccination-filters">    
             <Input
               placeholder="Tìm kiếm học sinh, triệu chứng..."
               prefix={<SearchOutlined />}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              style ={{width: 300}}
               allowClear
             />
-          </Col>
-          <Col span={6}>
             <Select
-              style={{ width: '100%' }}
+           
               value={severityFilter}
               onChange={setSeverityFilter}
               placeholder="Mức độ nghiêm trọng"
+              style = {{width:220}}
             >
               <Option value="all">Tất cả mức độ</Option>
               <Option value="none">Không có</Option>
               <Option value="mild">Nhẹ</Option>
               <Option value="moderate">Vừa</Option>
               <Option value="severe">Nặng</Option>
-            </Select>
-          </Col>
-          <Col span={6}>
+            </Select>      
             <Select
-              style={{ width: '100%' }}
+              style={{ width: 180 }}
               value={statusFilter}
               onChange={setStatusFilter}
               placeholder="Trạng thái"
             >
               <Option value="all">Tất cả trạng thái</Option>
               <Option value="Hoàn thành">Hoàn thành</Option>
-              <Option value="Đang theo dõi">Đang theo dõi</Option>
-            </Select>
-          </Col>
-          <Col span={6}>
-            <Button icon={<FilterOutlined />} block>
-              Áp dụng bộ lọc
-            </Button>
-          </Col>
-        </Row>
-      </Card>
+              <Option value="Cần theo dõi">Cần theo dõi</Option>
+            </Select>       
+        </div>
 
       {/* Observations List */}
       <div className="post-vaccination-list">
         {filteredObservations.map((obs) => (
-          <div key={obs.id} className="post-card">
+          <div key={obs.recordId || obs.vaccinationRecordID || obs.id} className="post-card">
             <div className="post-card-header">
               <div>
                 <Title level={4}>{obs.studentName}</Title>
                 <Text type="secondary">
-                  Lớp: {obs.className} | Vaccine: {obs.vaccine}
+                  Lớp: {obs.className} | Vaccine: {obs.vaccineTypeName}
                 </Text>
               </div>
               <Badge 
@@ -247,8 +233,8 @@ const PostVaccinationObservation = () => {
               />
             </div>
             <div className="post-card-info">
-              <Space><Text type="secondary">Thời gian theo dõi:</Text> <Text>{obs.observationTime}</Text></Space>
-              <Space><Text type="secondary">Mã học sinh:</Text> <Text>{obs.id}</Text></Space>
+              <Space><Text type="secondary">Thời gian theo dõi:</Text> <Text>{formatDateTime(obs.observationTime)}</Text></Space>
+            
             </div>
             <div className="post-card-info">
               <Space><Text type="secondary">Ghi chú quan sát:</Text> <Text>{obs.observationNotes || obs.symptoms}</Text></Space>
@@ -267,53 +253,53 @@ const PostVaccinationObservation = () => {
         open={isDetailModalOpen}
         onCancel={() => setIsDetailModalOpen(false)}
         footer={null}
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         {selectedObservationDetail && (
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
             <Row gutter={[24, 16]}>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="user"></span> Học sinh:</Text><br />
+                <Text type="secondary" strong>Học sinh:</Text><br />
                 <Text strong style={{ fontSize: 16 }}>{selectedObservationDetail.studentName}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="class"></span> Lớp:</Text><br />
+                <Text type="secondary" strong>Lớp:</Text><br />
                 <Text strong>{selectedObservationDetail.className}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="vaccine"></span> Tên vaccine:</Text><br />
+                <Text type="secondary" strong>Tên vaccine:</Text><br />
                 <Text strong>{selectedObservationDetail.vaccineName}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="status"></span> Trạng thái:</Text><br />
+                <Text type="secondary" strong>Trạng thái:</Text><br />
                 <Text strong>{selectedObservationDetail.status}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="nurse"></span> Y tá tạo:</Text><br />
+                <Text type="secondary" strong>Y tá tạo:</Text><br />
                 <Text>{selectedObservationDetail.createNurseName}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="nurse-edit"></span> Y tá chỉnh sửa:</Text><br />
+                <Text type="secondary" strong>Y tá chỉnh sửa:</Text><br />
                 <Text>{selectedObservationDetail.editNurseName}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="calendar"></span> Ngày giờ theo dõi:</Text><br />
-                <Text>{selectedObservationDetail.observation_time ? selectedObservationDetail.observation_time.replace('T', ' ').substring(0, 16) : ''}</Text>
+                <Text type="secondary" strong>Ngày giờ theo dõi:</Text><br />
+                <Text>{formatDateTime(selectedObservationDetail.observationTime || selectedObservationDetail.observation_time)}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="symptom"></span> Triệu chứng:</Text><br />
+                <Text type="secondary" strong>Triệu chứng:</Text><br />
                 <Text>{selectedObservationDetail.symptoms}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="severity"></span> Mức độ:</Text><br />
+                <Text type="secondary" strong>Mức độ:</Text><br />
                 <Text>{selectedObservationDetail.severity}</Text>
               </Col>
               <Col span={24} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="note"></span> Ghi chú:</Text><br />
+                <Text type="secondary" strong>Ghi chú:</Text><br />
                 <Text>{selectedObservationDetail.notes}</Text>
               </Col>
               <Col span={24} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="observation"></span> Ghi chú theo dõi:</Text><br />
+                <Text type="secondary" strong>Ghi chú theo dõi:</Text><br />
                 <Text>{selectedObservationDetail.observation_notes}</Text>
               </Col>
             </Row>
