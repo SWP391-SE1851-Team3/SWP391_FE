@@ -250,7 +250,7 @@ const HealthCheckRecord = () => {
         open={detailModalOpen}
         onCancel={() => setDetailModalOpen(false)}
         footer={null}
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
         {selectedRecord && (
@@ -296,7 +296,7 @@ const HealthCheckRecord = () => {
         onOk={handleUpdate}
         okText="Ghi nhận"
         cancelText="Hủy"
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
         width={600}
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>

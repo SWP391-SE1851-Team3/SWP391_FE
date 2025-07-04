@@ -25,7 +25,7 @@ import {
 } from 'antd';
 import './health-check-batch.css';
 import moment from 'moment';
-import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck, createHealthConsentForClass } from '../../../../api/healthCheckAPI';
+import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck, createHealthConsentForMultipleClasses } from '../../../../api/healthCheckAPI';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -92,28 +92,14 @@ const HealthCheckBatchManager = () => {
   // Map trạng thái DB sang UI
   const mapStatus = (status) => {
     switch (status) {
-      case 'SCHEDULED':
+      case 'Đã lên lịch':
         return 'Đã lên lịch';
-      case 'COMPLETED':
+      case 'Đã xác nhận':
         return 'Đã xác nhận';
-      case 'CANCELLED':
+      case 'Đã từ chối':
         return 'Đã từ chối';
       default:
-        return status;
-    }
-  };
-
-  // Map trạng thái UI sang DB (dùng cho filter, form)
-  const mapStatusToDB = (status) => {
-    switch (status) {
-      case 'Đã lên lịch':
-        return 'SCHEDULED';
-      case 'Đã xác nhận':
-        return 'COMPLETED';
-      case 'Đã từ chối':
-        return 'CANCELLED';
-      default:
-        return status;
+        return ''; // fallback về 'Đã lên lịch' nếu không khớp
     }
   };
 
@@ -126,7 +112,7 @@ const HealthCheckBatchManager = () => {
       );
     }
     if (statusFilter !== 'all') {
-      result = result.filter(batch => batch.status === mapStatusToDB(statusFilter));
+      result = result.filter(batch => mapStatus(batch.status) === statusFilter);
     }
     setFilteredBatches(result);
   }, [batches, searchTerm, statusFilter]);
@@ -150,7 +136,7 @@ const HealthCheckBatchManager = () => {
         name: values.batchName,
         location: values.location,
         notes: values.notes,
-        status: mapStatusToDB(values.status),
+        status: values.status,
         create_at: now,
         update_at: now,
         nurseName: nurseName,
@@ -216,7 +202,7 @@ const HealthCheckBatchManager = () => {
         name: values.batchName,
         location: values.location,
         notes: values.notes,
-        status: mapStatusToDB(values.status),
+        status: values.status,
         update_at: now,
         updatedByNurseID: nurseID,
         updatedByNurseName: nurseName,
@@ -261,15 +247,17 @@ const HealthCheckBatchManager = () => {
       }
       // Hiển thị xác nhận lại thông tin
       Modal.confirm({
-        title: <span style={{fontWeight:900, fontSize:20, color:'#52c41a'}}><ExclamationCircleOutlined style={{color:'#faad14', marginRight:8}}/>Xác nhận gửi phiếu</span>,
+        title: <span style={{fontWeight:900, fontSize:20, color:'#faad14'}}><ExclamationCircleOutlined style={{color:'#faad14', marginRight:8}}/>Xác nhận gửi phiếu</span>,
         icon: null,
         content: (
           <div style={{textAlign:'center', padding:'12px 0'}}>
             <Typography.Paragraph style={{fontSize:20, marginBottom:19}}>
               Vui lòng kiểm tra lại thông tin :
-            </Typography.Paragraph>
-            <div style={{display:'flex', flexDirection:'column', alignItems:'start', gap:12}}>
-              <Typography.Text strong style={{fontSize:16, color:'#1890ff'}}>Lớp: {values.className}</Typography.Text>
+            </Typography.Paragraph> <br />
+            <div style={{display:'flex', flexDirection:'column', alignItems:'start', gap:20}}>
+              <Typography.Text strong style={{fontSize:16, color:'#722ed1'}}>Tên đợt khám: {selectedBatchForConsent?.batchName}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16, color:'#13c2c2'}}>Địa điểm: {selectedBatchForConsent?.location}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16, color:'#1890ff'}}>Lớp: {Array.isArray(values.className) ? values.className.join(', ') : values.className}</Typography.Text>
               <Typography.Text style={{fontSize:16}}>
                 <b>Thời gian gửi phiếu:</b> <span style={{color:'#52c41a'}}>{consentDateRange[0]?.format('DD/MM/YYYY HH:mm')}</span>
               </Typography.Text>
@@ -286,17 +274,17 @@ const HealthCheckBatchManager = () => {
         centered: true,
         onOk: async () => {
           const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
-          console.log('[GỬI PHIẾU] createByNurseId:', nurseId);
           const data = {
             className: values.className,
             healthScheduleId: selectedBatchForConsent.id,
             sendDate: consentDateRange[0].toISOString(),
             expireDate: consentDateRange[1].toISOString(),
-            isAgreed: values.isAgreed,
+            isAgreed: 'Chờ xác nhận',
             notes: values.notes,
-            createByNurseId: nurseId
+            createdByNurseId: nurseId,
+            updatedByNurseID: nurseId
           };
-          await createHealthConsentForClass(data);
+          await createHealthConsentForMultipleClasses(data);
           message.success('Gửi phiếu xác nhận thành công!');
           setIsConsentModalOpen(false);
           setSelectedBatchForConsent(null);
@@ -362,7 +350,7 @@ const HealthCheckBatchManager = () => {
                   </Text>
                 </div>
                 <Badge 
-                  status={batch.status === 'COMPLETED' ? 'success' : (batch.status === 'SCHEDULED' ? 'warning' : (batch.status === 'CANCELLED' ? 'error' : 'default'))} 
+                  status={batch.status === 'Đã xác nhận' ? 'success' : (batch.status === 'Đã lên lịch' ? 'warning' : (batch.status === 'Đã từ chối' ? 'error' : 'default'))} 
                   text={mapStatus(batch.status)}
                 />
               </div>
@@ -399,13 +387,15 @@ const HealthCheckBatchManager = () => {
                 >
                   Chỉnh sửa
                 </Button>
-                <Button
-                  icon={<SendOutlined />}
-                  style={{ marginLeft: 8 }}
-                  onClick={() => handleSendConsent(batch)}
-                >
-                  Gửi phiếu xác nhận
-                </Button>
+                {batch.status === 'Đã xác nhận' && (
+                  <Button
+                    icon={<SendOutlined />}
+                    style={{ marginLeft: 8 }}
+                    onClick={() => handleSendConsent(batch)}
+                  >
+                    Gửi phiếu xác nhận
+                  </Button>
+                )}
               </div>
             </div>
           ))}
@@ -419,7 +409,7 @@ const HealthCheckBatchManager = () => {
         onOk={handleCreateBatch}
         okText="Tạo đợt khám"
         cancelText="Hủy"
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form form={form} layout="vertical">
@@ -455,7 +445,7 @@ const HealthCheckBatchManager = () => {
         onOk={handleUpdateBatch}
         okText="Cập nhật"
         cancelText="Hủy"
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form form={editForm} layout="vertical">
@@ -491,12 +481,12 @@ const HealthCheckBatchManager = () => {
         onOk={handleCreateConsent}
         okText="Gửi phiếu"
         cancelText="Hủy"
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form form={consentForm} layout="vertical">
-            <Form.Item name="className" label="Tên lớp" rules={[{ required: true, message: 'Vui lòng chọn tên lớp' }]}> 
-              <Select placeholder="Chọn lớp" showSearch optionFilterProp="children">
+            <Form.Item name="className" label="Tên lớp" rules={[{ required: true, message: 'Vui lòng chọn ít nhất một lớp' }]}> 
+              <Select mode="multiple" placeholder="Chọn lớp" showSearch optionFilterProp="children">
                 <Option value="Lớp 5A">Lớp 5A</Option>
                 <Option value="Lớp 4B">Lớp 4B</Option>
                 <Option value="Lớp 3C">Lớp 3C</Option>
@@ -512,6 +502,7 @@ const HealthCheckBatchManager = () => {
                 onChange={setConsentDateRange}
                 format="YYYY-MM-DD HH:mm"
                 placeholder={["Ngày gửi phiếu", "Ngày hết hạn"]}
+                disabledDate={current => current && current < moment().startOf('day')}
               />
             </Form.Item>
             <Form.Item name="isAgreed" label="Trạng thái xác nhận" initialValue="Chờ phản hồi"> 

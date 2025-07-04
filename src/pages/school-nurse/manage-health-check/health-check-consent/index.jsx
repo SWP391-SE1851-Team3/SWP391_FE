@@ -27,7 +27,10 @@ const HealthCheckConsent = () => {
     fetchConsents();
   }, []);
 
-  const filteredConsents = consents.filter(consent => {
+  // Sắp xếp consents theo ngày gửi phiếu mới nhất lên trên
+  const sortedConsents = [...consents].sort((a, b) => new Date(b.send_date) - new Date(a.send_date));
+
+  const filteredConsents = sortedConsents.filter(consent => {
     const matchesSearch = consent.studentName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || consent.isAgreed === statusFilter;
     const matchesClass = classFilter === 'all' || consent.className === classFilter;
@@ -146,7 +149,7 @@ const HealthCheckConsent = () => {
         open={isDetailModalOpen}
         onCancel={() => setIsDetailModalOpen(false)}
         footer={null}
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         {selectedConsent && (
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
