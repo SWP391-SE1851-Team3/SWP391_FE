@@ -60,7 +60,8 @@ const HealthConsultation = () => {
   const stats = {
     total: consultations.length,
     completed: consultations.filter(c => c.status === 'Đã hoàn thành').length,
-    pending: consultations.filter(c => c.status === 'Đang chờ xử lý').length
+    pending: consultations.filter(c => c.status === 'Đang chờ xử lý').length,
+    waitingSchedule: consultations.filter(c => c.status === 'Chờ lên lịch').length
   };
 
   return (
@@ -73,10 +74,10 @@ const HealthConsultation = () => {
       </div>
       {/* Statistics */}
       <Row gutter={16} style={{ marginBottom: '24px' }}>
-      <Col span={8}><Card><Statistic title="Tổng số tư vấn" value={stats.total} valueStyle={{ color: '#1890ff' }} /></Card></Col>
-        <Col span={8}><Card><Statistic title="Đã hoàn thành" value={stats.completed} valueStyle={{ color: '#52c41a' }} /></Card></Col>
-        <Col span={8}><Card><Statistic title="Chờ tư vấn" value={stats.pending} valueStyle={{ color: '#faad14' }} /></Card></Col>
- 
+        <Col span={6}><Card><Statistic title="Tổng số tư vấn" value={stats.total} valueStyle={{ color: '#1890ff' }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="Đã hoàn thành" value={stats.completed} valueStyle={{ color: '#52c41a' }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="Chờ tư vấn" value={stats.pending} valueStyle={{ color: '#faad14' }} /></Card></Col>
+        <Col span={6}><Card><Statistic title="Chờ lên lịch" value={stats.waitingSchedule} valueStyle={{ color: '#722ed1' }} /></Card></Col>
       </Row>
      
       <div className="health-consultation-filters">
@@ -106,6 +107,7 @@ const HealthConsultation = () => {
           <Option value="all">Tất cả trạng thái</Option>
           <Option value="Đã hoàn thành">Đã hoàn thành</Option>
           <Option value="Đang chờ xử lý">Đang chờ xử lý</Option>
+          <Option value="Chờ lên lịch">Chờ lên lịch</Option>
         </Select>
       </div>
       {/* Consultations List */}
@@ -114,7 +116,7 @@ const HealthConsultation = () => {
           <div key={consultation.id} className="health-consultation-card">
             <div className="health-consultation-card-header">
               <div><Title level={4}>{consultation.studentName}</Title><Text type="secondary">Lớp: {consultation.className}</Text></div>
-              <Badge status={consultation.status === 'Đã hoàn thành' ? 'success' : (consultation.status === 'Đang chờ xử lý' ? 'warning' : 'default')} text={consultation.status || ''} />
+              <Badge status={consultation.status === 'Đã hoàn thành' ? 'success' : (consultation.status === 'Đang chờ xử lý' ? 'warning' : (consultation.status === 'Chờ lên lịch' ? 'processing' : 'default'))} text={consultation.status || ''} />
             </div>
             <div className="health-consultation-card-info">
               <div className="info-item">
@@ -230,6 +232,7 @@ const HealthConsultation = () => {
                 <Select>
                   <Option value="Đã hoàn thành">Đã hoàn thành</Option>
                   <Option value="Đang chờ xử lý">Đang chờ xử lý</Option>
+                  <Option value="Chờ lên lịch">Chờ lên lịch</Option>
                 </Select>
               </Form.Item></Col>
               <Col span={12}><Form.Item name="scheduledDate" label="Ngày tư vấn" rules={[{ required: true, message: 'Vui lòng chọn ngày tư vấn' }]}><Input type="date" /></Form.Item></Col>
