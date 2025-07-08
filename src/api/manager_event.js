@@ -26,7 +26,7 @@ export async function getAllHealthCheck() {
 }
 
 export async function updateHealthCheckStatus(id, status) {
-  const url = `${BASE_URL_Vaccine}/${id}/status`;
+  const url = `${BASE_URL_HealthCheck}/${id}/status`;
   const res = await axios.put(url, { status });
   return res.data;
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
     Table,
     Form,
@@ -7,8 +7,8 @@ import {
     Select,
     Row,
     Col,
-    Popconfirm,
     message,
+    Switch,
 } from "antd";
 import {
     fetchUsersByRole,
@@ -28,17 +28,24 @@ const initialForm = {
     phone: "",
 };
 
+const roleOptions = [
+    { value: 1, label: "Phụ Huynh" },
+    { value: 2, label: "Y Tá" },
+    { value: 3, label: "Quản Lý" },
+];
+
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
     const [roleId, setRoleId] = useState(1);
     const [loading, setLoading] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [form] = Form.useForm();
+    const formRef = useRef(null);
 
-    const reloadUsers = async () => {
+    const reloadUsers = async (role = roleId) => {
         setLoading(true);
         try {
-            const res = await fetchUsersByRole(roleId);
+            const res = await fetchUsersByRole(role);
             const mapped = (res || []).map((u) => ({
                 ...u,
                 userName: u.userName || u.username || "",
@@ -52,6 +59,7 @@ const UserManagement = () => {
 
     useEffect(() => {
         reloadUsers();
+        // eslint-disable-next-line
     }, [roleId]);
 
     const handleRoleChange = (value) => {
@@ -63,23 +71,29 @@ const UserManagement = () => {
     const handleEdit = (record) => {
         setEditingUser(record);
         form.setFieldsValue({
-            userName: record.userName || "",
-            password: "", // Cho phép nhập mật khẩu mới nếu cần
-            fullName: record.fullName || "",
-            email: record.email || "",
-            phone: record.phone || "",
+            userName: record.userName,
+            password: record.password, 
+            fullName: record.fullName,
+            email: record.email,
+            phone: record.phone,
         });
+        setTimeout(() => {
+            if (formRef.current) {
+                formRef.current.scrollIntoView({ behavior: "smooth" });
+            }
+        }, 100);
     };
 
-    const handleDelete = async (record) => {
+    // Xử lý khi nhấn Switch trạng thái hoạt động
+    const handleActiveChange = async (checked, record) => {
         try {
-            await deleteUser(record.id, roleId);
-            message.success("Xóa thành công!");
+            await deleteUser(record.id, roleId); // API này sẽ toggle trạng thái
+            message.success(
+                checked ? "Đã kích hoạt tài khoản!" : "Đã vô hiệu hóa tài khoản!"
+            );
             reloadUsers();
-            setEditingUser(null);
-            form.resetFields();
         } catch {
-            message.error("Xóa thất bại!");
+            message.error("Thay đổi trạng thái thất bại!");
         }
     };
 
@@ -88,7 +102,7 @@ const UserManagement = () => {
             try {
                 await updateUser(editingUser.id, roleId, values);
                 message.success("Cập nhật thành công!");
-                reloadUsers();
+                reloadUsers(roleId);
                 setEditingUser(null);
                 form.resetFields();
             } catch {
@@ -98,7 +112,7 @@ const UserManagement = () => {
             try {
                 await createUser({ ...values, roleId });
                 message.success("Thêm mới thành công!");
-                reloadUsers();
+                reloadUsers(roleId);
                 form.resetFields();
             } catch {
                 message.error("Thêm mới thất bại!");
@@ -109,10 +123,21 @@ const UserManagement = () => {
     const columns = [
         { title: "ID", dataIndex: "id", width: 60 },
         { title: "Tên đăng nhập", dataIndex: "userName" },
-        { title: "Mật khẩu", dataIndex: "password" },   // 👈 Thêm lại biến password!
+        { title: "Mật khẩu", dataIndex: "password" },
         { title: "Họ tên", dataIndex: "fullName" },
         { title: "Email", dataIndex: "email" },
         { title: "SĐT", dataIndex: "phone" },
+        {
+            title: "Trạng thái",
+            dataIndex: "isActive",
+            render: (isActive, record) => (
+                <Switch
+                    checked={isActive === 1 || isActive === true || isActive === "1"}
+                    onChange={checked => handleActiveChange(checked, record)}
+                />
+            ),
+            width: 100,
+        },
         {
             title: "Hành động",
             render: (_, record) => (
@@ -128,28 +153,10 @@ const UserManagement = () => {
                     >
                         Sửa
                     </Button>
-
-                    <Popconfirm
-                        title={`Xác nhận xóa "${record.userName}"?`}
-                        onConfirm={() => handleDelete(record)}
-                    >
-                        <Button
-                            size="small"
-                            danger
-                            style={{
-                                background: "#ff4d4f",
-                                borderColor: "#ff4d4f",
-                                color: "#fff",
-                            }}
-                        >
-                            Xóa
-                        </Button>
-                    </Popconfirm>
                 </div>
             ),
-            width: 120,
+            width: 90,
         },
-
     ];
 
     return (
@@ -163,9 +170,9 @@ const UserManagement = () => {
                     style={{ width: 200 }}
                     onChange={handleRoleChange}
                 >
-                    <Option value={1}>Phụ Huynh</Option>
-                    <Option value={2}>Y Tá</Option>
-                    <Option value={3}>Quản Lý</Option>
+                    {roleOptions.map(r => (
+                        <Option key={r.value} value={r.value}>{r.label}</Option>
+                    ))}
                 </Select>
             </div>
 
@@ -178,7 +185,7 @@ const UserManagement = () => {
                 style={{ marginTop: 20 }}
             />
 
-            <div className="user-management-form-card">
+            <div ref={formRef} className="user-management-form-card">
                 <h3 className="form-header">
                     {editingUser ? "Cập nhật tài khoản" : "Thêm tài khoản mới"}
                 </h3>
@@ -198,39 +205,59 @@ const UserManagement = () => {
                                 <Input placeholder="Tên đăng nhập" />
                             </Form.Item>
                         </Col>
-
                         <Col xs={24} md={12}>
                             <Form.Item
                                 label="Mật khẩu"
                                 name="password"
                                 rules={
                                     editingUser
-                                        ? []
+                                        ? [] // Không required khi sửa
                                         : [{ required: true, message: "Nhập mật khẩu!" }]
                                 }
                             >
-                                <Input.Password placeholder="Mật khẩu" />
+                                <Input placeholder="Mật khẩu" />
                             </Form.Item>
                         </Col>
-
                         <Col xs={24} md={12}>
-                            <Form.Item label="Họ tên" name="fullName">
+                            <Form.Item
+                                label="Họ tên"
+                                name="fullName"
+                                rules={[{ required: !editingUser, message: "Nhập họ tên!" }]}
+                            >
                                 <Input placeholder="Họ tên" />
                             </Form.Item>
                         </Col>
-
                         <Col xs={24} md={12}>
-                            <Form.Item label="Số điện thoại" name="phone">
+                            <Form.Item
+                                label="Số điện thoại"
+                                name="phone"
+                                rules={[{ required: !editingUser, message: "Nhập số điện thoại!" }]}
+                            >
                                 <Input placeholder="Số điện thoại" />
                             </Form.Item>
                         </Col>
-
-                        <Col xs={24} md={24}>
+                        {!editingUser && (
+                            <Col xs={24} md={12}>
+                                <Form.Item
+                                    label="Vai trò"
+                                    name="roleId"
+                                    initialValue={roleId}
+                                    rules={[{ required: true, message: "Chọn vai trò!" }]}
+                                >
+                                    <Select>
+                                        {roleOptions.map(r => (
+                                            <Option key={r.value} value={r.value}>{r.label}</Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        )}
+                        <Col xs={24} md={12}>
                             <Form.Item
                                 label="Email"
                                 name="email"
                                 rules={[
-                                    { required: true, message: "Nhập email!" },
+                                    { required: !editingUser, message: "Nhập email!" },
                                     { type: "email", message: "Email không hợp lệ!" },
                                 ]}
                             >
@@ -238,7 +265,6 @@ const UserManagement = () => {
                             </Form.Item>
                         </Col>
                     </Row>
-
                     <Form.Item>
                         <Button type="primary" htmlType="submit">
                             {editingUser ? "Cập nhật" : "Thêm mới"}
