@@ -374,7 +374,7 @@ const VaccinationScheduleManager = () => {
     setSelectedBatchForConsent(schedule);
     setConsentDateRange([null, null]);
     consentForm.setFieldsValue({
-      className: '',
+      className: [],
       batchId: schedule.batchID,
       sendDate: null,
       expireDate: null,
@@ -387,6 +387,10 @@ const VaccinationScheduleManager = () => {
     try {
       setSendingConsent(true);
       const values = await consentForm.validateFields();
+      if (!consentDateRange || consentDateRange.length !== 2) {
+        message.error('Vui lòng chọn khoảng thời gian gửi và hết hạn!');
+        return;
+      }
       let sendDate = consentDateRange[0] ? consentDateRange[0].toISOString() : '';
       let expireDate = consentDateRange[1] ? consentDateRange[1].toISOString() : '';
       // Hiển thị xác nhận lại thông tin trước khi gửi
@@ -399,7 +403,7 @@ const VaccinationScheduleManager = () => {
             <Typography.Paragraph style={{fontSize:20, marginBottom:10}}>
               Vui lòng kiểm tra lại thông tin :
             </Typography.Paragraph> 
-              <Typography.Text strong style={{fontSize:16, color:'#722ed1'}}>Tên lớp: {values.className}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16, color:'#722ed1'}}>Tên lớp: {Array.isArray(values.className) ? values.className.join(', ') : values.className}</Typography.Text>
               <Typography.Text strong style={{fontSize:16, color:'#13c2c2'}}>Tên đợt tiêm: {selectedBatchForConsent?.vaccineBatch}</Typography.Text>
               <Typography.Text strong style={{fontSize:16, color:'#1890ff'}}>Địa điểm: {selectedBatchForConsent?.location}</Typography.Text>
               <Typography.Text style={{fontSize:16}}>
@@ -418,7 +422,17 @@ const VaccinationScheduleManager = () => {
         centered: true,
         onOk: async () => {
           try {
-            await sendConsentFormByClassName({ ...values, sendDate, expireDate });
+            const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+            const data = {
+              className: values.className,
+              batchId: selectedBatchForConsent.batchID,
+              sendDate: sendDate,
+              expireDate: expireDate,
+              status: 'Chờ xác nhận',
+              createdByNurseId: nurseId,
+              updatedByNurseID: nurseId
+            };
+            await sendConsentFormByClassName(data);
             message.success('Gửi phiếu đồng ý thành công!');
             setIsConsentModalOpen(false);
             consentForm.resetFields();
@@ -815,9 +829,10 @@ const VaccinationScheduleManager = () => {
           <Form.Item
             name="className"
             label="Tên lớp"
-            rules={[{ required: true, message: 'Vui lòng chọn tên lớp' }]}
+            rules={[{ required: true, message: 'Vui lòng chọn ít nhất một lớp' }]}
           >
             <Select
+              mode="multiple"
               placeholder="Chọn lớp"
               showSearch
               optionFilterProp="children"

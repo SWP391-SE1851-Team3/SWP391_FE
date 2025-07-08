@@ -240,7 +240,11 @@ const HealthCheckRecord = () => {
             </div>
             <div className="health-check-record-card-actions">
               <Button icon={<EyeOutlined />} onClick={() => { setSelectedRecord(record); setDetailModalOpen(true); }}>Xem chi tiết</Button>
-              <Button type="primary" onClick={() => handleOpenUpdateModal(record)}>Ghi nhận kết quả</Button>
+              {record.status === 'Chờ ghi nhận' ? (
+                <Button type="primary" onClick={() => handleOpenUpdateModal(record)}>Ghi nhận hồ sơ</Button>
+              ) : (
+                <Button type="primary" onClick={() => handleOpenUpdateModal(record)}>Chỉnh sửa</Button>
+              )}
             </div>
           </div>
         ))}
