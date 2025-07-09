@@ -83,4 +83,18 @@ export const getEventNames = async () => {
   }
 };
 
+//Lấy vật tư y tế 
+export const getMedicalSupplies = async () => {
+
+  try{
+    const response = await axios.get(`http://localhost:8080/api/medical-supplies`);
+
+    console.log('Kết quả getMedicalSupplies:', response.data);
+    return response.data;
+  }catch (error) {
+    console.error('Error fetching medical supplies:', error);
+    throw error;
+  }
+};
+
 

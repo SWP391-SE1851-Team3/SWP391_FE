@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
+import {Table,
   Button,
   Input,
   Select,
@@ -40,6 +39,7 @@ import {
   fetchStudentsByClass,
   getEventDetailsByEndpoint,
   getEventNames,
+  getMedicalSupplies
 } from '/src/api/medicalEventsAPI.js';
 
 const { Title } = Typography;
@@ -63,8 +63,6 @@ const App = () => {
   const [selectedSupply, setSelectedSupply] = useState(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
-  const [addSupplyForm] = Form.useForm();
-  const [isAddSupplyModalVisible, setIsAddSupplyModalVisible] = useState(false);
   const [students, setStudents] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -76,34 +74,7 @@ const App = () => {
   const [events, setEvents] = useState([]);
 
   // Dữ liệu mẫu cho vật tư y tế
-  const [medicalSupplies, setMedicalSupplies] = useState([
-    {
-      key: '1',
-      name: 'Khẩu trang y tế',
-      quantity: 1200,
-      unit: 'cái',
-      status: 'normal',
-      category: 'Bảo hộ'
-    },
-    {
-      key: '2',
-      name: 'Găng tay latex',
-      quantity: 50,
-      unit: 'hộp',
-      status: 'low',
-      statusText: 'Sắp hết',
-      category: 'Bảo hộ'
-    },
-    {
-      key: '3',
-      name: 'Ống tiêm 5ml',
-      quantity: 5,
-      unit: 'hộp',
-      status: 'critical',
-      statusText: 'Cần đặt gấp',
-      category: 'Dụng cụ'
-    },
-  ]);
+  const [medicalSupplies, setMedicalSupplies] = useState([]);
 
   const eventColumns = [
     {
@@ -218,61 +189,8 @@ const App = () => {
      
       render: (text) => <Tag>{text}</Tag>
     },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      
-      render: (status) => {
-        switch (status) {
-          case 'critical':
-            return <Tag color="red">Cấp bách</Tag>;
-          case 'low':
-            return <Tag color="orange">Thấp</Tag>;
-          default:
-            return <Tag color="green">Bình thường</Tag>;
-        }
-      }
-    },
-    {
-      title: 'Hành động',
-      key: 'action',
-     
-      render: (_, record) => (
-        <Space size="middle">
-          <Tooltip title="Chỉnh sửa">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
-              onClick={() => handleEditSupply(record)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
   ];
 
-  //trạng thái vật tư
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'critical':
-        return 'critical-status';
-      case 'low':
-        return 'low-status';
-      default:
-        return 'normal-status';
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'critical':
-        return <Tag color="red">Cấp bách</Tag>;
-      case 'low':
-        return <Tag color="orange">Thấp</Tag>;
-      default:
-        return <Tag color="green">Bình thường</Tag>;
-    }
-  };
 
   // Hàm lọc dữ liệu
   const getFilteredEvents = () => {
@@ -704,39 +622,6 @@ const App = () => {
     });
   };
 
-  const showAddSupplyModal = () => {
-    setIsAddSupplyModalVisible(true);
-    addSupplyForm.resetFields();
-  };
-  //Hàm thêm vật tư 
-  const handleAddSupply = () => {
-    addSupplyForm.validateFields()
-      .then(values => {
-        const newSupply = {
-          key: String(medicalSupplies.length + 1), // Simple key generation
-          name: values.name,
-          quantity: values.quantity,
-          unit: values.unit,
-          category: values.category,
-          status: values.quantity <= 10 ? 'critical' : (values.quantity <= 50 ? 'low' : 'normal'), // Basic status logic
-          statusText: values.quantity <= 10 ? 'Cần đặt gấp' : (values.quantity <= 50 ? 'Sắp hết' : null),
-        };
-        setMedicalSupplies(prevSupplies => [...prevSupplies, newSupply]);
-        message.success('Thêm vật tư thành công!');
-        setIsAddSupplyModalVisible(false);
-        addSupplyForm.resetFields();
-      })
-      .catch(info => {
-        console.log('Validate Failed:', info);
-        message.error('Vui lòng điền đầy đủ thông tin cần thiết.');
-      });
-  };
-
-  const handleCancelAddSupply = () => {
-    setIsAddSupplyModalVisible(false);
-    addSupplyForm.resetFields();
-  };
-
   // Xử lý xem chi tiết vật tư
   const handleViewSupplyDetails = (record) => {
     setSelectedSupply(record);
@@ -844,6 +729,35 @@ const App = () => {
     loadEventNames();
   }, []);
 
+  useEffect(() => {
+    const fetchSupplies = async () => {
+      try {
+        const supplies = await getMedicalSupplies();
+        // Khi map dữ liệu từ API, bỏ trường status:
+        const mapped = supplies.map(item => ({
+          key: item.medicalSupplyID,
+          name: item.supplyName,
+          quantity: item.quantityAvailable,
+          unit: item.unit,
+          category: item.categoryName || item.categoryID || 'Khác',
+          // Các trường gốc giữ lại nếu cần dùng
+          medicalSupplyID: item.medicalSupplyID,
+          supplyName: item.supplyName,
+          dateAdded: item.dateAdded,
+          storageTemperature: item.storageTemperature,
+          reorderLevel: item.reorderLevel,
+          categoryID: item.categoryID,
+          quantityAvailable: item.quantityAvailable,
+          categoryName: item.categoryName,
+        }));
+        setMedicalSupplies(mapped);
+      } catch (error) {
+        message.error('Không thể tải danh sách vật tư y tế');
+      }
+    };
+    fetchSupplies();
+  }, []);
+
   // Lấy dữ liệu đã lọc
   const filteredEvents = getFilteredEvents();
 
@@ -930,7 +844,7 @@ const App = () => {
       </Card>
 
       {/* Quản lý vật tư y tế */}
-      <Card className="supplies-card" title="Quản lý vật tư y tế">
+      <Card className="supplies-card" title="Danh sách vật tư y tế">
         <div className="filters-section custom-filters-section">
           <Row gutter={16} justify="space-between" align="middle">
             <Col flex="auto">
@@ -957,25 +871,6 @@ const App = () => {
                 <Option value="Khử trùng">Khử trùng</Option>
                 <Option value="Thiết bị">Thiết bị</Option>
               </Select>
-            </Col>
-            <Col>
-              <Select
-                placeholder="Tất cả trạng thái"
-                value={supplyStatusFilter}
-                onChange={setSupplyStatusFilter}
-                style={{ minWidth: 170 }}
-                allowClear
-              >
-                <Option value="">Tất cả trạng thái</Option>
-                <Option value="normal">Bình thường</Option>
-                <Option value="low">Sắp hết</Option>
-                <Option value="critical">Cấp bách</Option>
-              </Select>
-            </Col>
-            <Col>
-          <Button type="primary" icon={<PlusOutlined />} onClick={showAddSupplyModal}>
-            Thêm vật tư
-          </Button>
             </Col>
           </Row>
         </div>
@@ -1005,44 +900,6 @@ const App = () => {
               key: 'category',
              
               render: (text) => <Tag>{text}</Tag>
-            },
-            {
-              title: 'Trạng thái',
-              dataIndex: 'status',
-          
-              render: (status) => {
-                switch (status) {
-                  case 'critical':
-                    return <Tag color="red">Cấp bách</Tag>;
-                  case 'low':
-                    return <Tag color="orange">Sắp hết</Tag>;
-                  default:
-                    return <Tag color="green">Bình thường</Tag>;
-                }
-              }
-            },
-            {
-              title: 'Hành động',
-              key: 'action',
-              
-              render: (_, record) => (
-                <Space size="middle">
-                  <Tooltip title="Xem chi tiết">
-                    <Button 
-                      type="text" 
-                      icon={<EyeOutlined />} 
-                      onClick={() => handleViewSupplyDetails(record)}
-                    />
-                  </Tooltip>
-                  <Tooltip title="Chỉnh sửa">
-                    <Button 
-                      type="text" 
-                      icon={<EditOutlined />} 
-                      onClick={() => handleEditSupply(record)}
-                    />
-                  </Tooltip>
-                </Space>
-              ),
             },
           ]}
           dataSource={getFilteredSupplies()}
@@ -1771,90 +1628,6 @@ const App = () => {
         </div>
       </Modal>
 
-      <Modal
-        title="Thêm Vật Tư Mới"
-        open={isAddSupplyModalVisible}
-        onOk={handleAddSupply}
-        onCancel={handleCancelAddSupply}
-        okText="Thêm"
-        cancelText="Hủy"
-        maskClosable={false}
-      >
-        <Form
-          form={addSupplyForm}
-          layout="vertical"
-          name="add_supply_form"
-          preserve={false}
-        >
-          <Form.Item
-            name="name"
-            label="Tên Vật Tư"
-            rules={[{ required: true, message: 'Vui lòng nhập tên vật tư!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="quantity"
-            label="Số Lượng"
-            rules={[{ required: true, message: 'Vui lòng nhập số lượng!' }, { min: 1, message: 'Số lượng phải là số dương!' }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item
-            name="unit"
-            label="Đơn Vị"
-            rules={[{ required: true, message: 'Vui lòng nhập đơn vị!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="category"
-            label="Loại Vật Tư"
-            rules={[{ required: true, message: 'Vui lòng chọn loại vật tư!' }]}
-          >
-            <Select placeholder="Chọn loại vật tư">
-              <Option value="Bảo hộ">Bảo hộ</Option>
-              <Option value="Dụng cụ">Dụng cụ</Option>
-              <Option value="Băng gạc">Băng gạc</Option>
-              <Option value="Khử trùng">Khử trùng</Option>
-              <Option value="Thiết bị">Thiết bị</Option>
-              <Option value="Khác">Khác</Option>
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Modal xem chi tiết vật tư */}
-      <Modal
-        title="Chi tiết vật tư y tế"
-        open={isSupplyViewModalVisible}
-        onCancel={() => setIsSupplyViewModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        {selectedSupply && (
-          <div className="event-details">
-            <div className="detail-item">
-              <span className="label">Tên vật tư:</span>
-              <span className="value">{selectedSupply.name}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Số lượng:</span>
-              <span className="value">{selectedSupply.quantity} {selectedSupply.unit}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Loại vật tư:</span>
-              <Tag>{selectedSupply.category}</Tag>
-            </div>
-            <div className="detail-item">
-              <span className="label">Trạng thái:</span>
-              {selectedSupply.status === 'critical' && <Tag color="red">Cấp bách</Tag>}
-              {selectedSupply.status === 'low' && <Tag color="orange">Sắp hết</Tag>}
-              {selectedSupply.status === 'normal' && <Tag color="green">Bình thường</Tag>}
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };
