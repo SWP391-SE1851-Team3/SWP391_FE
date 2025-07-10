@@ -59,7 +59,6 @@ const UserManagement = () => {
 
     useEffect(() => {
         reloadUsers();
-        // eslint-disable-next-line
     }, [roleId]);
 
     const handleRoleChange = (value) => {
@@ -161,7 +160,7 @@ const UserManagement = () => {
 
     return (
         <div className="user-management-container">
-            <h2 className="user-management-header">Quản lý người dùng theo vai trò</h2>
+            <h2 className="user-management-header">Quản Lý Người Dùng Theo Vai Trò</h2>
 
             <div className="role-select">
                 <span>Chọn vai trò: </span>
