@@ -3,6 +3,7 @@ import { PlusOutlined, SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-
 import { Button, Card, Input, Select, Modal, Form, Typography, Row, Col, Tag, Space, message, Statistic, Badge, Alert, Checkbox } from 'antd';
 import './health-consultation.css';
 import { getAllHealthConsultations, updateHealthConsultation } from '../../../../api/healthCheckAPI';
+import { formatDateTime } from '../../../../utils/formatDate';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
