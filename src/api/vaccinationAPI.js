@@ -1,5 +1,27 @@
 import axios from 'axios';
 
+// Create axios instance with authentication
+const apiClient = axios.create({
+  baseURL: 'http://localhost:8080/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to include token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Tạo đợt tiêm chủng mới
 export const createVaccinationBatch = async (data) => {
   try {
@@ -8,7 +30,7 @@ export const createVaccinationBatch = async (data) => {
       data: data
     });
     
-    const response = await axios.post('http://localhost:8080/api/vaccinebatches', data);
+    const response = await apiClient.post('/vaccinebatches', data);
     
     console.log('✅ [Vaccination API] Tạo đợt tiêm chủng thành công:', {
       timestamp: new Date().toISOString(),
@@ -39,7 +61,7 @@ export const getVaccinationBatches = async () => {
       timestamp: new Date().toISOString()
     });
     
-    const response = await axios.get('http://localhost:8080/api/vaccinebatches');
+    const response = await apiClient.get('/vaccinebatches');
     
     console.log('✅ [Vaccination API] Lấy danh sách đợt tiêm chủng thành công:', {
       timestamp: new Date().toISOString(),
@@ -60,7 +82,7 @@ export const getVaccinationBatches = async () => {
 
 // Lấy vaccineType theo tên vaccine
 export const getVaccineTypeByName = async (vaccineName) => {
-  return axios.get(`http://localhost:8080/api/vaccine_types/getByVacinesName`, {
+  return apiClient.get(`/vaccine_types/getByVacinesName`, {
     params: { name: vaccineName }
   });
 };
@@ -77,7 +99,7 @@ export const updateVaccinationBatch = async (batchId, data) => {
       data: data
     });
     
-    const response = await axios.put(`http://localhost:8080/api/vaccinebatches/editByVaccinebatch/${numericBatchId}`, data);
+    const response = await apiClient.put(`/vaccinebatches/editByVaccinebatch/${numericBatchId}`, data);
     
     console.log('✅ [Vaccination API] Cập nhật đợt tiêm chủng thành công:', {
       timestamp: new Date().toISOString(),
@@ -104,7 +126,7 @@ export const updateVaccinationBatch = async (batchId, data) => {
 export const sendConsentFormByClassName = async (data) => {
   try {
     console.log('🚀 [Vaccination API] Gửi phiếu đồng ý theo className:', data);
-    const response = await axios.post('http://localhost:8080/api/Consent_forms/consent-forms/send-by-classname', data);
+    const response = await apiClient.post('/Consent_forms/consent-forms/send-by-classname', data);
     console.log('✅ [Vaccination API] Gửi phiếu đồng ý thành công:', response.data);
     return response;
   } catch (error) {
@@ -117,7 +139,7 @@ export const sendConsentFormByClassName = async (data) => {
 export const getConsentForms = async () => {
   try {
     console.log('🚀 [Vaccination API] Bắt đầu lấy danh sách phiếu đồng ý...');
-    const response = await axios.get('http://localhost:8080/api/Consent_forms/viewNurse');
+    const response = await apiClient.get('/Consent_forms/viewNurse');
     console.log('✅ [Vaccination API] Lấy danh sách phiếu đồng ý thành công:', response.data);
     return response;
   } catch (error) {
@@ -130,7 +152,7 @@ export const getConsentForms = async () => {
 export const getConsentFormDetail = async (consentFormId) => {
   try {
     console.log('🚀 [Vaccination API] Lấy chi tiết phiếu đồng ý:', consentFormId);
-    const response = await axios.get(`http://localhost:8080/api/Consent_forms/consent-info`, {
+    const response = await apiClient.get(`/Consent_forms/consent-info`, {
       params: { consent_form_id: consentFormId }
     });
     console.log('✅ [Vaccination API] Lấy chi tiết phiếu đồng ý thành công:', response.data);
@@ -143,7 +165,7 @@ export const getConsentFormDetail = async (consentFormId) => {
   export const geVaccinationRecords = async () => {
     try {
       console.log('🚀 [Vaccination API] Lấy danh sách hồ sơ:');
-      const response = await axios.get(`http://localhost:8080/api/vaccination_records`, {
+      const response = await apiClient.get(`/vaccination_records`, {
         
       });
       console.log('✅ [Vaccination API] Lấy hồ sơ thành công:', response.data);
@@ -158,7 +180,7 @@ export const getConsentFormDetail = async (consentFormId) => {
 export const getVaccinationRecordDetail = async (id) => {
   try {
     console.log('🚀 [Vaccination API] Lấy chi tiết hồ sơ tiêm chủng:', id);
-    const response = await axios.get(`http://localhost:8080/api/vaccination_records/${id}`);
+    const response = await apiClient.get(`/vaccination_records/${id}`);
     console.log('✅ [Vaccination API] Lấy chi tiết hồ sơ tiêm chủng thành công:', response.data);
     return response;
   } catch (error) {
@@ -171,7 +193,7 @@ export const getVaccinationRecordDetail = async (id) => {
 export const createVaccinationRecord = async (data) => {
   try {
     console.log('🚀 [Vaccination API] Ghi nhận tiêm chủng và gửi email:', data);
-    const response = await axios.post('http://localhost:8080/api/vaccination_records/vaccination-records/send-email', data);
+    const response = await apiClient.post('/vaccination_records/vaccination-records/send-email', data);
     console.log('✅ [Vaccination API] Ghi nhận tiêm chủng và gửi email thành công:', response.data);
     return response;
   } catch (error) {
@@ -184,7 +206,7 @@ export const createVaccinationRecord = async (data) => {
 export const updateVaccinationRecord = async (vaccinationRecordID, data) => {
   try {
     console.log('🚀 [Vaccination API] Gửi lại hồ sơ tiêm chủng:', vaccinationRecordID, data);
-    const response = await axios.put(`http://localhost:8080/api/vaccination_records/vaccination-records/resend/${vaccinationRecordID}`, data);
+    const response = await apiClient.put(`/vaccination_records/vaccination-records/resend/${vaccinationRecordID}`, data);
     console.log('✅ [Vaccination API] Gửi lại hồ sơ tiêm chủng thành công:', response.data);
     return response;
   } catch (error) {
@@ -197,7 +219,7 @@ export const updateVaccinationRecord = async (vaccinationRecordID, data) => {
     export const updateVaccinationRecordById = async (vaccinationRecordID, data) => {
       try {
         console.log('🚀 [Vaccination API] Gửi lại hồ sơ tiêm chủng:', vaccinationRecordID, data);
-        const response = await axios.put(`/api/vaccination_records/editVaccineRecord/${vaccinationRecordID}`, data);
+        const response = await apiClient.put(`/vaccination_records/editVaccineRecord/${vaccinationRecordID}`, data);
         console.log('✅ [Vaccination API] Gửi lại hồ sơ tiêm chủng thành công:', response.data);
         return response;
       } catch (error) {
