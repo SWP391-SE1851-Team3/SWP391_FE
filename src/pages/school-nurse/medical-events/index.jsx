@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Table,
+import {Table,
   Button,
   Input,
   Select,
@@ -19,7 +18,8 @@ import {
   DatePicker,
   message,
   Alert,
-  Switch
+  Switch,
+  InputNumber
 } from 'antd';
 import {
   SearchOutlined,
@@ -39,6 +39,7 @@ import {
   fetchStudentsByClass,
   getEventDetailsByEndpoint,
   getEventNames,
+  getMedicalSupplies
 } from '/src/api/medicalEventsAPI.js';
 
 const { Title } = Typography;
@@ -62,59 +63,29 @@ const App = () => {
   const [selectedSupply, setSelectedSupply] = useState(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
-  const [addSupplyForm] = Form.useForm();
-  const [isAddSupplyModalVisible, setIsAddSupplyModalVisible] = useState(false);
   const [students, setStudents] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [eventTypeList, setEventTypeList] = useState([]);
   const [selectedEventType, setSelectedEventType] = useState(null);
+  const [selectedSupplies, setSelectedSupplies] = useState([]);
 
   //Dự liệu mẫu cho sự kiện y tế
   const [events, setEvents] = useState([]);
 
   // Dữ liệu mẫu cho vật tư y tế
-  const [medicalSupplies, setMedicalSupplies] = useState([
-    {
-      key: '1',
-      name: 'Khẩu trang y tế',
-      quantity: 1200,
-      unit: 'cái',
-      status: 'normal',
-      category: 'Bảo hộ'
-    },
-    {
-      key: '2',
-      name: 'Găng tay latex',
-      quantity: 50,
-      unit: 'hộp',
-      status: 'low',
-      statusText: 'Sắp hết',
-      category: 'Bảo hộ'
-    },
-    {
-      key: '3',
-      name: 'Ống tiêm 5ml',
-      quantity: 5,
-      unit: 'hộp',
-      status: 'critical',
-      statusText: 'Cần đặt gấp',
-      category: 'Dụng cụ'
-    },
-  ]);
+  const [medicalSupplies, setMedicalSupplies] = useState([]);
 
   const eventColumns = [
     {
       title: 'Tên học sinh',
       dataIndex: 'studentName',
       key: 'studentName',
-      width: 150,
     },
     {
       title: 'Loại sự kiện',
       dataIndex: 'eventType',
       key: 'eventType',
-      width: 150,
       render: (type) => (
         <Tag color="red">{type}</Tag>
       )
@@ -123,7 +94,6 @@ const App = () => {
       title: 'Thời gian',
       dataIndex: 'time',
       key: 'time',
-      width: 180,
       render: (text) => {
         if (!text) return '-';
         const date = moment(text, 'HH:mm, DD/MM/YYYY');
@@ -138,7 +108,6 @@ const App = () => {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      width: 120,
       render: (status, record) => {
         
         
@@ -174,8 +143,6 @@ const App = () => {
     {
       title: 'Hành động',
       key: 'actions',
-      fixed: 'right',
-      width: 120,
       render: (_, record) => (
         <Space size="middle">
           <Tooltip title="Xem chi tiết">
@@ -222,62 +189,8 @@ const App = () => {
      
       render: (text) => <Tag>{text}</Tag>
     },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      
-      render: (status) => {
-        switch (status) {
-          case 'critical':
-            return <Tag color="red">Cấp bách</Tag>;
-          case 'low':
-            return <Tag color="orange">Thấp</Tag>;
-          default:
-            return <Tag color="green">Bình thường</Tag>;
-        }
-      }
-    },
-    {
-      title: 'Hành động',
-      key: 'action',
-     
-      render: (_, record) => (
-        <Space size="middle">
-          <Tooltip title="Chỉnh sửa">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
-              onClick={() => handleEditSupply(record)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
   ];
 
-  //trạng thái vật tư
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'critical':
-        return 'critical-status';
-      case 'low':
-        return 'low-status';
-      default:
-        return 'normal-status';
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'critical':
-        return <Tag color="red">Cấp bách</Tag>;
-      case 'low':
-        return <Tag color="orange">Thấp</Tag>;
-      default:
-        return <Tag color="green">Bình thường</Tag>;
-    }
-  };
 
   // Hàm lọc dữ liệu
   const getFilteredEvents = () => {
@@ -322,6 +235,64 @@ const App = () => {
     });
   };
 
+  // Table columns for selecting supplies
+  const supplySelectColumns = [
+    {
+      title: 'Chọn',
+      dataIndex: 'selected',
+      render: (_, record) => (
+        <input
+          type="checkbox"
+          checked={!!selectedSupplies.find(s => s.medicalSupplyId === record.key)}
+          onChange={e => {
+            if (e.target.checked) {
+              setSelectedSupplies(prev => ([
+                ...prev,
+                {
+                  medicalSupplyId: record.key,
+                  supplyName: record.name,
+                  unit: record.unit,
+                  quantityUsed: 1
+                }
+              ]));
+            } else {
+              setSelectedSupplies(prev => prev.filter(s => s.medicalSupplyId !== record.key));
+            }
+          }}
+        />
+      )
+    },
+    {
+      title: 'Tên vật tư',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Đơn vị',
+      dataIndex: 'unit',
+      key: 'unit',
+    },
+    {
+      title: 'Số lượng sử dụng',
+      dataIndex: 'quantityUsed',
+      render: (_, record) => {
+        const selected = selectedSupplies.find(s => s.medicalSupplyId === record.key);
+        return (
+          <InputNumber
+            min={1}
+            disabled={!selected}
+            value={selected ? selected.quantityUsed : 1}
+            onChange={val => {
+              setSelectedSupplies(prev => prev.map(s =>
+                s.medicalSupplyId === record.key ? { ...s, quantityUsed: val } : s
+              ));
+            }}
+          />
+        );
+      }
+    }
+  ];
+
   // Xử lý tạo sự kiện mới
   const handleCreateEvent = () => {
     form.validateFields().then(async values => {
@@ -351,21 +322,22 @@ const App = () => {
           studentId: selectedStudent.studentID,
           parentID: selectedStudent.parentID || 0,
           typeName: values?.typeName || '',
-          isEmergency: values?.isEmergency || false,
-          emergency: values?.emergency || false,
+          nurseId,
+          nurseName,
+          updatedByNurseId,
+          updatedByNurseName,
+          usageMethod: values?.usageMethod || '',
           hasParentBeenInformed: values?.hasParentBeenInformed || false,
           temperature: values?.temperature || '',
           heartRate: values?.heartRate || '',
           eventDateTime: eventDateTime,
-          usageMethod: values?.usageMethod || '',
-          eventTypeId: selectedEventType.eventTypeId,
           note: values?.note || '',
           result: values?.result || '',
           processingStatus: 'PENDING',
-          nurseId,
-          nurseName,
-          updatedByNurseId,
-          updatedByNurseName
+          eventTypeId: selectedEventType.eventTypeId,
+          // Thêm các trường mới theo API mới
+          medicalSupplies: selectedSupplies,
+          emergency: values?.emergency || false
         };
 
         console.log("📤 Final Payload gửi lên API:", eventData);
@@ -398,6 +370,7 @@ const App = () => {
         setSelectedStudent(null);
         setStudents([]);
         setSelectedEventType(null);
+        setSelectedSupplies([]);
       } catch (error) {
         console.error('Error creating emergency event:', error);
         message.error('Có lỗi xảy ra khi tạo sự kiện khẩn cấp');
@@ -445,7 +418,8 @@ const App = () => {
           note: values.description,
           result: values.result,
           processingStatus: values.processingStatus,
-          nurseName
+          nurseName,
+          medicalSupplies: selectedSupplies,
         };
 
         console.log("Event data before API call:", eventData); // Debug log
@@ -528,6 +502,18 @@ const App = () => {
 
       console.log("Setting form values:", formValues); // Debug log
       editForm.setFieldsValue(formValues);
+
+      // Đồng bộ selectedSupplies nếu có listMedicalSupplies
+      if (selectedEvent.listMedicalSupplies && Array.isArray(selectedEvent.listMedicalSupplies)) {
+        setSelectedSupplies(selectedEvent.listMedicalSupplies.map(s => ({
+          medicalSupplyId: s.medicalSupplyId,
+          supplyName: s.supplyName,
+          unit: s.unit,
+          quantityUsed: s.quantityUsed || 1
+        })));
+      } else {
+        setSelectedSupplies([]);
+      }
     }
   }, [isEditModalVisible, selectedEvent, eventTypeList, editForm]);
 
@@ -563,6 +549,18 @@ const App = () => {
       // Open modal - form fields will be set by useEffect
       setIsEditModalVisible(true);
 
+      // Đồng bộ selectedSupplies nếu có listMedicalSupplies
+      if (eventDetails.listMedicalSupplies && Array.isArray(eventDetails.listMedicalSupplies)) {
+        setSelectedSupplies(eventDetails.listMedicalSupplies.map(s => ({
+          medicalSupplyId: s.medicalSupplyId,
+          supplyName: s.supplyName,
+          unit: s.unit,
+          quantityUsed: s.quantityUsed || 1
+        })));
+      } else {
+        setSelectedSupplies([]);
+      }
+
     } catch (error) {
       console.error('Error loading event details:', error);
       message.error('Có lỗi xảy ra khi tải thông tin sự kiện');
@@ -587,7 +585,9 @@ const App = () => {
         try {
           const eventData = {
             ...record,
-            processingStatus: 'COMPLETED'
+            processingStatus: 'COMPLETED',
+            isEmergency: record.isEmergency || false,
+            medicalSupplies: record.medicalSupplies || [],
           };
 
           // Find the event type ID from the eventTypeList
@@ -620,39 +620,6 @@ const App = () => {
         }
       }
     });
-  };
-
-  const showAddSupplyModal = () => {
-    setIsAddSupplyModalVisible(true);
-    addSupplyForm.resetFields();
-  };
-  //Hàm thêm vật tư 
-  const handleAddSupply = () => {
-    addSupplyForm.validateFields()
-      .then(values => {
-        const newSupply = {
-          key: String(medicalSupplies.length + 1), // Simple key generation
-          name: values.name,
-          quantity: values.quantity,
-          unit: values.unit,
-          category: values.category,
-          status: values.quantity <= 10 ? 'critical' : (values.quantity <= 50 ? 'low' : 'normal'), // Basic status logic
-          statusText: values.quantity <= 10 ? 'Cần đặt gấp' : (values.quantity <= 50 ? 'Sắp hết' : null),
-        };
-        setMedicalSupplies(prevSupplies => [...prevSupplies, newSupply]);
-        message.success('Thêm vật tư thành công!');
-        setIsAddSupplyModalVisible(false);
-        addSupplyForm.resetFields();
-      })
-      .catch(info => {
-        console.log('Validate Failed:', info);
-        message.error('Vui lòng điền đầy đủ thông tin cần thiết.');
-      });
-  };
-
-  const handleCancelAddSupply = () => {
-    setIsAddSupplyModalVisible(false);
-    addSupplyForm.resetFields();
   };
 
   // Xử lý xem chi tiết vật tư
@@ -713,6 +680,7 @@ const App = () => {
     setSelectedClass(null);
     setSelectedStudent(null);
     setStudents([]);
+    setSelectedSupplies([]);
   };
 
   // Load events on component mount
@@ -759,6 +727,35 @@ const App = () => {
       }
     };
     loadEventNames();
+  }, []);
+
+  useEffect(() => {
+    const fetchSupplies = async () => {
+      try {
+        const supplies = await getMedicalSupplies();
+        // Khi map dữ liệu từ API, bỏ trường status:
+        const mapped = supplies.map(item => ({
+          key: item.medicalSupplyID,
+          name: item.supplyName,
+          quantity: item.quantityAvailable,
+          unit: item.unit,
+          category: item.categoryName || item.categoryID || 'Khác',
+          // Các trường gốc giữ lại nếu cần dùng
+          medicalSupplyID: item.medicalSupplyID,
+          supplyName: item.supplyName,
+          dateAdded: item.dateAdded,
+          storageTemperature: item.storageTemperature,
+          reorderLevel: item.reorderLevel,
+          categoryID: item.categoryID,
+          quantityAvailable: item.quantityAvailable,
+          categoryName: item.categoryName,
+        }));
+        setMedicalSupplies(mapped);
+      } catch (error) {
+        message.error('Không thể tải danh sách vật tư y tế');
+      }
+    };
+    fetchSupplies();
   }, []);
 
   // Lấy dữ liệu đã lọc
@@ -843,12 +840,11 @@ const App = () => {
             showQuickJumper: false
           }}
           className="events-table"
-          scroll={{ x: 'max-content' }}
         />
       </Card>
 
       {/* Quản lý vật tư y tế */}
-      <Card className="supplies-card" title="Quản lý vật tư y tế">
+      <Card className="supplies-card" title="Danh sách vật tư y tế">
         <div className="filters-section custom-filters-section">
           <Row gutter={16} justify="space-between" align="middle">
             <Col flex="auto">
@@ -875,25 +871,6 @@ const App = () => {
                 <Option value="Khử trùng">Khử trùng</Option>
                 <Option value="Thiết bị">Thiết bị</Option>
               </Select>
-            </Col>
-            <Col>
-              <Select
-                placeholder="Tất cả trạng thái"
-                value={supplyStatusFilter}
-                onChange={setSupplyStatusFilter}
-                style={{ minWidth: 170 }}
-                allowClear
-              >
-                <Option value="">Tất cả trạng thái</Option>
-                <Option value="normal">Bình thường</Option>
-                <Option value="low">Sắp hết</Option>
-                <Option value="critical">Cấp bách</Option>
-              </Select>
-            </Col>
-            <Col>
-          <Button type="primary" icon={<PlusOutlined />} onClick={showAddSupplyModal}>
-            Thêm vật tư
-          </Button>
             </Col>
           </Row>
         </div>
@@ -924,49 +901,10 @@ const App = () => {
              
               render: (text) => <Tag>{text}</Tag>
             },
-            {
-              title: 'Trạng thái',
-              dataIndex: 'status',
-          
-              render: (status) => {
-                switch (status) {
-                  case 'critical':
-                    return <Tag color="red">Cấp bách</Tag>;
-                  case 'low':
-                    return <Tag color="orange">Sắp hết</Tag>;
-                  default:
-                    return <Tag color="green">Bình thường</Tag>;
-                }
-              }
-            },
-            {
-              title: 'Hành động',
-              key: 'action',
-              
-              render: (_, record) => (
-                <Space size="middle">
-                  <Tooltip title="Xem chi tiết">
-                    <Button 
-                      type="text" 
-                      icon={<EyeOutlined />} 
-                      onClick={() => handleViewSupplyDetails(record)}
-                    />
-                  </Tooltip>
-                  <Tooltip title="Chỉnh sửa">
-                    <Button 
-                      type="text" 
-                      icon={<EditOutlined />} 
-                      onClick={() => handleEditSupply(record)}
-                    />
-                  </Tooltip>
-                </Space>
-              ),
-            },
           ]}
           dataSource={getFilteredSupplies()}
           pagination={false}
           className="events-table"
-          scroll={{ x: 'max-content' }}
         />
 
         <div className="pagination-section">
@@ -983,307 +921,395 @@ const App = () => {
 
       {/* Modal tạo sự kiện mới */}
       <Modal
-        title="Tạo sự kiện y tế khẩn cấp"
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Tạo sự kiện y tế mới</span>}
         open={isModalVisible}
         onOk={handleCreateEvent}
-        onCancel={() => {
-          setIsModalVisible(false);
-          form.resetFields();
-          setSelectedClass(null);
-          setSelectedStudent(null);
-          setStudents([]);
-        }}
+        onCancel={() => setIsModalVisible(false)}
         width={800}
         okText="Tạo sự kiện"
         cancelText="Hủy"
+        maskClosable={false}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        afterOpenChange={(visible) => {
+          if (!visible) {
+            form.resetFields();
+            setSelectedClass(null);
+            setSelectedStudent(null);
+            setStudents([]);
+            setSelectedEventType(null);
+            setSelectedSupplies([]);
+          }
+        }}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          requiredMark={false}
-        >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="className"
-                label="Lớp"
-                rules={[{ required: true, message: 'Vui lòng chọn lớp' }]}
-                initialValue={undefined}
-              >
-                <Select
-                  placeholder="Chọn lớp"
-                  onChange={handleClassChange}
-                  allowClear
-                  showSearch
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
-                >
-                  <Option value="Lớp 5A">Lớp 5A</Option>
-                  <Option value="Lớp 4B">Lớp 4B</Option>
-                  <Option value="Lớp 3C">Lớp 3C</Option>
-                  <Option value="Lớp 2A">Lớp 2A</Option>
-                  <Option value="Lớp 1B">Lớp 1B</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="studentId"
-                label="Học sinh"
-                rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
-              >
-                <Select
-                  placeholder="Chọn học sinh"
-                  onChange={handleStudentChange}
-                  disabled={!selectedClass}
-                  loading={!selectedClass}
-                  allowClear
-                  showSearch
-                  optionFilterProp="label"
-                  filterOption={(input, option) => {
-                    const studentName = option?.label?.toLowerCase() || '';
-                    return studentName.includes(input.toLowerCase());
-                  }}
-                >
-                  {students && students.length > 0 ? (
-                    students.map(student => (
-                      <Option 
-                        key={student.studentID} 
-                        value={student.studentID}
-                        label={`${student.fullName} - ${student.gender === 1 ? 'Nam' : 'Nữ'}`}
-                      >
-                        {student.fullName} - {student.gender === 1 ? 'Nam' : 'Nữ'}
-                      </Option>
-                    ))
-                  ) : (
-                    <Option disabled value="no-data">Không có dữ liệu học sinh</Option>
-                  )}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            name="typeName"
-            label="Loại sự kiện"
-            rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <Form
+            form={form}
+            layout="vertical"
+            requiredMark={false}
+            preserve={true}
           >
-            <Select 
-              placeholder="Chọn loại sự kiện" 
-              allowClear
-              onChange={(value, option) => {
-                const selectedType = eventTypeList.find(type => type.typeName === value);
-                setSelectedEventType(selectedType);
-              }}
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="className"
+                  label="Lớp"
+                  rules={[{ required: true, message: 'Vui lòng chọn lớp' }]}
+                  initialValue={undefined}
+                >
+                  <Select
+                    placeholder="Chọn lớp"
+                    onChange={handleClassChange}
+                    allowClear
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    <Option value="Lớp 5A">Lớp 5A</Option>
+                    <Option value="Lớp 4B">Lớp 4B</Option>
+                    <Option value="Lớp 3C">Lớp 3C</Option>
+                    <Option value="Lớp 2A">Lớp 2A</Option>
+                    <Option value="Lớp 1B">Lớp 1B</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="studentId"
+                  label="Học sinh"
+                  rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
+                >
+                  <Select
+                    placeholder="Chọn học sinh"
+                    onChange={handleStudentChange}
+                    disabled={!selectedClass}
+                    loading={!selectedClass}
+                    allowClear
+                    showSearch
+                    optionFilterProp="label"
+                    filterOption={(input, option) => {
+                      const studentName = option?.label?.toLowerCase() || '';
+                      return studentName.includes(input.toLowerCase());
+                    }}
+                  >
+                    {students && students.length > 0 ? (
+                      students.map(student => (
+                        <Option 
+                          key={student.studentID} 
+                          value={student.studentID}
+                          label={`${student.fullName} - ${student.gender === 1 ? 'Nam' : 'Nữ'}`}
+                        >
+                          {student.fullName} - {student.gender === 1 ? 'Nam' : 'Nữ'}
+                        </Option>
+                      ))
+                    ) : (
+                      <Option disabled value="no-data">Không có dữ liệu học sinh</Option>
+                    )}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              name="typeName"
+              label="Loại sự kiện"
+              rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
             >
-              {eventTypeList.map(eventType => (
-                <Option key={eventType.eventTypeId} value={eventType.typeName}>
-                  {eventType.typeName}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+              <Select 
+                placeholder="Chọn loại sự kiện" 
+                allowClear
+                onChange={(value, option) => {
+                  const selectedType = eventTypeList.find(type => type.typeName === value);
+                  setSelectedEventType(selectedType);
+                }}
+              >
+                {eventTypeList.map(eventType => (
+                  <Option key={eventType.eventTypeId} value={eventType.typeName}>
+                    {eventType.typeName}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="temperature"
-                label="Nhiệt độ"
-              >
-                <Input placeholder="Nhập nhiệt độ" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="heartRate"
-                label="Nhịp tim"
-              >
-                <Input placeholder="Nhập nhịp tim" />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="temperature"
+                  label="Nhiệt độ"
+                >
+                  <Input placeholder="Nhập nhiệt độ" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="heartRate"
+                  label="Nhịp tim"
+                >
+                  <Input placeholder="Nhập nhịp tim" />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="date"
-                label="Ngày"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="time"
-                label="Giờ"
-                rules={[{ required: true, message: 'Vui lòng chọn giờ' }]}
-              >
-                <TimePicker style={{ width: '100%' }} format="HH:mm" />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="date"
+                  label="Ngày"
+                  rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+                >
+                  <DatePicker style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="time"
+                  label="Giờ"
+                  rules={[{ required: true, message: 'Vui lòng chọn giờ' }]}
+                >
+                  <TimePicker style={{ width: '100%' }} format="HH:mm" />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="emergency"
-                label="Tình trạng khẩn cấp"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="hasParentBeenInformed"
-                label="Đã thông báo phụ huynh"
-                valuePropName="checked"
-                initialValue={false}
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="emergency"
+                  label="Tình trạng khẩn cấp"
+                  valuePropName="checked"
+                  initialValue={false}
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="hasParentBeenInformed"
+                  label="Thông báo cho phụ huynh"
+                  valuePropName="checked"
+                  initialValue={false}
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Form.Item
-            name="usageMethod"
-            label="Phương pháp xử lý"
-          >
-            <Input placeholder="Nhập phương pháp xử lý" />
-          </Form.Item>
+            <Form.Item
+              name="usageMethod"
+              label="Phương pháp xử lý"
+            >
+              <Input placeholder="Nhập phương pháp xử lý" />
+            </Form.Item>
 
-          {/* Ẩn phần ghi chú và kết quả xử lý khi tạo sự kiện mới
-          <Form.Item name="note" label="Ghi chú">
-            <TextArea rows={3} placeholder="Nhập ghi chú chi tiết về sự kiện y tế..." />
-          </Form.Item>
-          <Form.Item name="result" label="Kết quả xử lý">
-            <TextArea rows={3} placeholder="Nhập kết quả xử lý..." />
-          </Form.Item>
-          */}
-        </Form>
+            <Form.Item
+              label="Vật tư y tế sử dụng"
+              extra="Chọn vật tư y tế đã sử dụng cho sự kiện và nhập số lượng sử dụng."
+            >
+              <Select
+                mode="multiple"
+                placeholder="Chọn vật tư y tế sử dụng"
+                value={selectedSupplies.map(s => s.medicalSupplyId)}
+                onChange={ids => {
+                  // Thêm mới các vật tư được chọn
+                  const newSelected = ids.map(id => {
+                    const existed = selectedSupplies.find(s => s.medicalSupplyId === id);
+                    if (existed) return existed;
+                    // Ưu tiên lấy tên từ medicalSupplies, nếu không có thì lấy từ selectedSupplies
+                    const found = medicalSupplies.find(s => s.key === id);
+                    if (found) {
+                      return {
+                        medicalSupplyId: found.key,
+                        supplyName: found.name,
+                        unit: found.unit,
+                        quantityUsed: 1
+                      };
+                    }
+                    // Nếu không tìm thấy trong medicalSupplies, lấy từ selectedSupplies (giữ supplyName cũ)
+                    const existedOld = selectedSupplies.find(s => s.medicalSupplyId === id);
+                    if (existedOld) return existedOld;
+                    return null;
+                  }).filter(Boolean);
+                  setSelectedSupplies(newSelected);
+                }}
+                style={{ width: '100%' }}
+                optionLabelProp="label"
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {selectedSupplies.map(supply => (
+                  <Option key={supply.medicalSupplyId} value={supply.medicalSupplyId} label={supply.supplyName}>
+                    {supply.supplyName} ({supply.unit})
+                  </Option>
+                ))}
+                {/* Đảm bảo các vật tư mới cũng có thể chọn */}
+                {medicalSupplies.filter(s => !selectedSupplies.find(sel => sel.medicalSupplyId === s.key)).map(supply => (
+                  <Option key={supply.key} value={supply.key} label={supply.name}>
+                    {supply.name} ({supply.unit})
+                  </Option>
+                ))}
+              </Select>
+              {/* Table nhập số lượng cho các vật tư đã chọn */}
+              {selectedSupplies.length > 0 && (
+                <Table
+                  columns={[
+                    { title: 'Tên vật tư', dataIndex: 'supplyName', key: 'supplyName' },
+                    { title: 'Đơn vị', dataIndex: 'unit', key: 'unit' },
+                    {
+                      title: 'Số lượng sử dụng',
+                      dataIndex: 'quantityUsed',
+                      render: (val, record) => (
+                        <InputNumber
+                          min={1}
+                          value={val}
+                          onChange={v => {
+                            setSelectedSupplies(prev => prev.map(s =>
+                              s.medicalSupplyId === record.medicalSupplyId ? { ...s, quantityUsed: v } : s
+                            ));
+                          }}
+                        />
+                      )
+                    },
+                    {
+                      title: '',
+                      key: 'remove',
+                      render: (_, record) => (
+                        <Button type="link" danger onClick={() => {
+                          setSelectedSupplies(prev => prev.filter(s => s.medicalSupplyId !== record.medicalSupplyId));
+                        }}>Xóa</Button>
+                      )
+                    }
+                  ]}
+                  dataSource={selectedSupplies}
+                  pagination={false}
+                  rowKey="medicalSupplyId"
+                  size="small"
+                  style={{ marginTop: 12 }}
+                />
+              )}
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
 
       {/* Modal xem chi tiết */}
       <Modal
-        title="Chi tiết sự kiện y tế"
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết sự kiện y tế</span>}
         open={isViewModalVisible}
         onCancel={() => setIsViewModalVisible(false)}
         footer={null}
-        width={600}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        width={800}
       >
         {selectedEvent && (
-          <div className="event-details">
-            <div className="detail-item">
-              <span className="label">ID Sự kiện:</span>
-              <span className="value">{selectedEvent.eventId}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">ID Học sinh:</span>
-              <span className="value">{selectedEvent.studentId}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Tên học sinh:</span>
-              <span className="value">{selectedEvent.fullName}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Lớp:</span>
-              <span className="value">{selectedEvent.className}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Giới tính:</span>
-              <span className="value">{selectedEvent.gender === 1 ? 'Nam' : 'Nữ'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Loại sự kiện:</span>
-              <div className="value">
-                {selectedEvent.eventTypeNames && selectedEvent.eventTypeNames.map((type, index) => (
-                  <Tag key={index} color="red">{type}</Tag>
-                ))}
-              </div>
-            </div>
-            <div className="detail-item">
-              <span className="label">Thời gian:</span>
-              <span className="value">{moment(selectedEvent.eventDateTime).format('HH:mm, DD/MM/YYYY')}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Trạng thái:</span>
-              <Tag color={
-                selectedEvent.processingStatus === 'COMPLETED' ? 'success' :
-                selectedEvent.processingStatus === 'PROCESSING' ? 'processing' :
-                selectedEvent.processingStatus === 'PENDING' ? 'error' :
-                selectedEvent.processingStatus === 'DELETED' ? 'default' : 'default'
-              }>
-                {selectedEvent.processingStatus === 'COMPLETED' ? 'Hoàn thành' :
-                 selectedEvent.processingStatus === 'PROCESSING' ? 'Đang xử lý' :
-                 selectedEvent.processingStatus === 'PENDING' ? 'Chờ xử lí' :
-                 selectedEvent.processingStatus === 'DELETED' ? 'Đã xóa' : 'Chưa xử lý'}
-              </Tag>
-            </div>
-           
-            {selectedEvent.createdByNurseName && (
-              <div className="detail-item">
-                <span className="label">Người tạo sự kiện: </span>
-                <span className="value">{selectedEvent.createdByNurseName}</span>
-              </div>
-            )}
-            {selectedEvent.updatedByNurseName && (
-              <div className="detail-item">
-                <span className="label">Người cập nhật cuối: </span>
-                <span className="value">{selectedEvent.updatedByNurseName}</span>
-              </div>
-            )}
-            <div className="detail-item">
-              <span className="label">Khẩn cấp:</span>
-              <Tag color={selectedEvent.isEmergency || selectedEvent.emergency ? 'red' : 'default'}>
-                {(selectedEvent.isEmergency || selectedEvent.emergency) ? 'Có' : 'Không'}
-              </Tag>
-            </div>
-            <div className="detail-item">
-              <span className="label">Đã thông báo PH:</span>
-              <Tag color={selectedEvent.hasParentBeenInformed ? 'green' : 'default'}>
-                {selectedEvent.hasParentBeenInformed ? 'Đã thông báo' : 'Chưa thông báo'}
-              </Tag>
-            </div>
-            {selectedEvent.temperature && (
-              <div className="detail-item">
-                <span className="label">Nhiệt độ:</span>
-                <span className="value">{selectedEvent.temperature}</span>
-              </div>
-            )}
-            {selectedEvent.heartRate && (
-              <div className="detail-item">
-                <span className="label">Nhịp tim:</span>
-                <span className="value">{selectedEvent.heartRate}</span>
-              </div>
-            )}
-            {selectedEvent.usageMethod && (
-              <div className="detail-item">
-                <span className="label">Phương pháp xử lý:</span>
-                <span className="value">{selectedEvent.usageMethod}</span>
-              </div>
-            )}
-            {selectedEvent.note && (
-              <div className="detail-item">
-                <span className="label">Ghi chú:</span>
-                <div className="value description">{selectedEvent.note}</div>
-              </div>
-            )}
-            {selectedEvent.result && (
-              <div className="detail-item">
-                <span className="label">Kết quả xử lý:</span>
-                <div className="value description">{selectedEvent.result}</div>
-              </div>
-            )}
+          <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+            <Row gutter={[24, 16]}>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Tên học sinh:</Typography.Text><br />
+                <Typography.Text strong style={{ fontSize: 16 }}>{selectedEvent.fullName}</Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Lớp:</Typography.Text><br />
+                <Typography.Text strong>{selectedEvent.className}</Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Loại sự kiện:</Typography.Text><br />
+                <Typography.Text>{selectedEvent.eventTypeNames && selectedEvent.eventTypeNames.length > 0 ? selectedEvent.eventTypeNames[0] : selectedEvent.eventType}</Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Thời gian:</Typography.Text><br />
+                <Typography.Text>{moment(selectedEvent.eventDateTime).format('HH:mm, DD/MM/YYYY')}</Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Trạng thái:</Typography.Text><br />
+                <Tag color={
+                  selectedEvent.processingStatus === 'COMPLETED' ? 'success' :
+                  selectedEvent.processingStatus === 'PROCESSING' ? 'processing' :
+                  selectedEvent.processingStatus === 'PENDING' ? 'error' :
+                  selectedEvent.processingStatus === 'DELETED' ? 'default' : 'default'
+                }>
+                  {selectedEvent.processingStatus === 'COMPLETED' ? 'Hoàn thành' :
+                   selectedEvent.processingStatus === 'PROCESSING' ? 'Đang xử lý' :
+                   selectedEvent.processingStatus === 'PENDING' ? 'Chờ xử lí' :
+                   selectedEvent.processingStatus === 'DELETED' ? 'Đã xóa' : 'Chưa xử lý'}
+                </Tag>
+              </Col>
+              {selectedEvent.createdByNurseName && (
+                <Col span={12} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Người tạo sự kiện:</Typography.Text><br />
+                  <Typography.Text>{selectedEvent.createdByNurseName}</Typography.Text>
+                </Col>
+              )}
+              {selectedEvent.updatedByNurseName && (
+                <Col span={12} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Người cập nhật cuối:</Typography.Text><br />
+                  <Typography.Text>{selectedEvent.updatedByNurseName}</Typography.Text>
+                </Col>
+              )}
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Khẩn cấp:</Typography.Text><br />
+                <Tag color={selectedEvent.isEmergency || selectedEvent.emergency ? 'red' : 'default'}>
+                  {(selectedEvent.isEmergency || selectedEvent.emergency) ? 'Có' : 'Không'}
+                </Tag>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Thông báo cho phụ huynh:</Typography.Text><br />
+                <Tag color={selectedEvent.hasParentBeenInformed ? 'green' : 'default'}>
+                  {selectedEvent.hasParentBeenInformed ? 'Đã thông báo' : 'Chưa thông báo'}
+                </Tag>
+              </Col>
+              {selectedEvent.temperature && (
+                <Col span={12} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Nhiệt độ:</Typography.Text><br />
+                  <Typography.Text>{selectedEvent.temperature}</Typography.Text>
+                </Col>
+              )}
+              {selectedEvent.heartRate && (
+                <Col span={12} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Nhịp tim:</Typography.Text><br />
+                  <Typography.Text>{selectedEvent.heartRate}</Typography.Text>
+                </Col>
+              )}
+              {selectedEvent.usageMethod && (
+                <Col span={12} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Phương pháp xử lý:</Typography.Text><br />
+                  <Typography.Text>{selectedEvent.usageMethod}</Typography.Text>
+                </Col>
+              )}
+              {selectedEvent.note && (
+                <Col span={24} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Ghi chú:</Typography.Text><br />
+                  <Typography.Text>{selectedEvent.note}</Typography.Text>
+                </Col>
+              )}
+              {selectedEvent.result && (
+                <Col span={24} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Kết quả xử lý:</Typography.Text><br />
+                  <Typography.Text>{selectedEvent.result}</Typography.Text>
+                </Col>
+              )}
+              {selectedEvent.listMedicalSupplies && selectedEvent.listMedicalSupplies.length > 0 && (
+                <Col span={24} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Vật tư y tế sử dụng:</Typography.Text>
+                  <ul>
+                    {selectedEvent.listMedicalSupplies.map((supply, idx) => (
+                      <li key={idx}>
+                        {supply.supplyName} - {supply.quantityUsed} {supply.unit}
+                      </li>
+                    ))}
+                  </ul>
+                </Col>
+              )}
+            </Row>
           </div>
         )}
       </Modal>
 
       {/* Modal chỉnh sửa */}
       <Modal
-        title="Chỉnh sửa sự kiện y tế"
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chỉnh sửa sự kiện y tế</span>}
         open={isEditModalVisible}
         onOk={handleUpdateEvent}
         onCancel={handleCancelEdit}
@@ -1291,6 +1317,7 @@ const App = () => {
         okText="Cập nhật"
         cancelText="Hủy"
         maskClosable={false}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
         afterOpenChange={(visible) => {
           if (!visible) {
             editForm.resetFields();
@@ -1300,290 +1327,307 @@ const App = () => {
           }
         }}
       >
-        <Form
-          form={editForm}
-          layout="vertical"
-          requiredMark={false}
-          preserve={true}
-        >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="className"
-                label="Lớp"
-                rules={[{ required: true, message: 'Vui lòng chọn lớp' }]}
-                initialValue={undefined}
-              >
-                <Select
-                  placeholder="Chọn lớp"
-                  onChange={handleClassChange}
-                  allowClear
-                  showSearch
-                  optionFilterProp="children"
-                  filterOption={(input, option) =>
-                    (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <Form
+            form={editForm}
+            layout="vertical"
+            requiredMark={false}
+            preserve={true}
+          >
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="className"
+                  label="Lớp"
+                  rules={[{ required: true, message: 'Vui lòng chọn lớp' }]}
+                  initialValue={undefined}
                 >
-                  <Option value="Lớp 5A">Lớp 5A</Option>
-                  <Option value="Lớp 4B">Lớp 4B</Option>
-                  <Option value="Lớp 3C">Lớp 3C</Option>
-                  <Option value="Lớp 2A">Lớp 2A</Option>
-                  <Option value="Lớp 1B">Lớp 1B</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="studentId"
-                label="Học sinh"
-                rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
-              >
-                <Select
-                  placeholder="Chọn học sinh"
-                  onChange={handleStudentChange}
-                  disabled={!selectedClass}
-                  loading={!selectedClass}
-                  allowClear
-                  showSearch
-                  optionFilterProp="label"
-                  filterOption={(input, option) => {
-                    const studentName = option?.label?.toLowerCase() || '';
-                    return studentName.includes(input.toLowerCase());
-                  }}
+                  <Select
+                    placeholder="Chọn lớp"
+                    onChange={handleClassChange}
+                    allowClear
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    <Option value="Lớp 5A">Lớp 5A</Option>
+                    <Option value="Lớp 4B">Lớp 4B</Option>
+                    <Option value="Lớp 3C">Lớp 3C</Option>
+                    <Option value="Lớp 2A">Lớp 2A</Option>
+                    <Option value="Lớp 1B">Lớp 1B</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="studentId"
+                  label="Học sinh"
+                  rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
                 >
-                  {students && students.length > 0 ? (
-                    students.map(student => (
-                      <Option 
-                        key={student.studentID} 
-                        value={student.studentID}
-                        label={`${student.fullName} - ${student.gender === 1 ? 'Nam' : 'Nữ'}`}
-                      >
-                        {student.fullName} - {student.gender === 1 ? 'Nam' : 'Nữ'}
+                  <Select
+                    placeholder="Chọn học sinh"
+                    onChange={handleStudentChange}
+                    disabled={!selectedClass}
+                    loading={!selectedClass}
+                    allowClear
+                    showSearch
+                    optionFilterProp="label"
+                    filterOption={(input, option) => {
+                      const studentName = option?.label?.toLowerCase() || '';
+                      return studentName.includes(input.toLowerCase());
+                    }}
+                  >
+                    {students && students.length > 0 ? (
+                      students.map(student => (
+                        <Option 
+                          key={student.studentID} 
+                          value={student.studentID}
+                          label={`${student.fullName} - ${student.gender === 1 ? 'Nam' : 'Nữ'}`}
+                        >
+                          {student.fullName} - {student.gender === 1 ? 'Nam' : 'Nữ'}
+                        </Option>
+                      ))
+                    ) : (
+                      <Option disabled value="no-data">Không có dữ liệu học sinh</Option>
+                    )}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="typeName"
+                  label="Loại sự kiện"
+                  rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
+                >
+                  <Select 
+                    placeholder="Chọn loại sự kiện" 
+                    allowClear
+                    onChange={(value, option) => {
+                      const selectedType = eventTypeList.find(type => type.typeName === value);
+                      setSelectedEventType(selectedType);
+                    }}
+                    value={editForm.getFieldValue('typeName')}
+                    key={selectedEvent?.eventId || 'new'}
+                  >
+                    {eventTypeList.map(eventType => (
+                      <Option key={eventType.eventTypeId} value={eventType.typeName}>
+                        {eventType.typeName}
                       </Option>
-                    ))
-                  ) : (
-                    <Option disabled value="no-data">Không có dữ liệu học sinh</Option>
-                  )}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="typeName"
-                label="Loại sự kiện"
-                rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
-              >
-                <Select 
-                  placeholder="Chọn loại sự kiện" 
-                  allowClear
-                  onChange={(value, option) => {
-                    const selectedType = eventTypeList.find(type => type.typeName === value);
-                    setSelectedEventType(selectedType);
-                  }}
-                  value={editForm.getFieldValue('typeName')}
-                  key={selectedEvent?.eventId || 'new'}
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="processingStatus"
+                  label="Trạng thái xử lý"
+                  rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
                 >
-                  {eventTypeList.map(eventType => (
-                    <Option key={eventType.eventTypeId} value={eventType.typeName}>
-                      {eventType.typeName}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="processingStatus"
-                label="Trạng thái xử lý"
-                rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-              >
-                <Select placeholder="Chọn trạng thái">
-                  <Option value="PROCESSING">Đang xử lý</Option>
-                  <Option value="COMPLETED">Hoàn thành</Option>
-                  <Option value="PENDING">Chờ xử lí</Option>
-                  <Option value="DELETED">Đã xóa</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+                  <Select placeholder="Chọn trạng thái">
+                    <Option value="PROCESSING">Đang xử lý</Option>
+                    <Option value="COMPLETED">Hoàn thành</Option>
+                    <Option value="PENDING">Chờ xử lí</Option>
+                    <Option value="DELETED">Đã xóa</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="temperature"
-                label="Nhiệt độ"
-              >
-                <Input placeholder="Nhập nhiệt độ" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="heartRate"
-                label="Nhịp tim"
-              >
-                <Input placeholder="Nhập nhịp tim" />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="temperature"
+                  label="Nhiệt độ"
+                >
+                  <Input placeholder="Nhập nhiệt độ" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="heartRate"
+                  label="Nhịp tim"
+                >
+                  <Input placeholder="Nhập nhịp tim" />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="date"
-                label="Ngày"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="time"
-                label="Giờ"
-                rules={[{ required: true, message: 'Vui lòng chọn giờ' }]}
-              >
-                <TimePicker style={{ width: '100%' }} format="HH:mm" />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="date"
+                  label="Ngày sự kiện"
+                  rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+                >
+                  <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="time"
+                  label="Giờ sự kiện"
+                  rules={[{ required: true, message: 'Vui lòng chọn giờ' }]}
+                >
+                  <TimePicker style={{ width: '100%' }} format="HH:mm" />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="emergency"
-                label="Tình trạng khẩn cấp"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="hasParentBeenInformed"
-                label="Đã thông báo phụ huynh"
-                valuePropName="checked"
-              >
-                <Switch />
-              </Form.Item>
-            </Col>
-          </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="isEmergency"
+                  label="Khẩn cấp"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="hasParentBeenInformed"
+                  label="Thông báo cho phụ huynh"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Form.Item
-            name="usageMethod"
-            label="Phương pháp xử lý"
-          >
-            <Input placeholder="Nhập phương pháp xử lý" />
-          </Form.Item>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  name="usageMethod"
+                  label="Phương pháp xử lý"
+                >
+                  <Input placeholder="Nhập phương pháp xử lý" />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Form.Item
-            name="description"
-            label="Ghi chú"
-          >
-            <TextArea 
-              rows={4} 
-              placeholder="Nhập ghi chú chi tiết về sự kiện y tế..."
-            />
-          </Form.Item>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  name="description"
+                  label="Ghi chú"
+                >
+                  <Input.TextArea rows={3} placeholder="Nhập ghi chú" />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Form.Item
-            name="result"
-            label="Kết quả xử lý"
-          >
-            <TextArea 
-              rows={4} 
-              placeholder="Nhập kết quả xử lý..."
-            />
-          </Form.Item>
-        </Form>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  name="result"
+                  label="Kết quả xử lý"
+                >
+                  <Input.TextArea rows={3} placeholder="Nhập kết quả xử lý" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  label="Vật tư y tế sử dụng"
+                  extra="Chọn vật tư y tế đã sử dụng cho sự kiện và nhập số lượng sử dụng."
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder="Chọn vật tư y tế sử dụng"
+                    value={selectedSupplies.map(s => s.medicalSupplyId)}
+                    onChange={ids => {
+                      // Thêm mới các vật tư được chọn
+                      const newSelected = ids.map(id => {
+                        const existed = selectedSupplies.find(s => s.medicalSupplyId === id);
+                        if (existed) return existed;
+                        // Ưu tiên lấy tên từ medicalSupplies, nếu không có thì lấy từ selectedSupplies
+                        const found = medicalSupplies.find(s => s.key === id);
+                        if (found) {
+                          return {
+                            medicalSupplyId: found.key,
+                            supplyName: found.name,
+                            unit: found.unit,
+                            quantityUsed: 1
+                          };
+                        }
+                        // Nếu không tìm thấy trong medicalSupplies, lấy từ selectedSupplies (giữ supplyName cũ)
+                        const existedOld = selectedSupplies.find(s => s.medicalSupplyId === id);
+                        if (existedOld) return existedOld;
+                        return null;
+                      }).filter(Boolean);
+                      setSelectedSupplies(newSelected);
+                    }}
+                    style={{ width: '100%' }}
+                    optionLabelProp="label"
+                    showSearch
+                    filterOption={(input, option) =>
+                      (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {selectedSupplies.map(supply => (
+                      <Option key={supply.medicalSupplyId} value={supply.medicalSupplyId} label={supply.supplyName}>
+                        {supply.supplyName} ({supply.unit})
+                      </Option>
+                    ))}
+                    {/* Đảm bảo các vật tư mới cũng có thể chọn */}
+                    {medicalSupplies.filter(s => !selectedSupplies.find(sel => sel.medicalSupplyId === s.key)).map(supply => (
+                      <Option key={supply.key} value={supply.key} label={supply.name}>
+                        {supply.name} ({supply.unit})
+                      </Option>
+                    ))}
+                  </Select>
+                  {/* Table nhập số lượng cho các vật tư đã chọn */}
+                  {selectedSupplies.length > 0 && (
+                    <Table
+                      columns={[
+                        { title: 'Tên vật tư', dataIndex: 'supplyName', key: 'supplyName' },
+                        { title: 'Đơn vị', dataIndex: 'unit', key: 'unit' },
+                        {
+                          title: 'Số lượng sử dụng',
+                          dataIndex: 'quantityUsed',
+                          render: (val, record) => (
+                            <InputNumber
+                              min={1}
+                              value={val}
+                              onChange={v => {
+                                setSelectedSupplies(prev => prev.map(s =>
+                                  s.medicalSupplyId === record.medicalSupplyId ? { ...s, quantityUsed: v } : s
+                                ));
+                              }}
+                            />
+                          )
+                        },
+                        {
+                          title: '',
+                          key: 'remove',
+                          render: (_, record) => (
+                            <Button type="link" danger onClick={() => {
+                              setSelectedSupplies(prev => prev.filter(s => s.medicalSupplyId !== record.medicalSupplyId));
+                            }}>Xóa</Button>
+                          )
+                        }
+                      ]}
+                      dataSource={selectedSupplies}
+                      pagination={false}
+                      rowKey="medicalSupplyId"
+                      size="small"
+                      style={{ marginTop: 12 }}
+                    />
+                  )}
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </div>
       </Modal>
 
-      <Modal
-        title="Thêm Vật Tư Mới"
-        open={isAddSupplyModalVisible}
-        onOk={handleAddSupply}
-        onCancel={handleCancelAddSupply}
-        okText="Thêm"
-        cancelText="Hủy"
-        maskClosable={false}
-      >
-        <Form
-          form={addSupplyForm}
-          layout="vertical"
-          name="add_supply_form"
-          preserve={false}
-        >
-          <Form.Item
-            name="name"
-            label="Tên Vật Tư"
-            rules={[{ required: true, message: 'Vui lòng nhập tên vật tư!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="quantity"
-            label="Số Lượng"
-            rules={[{ required: true, message: 'Vui lòng nhập số lượng!' }, { min: 1, message: 'Số lượng phải là số dương!' }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item
-            name="unit"
-            label="Đơn Vị"
-            rules={[{ required: true, message: 'Vui lòng nhập đơn vị!' }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="category"
-            label="Loại Vật Tư"
-            rules={[{ required: true, message: 'Vui lòng chọn loại vật tư!' }]}
-          >
-            <Select placeholder="Chọn loại vật tư">
-              <Option value="Bảo hộ">Bảo hộ</Option>
-              <Option value="Dụng cụ">Dụng cụ</Option>
-              <Option value="Băng gạc">Băng gạc</Option>
-              <Option value="Khử trùng">Khử trùng</Option>
-              <Option value="Thiết bị">Thiết bị</Option>
-              <Option value="Khác">Khác</Option>
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Modal xem chi tiết vật tư */}
-      <Modal
-        title="Chi tiết vật tư y tế"
-        open={isSupplyViewModalVisible}
-        onCancel={() => setIsSupplyViewModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        {selectedSupply && (
-          <div className="event-details">
-            <div className="detail-item">
-              <span className="label">Tên vật tư:</span>
-              <span className="value">{selectedSupply.name}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Số lượng:</span>
-              <span className="value">{selectedSupply.quantity} {selectedSupply.unit}</span>
-            </div>
-            <div className="detail-item">
-              <span className="label">Loại vật tư:</span>
-              <Tag>{selectedSupply.category}</Tag>
-            </div>
-            <div className="detail-item">
-              <span className="label">Trạng thái:</span>
-              {selectedSupply.status === 'critical' && <Tag color="red">Cấp bách</Tag>}
-              {selectedSupply.status === 'low' && <Tag color="orange">Sắp hết</Tag>}
-              {selectedSupply.status === 'normal' && <Tag color="green">Bình thường</Tag>}
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };
