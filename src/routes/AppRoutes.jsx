@@ -28,7 +28,7 @@ const AppRoutes = () => {
 
         {/* Protected routes */}
         <Route path="parent" element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[1]}>
             <ParentPage />
           </PrivateRoute>
         } />
@@ -38,50 +38,50 @@ const AppRoutes = () => {
           </PrivateRoute>
         } />
         <Route path="health-records" element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[1]}>
             <StudentHealthRecord />
           </PrivateRoute>
         } />
 
         <Route path="medications" element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[1]}>
             <MedicineForm />
           </PrivateRoute>
         } />
         <Route path="health-check" element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[1]}>
             <HealthCheckNotification />
           </PrivateRoute>
         } />
         <Route path="vaccination" element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[1]}>
             <ParentVaccineConfirmation />
           </PrivateRoute>
         } />
         <Route path="school-nurse" element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[2]}>
             <NursePage />
           </PrivateRoute>
         } />
         <Route path='medical-events' element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[2]}>
             <MedicalEvents />
           </PrivateRoute>
 
         } />
         <Route path='manage-medication' element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[2]}>
             <ManageMedication />
           </PrivateRoute>
         } />
 
         <Route path='manage-vaccination' element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[2]}>
             <ManageVaccination />
           </PrivateRoute>
         } />
          <Route path='manage-health-check' element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={[2]}>
             <HealthCheckNurse />
           </PrivateRoute>
         } />
