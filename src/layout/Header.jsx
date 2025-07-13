@@ -23,8 +23,8 @@ const ROLE_MENUS = {
   ],
   3: [
     { key: 'home', label: 'Trang chủ', path: '/' },
-    { key: 'user-management', label: 'Quản lý người dùng', path: '/manager-users' },
-    // { key: 'school-management', label: 'Quản lý trường học', path: '/manager-school' },
+    { key: 'user-management', label: 'Quản Lý Người Dùng', path: '/manager-users' },
+    { key: 'supplies-management', label: 'Quản Lý Vật Tư', path: '/manager-supply' },
     { key: 'manage-dashboard', label: 'Biểu Đồ Báo Cáo', path: '/manager-dashboard' },
     { key: 'manager-event', label: 'Quản Lý Sự Kiện', path: '/manager-event' },
   ]

@@ -10,6 +10,7 @@ import ManagerPage from '../pages/manager';
 import UserManagement from '../pages/manager/manager-user';
 import VaccineApprovalPage from '../pages/manager/manager-event';
 import ManagerSchoolNurse from '../pages/manager/manager-school';
+import ManagerSupplies from '../pages/manager/manager-supply';
 import MedicineForm from '../pages/parent/medicine-submission';
 import HealthCheckNotification from '../pages/parent/health-check';
 import ParentVaccineConfirmation from '../pages/parent/vaccination';
@@ -38,6 +39,12 @@ const AppRoutes = () => {
         <Route path="manager-dashboard" element={
           <PrivateRoute>
             <ManagerPage />
+          </PrivateRoute>
+        } />
+
+        <Route path="manager-supply" element={
+          <PrivateRoute>
+            <ManagerSupplies />
           </PrivateRoute>
         } />
 
