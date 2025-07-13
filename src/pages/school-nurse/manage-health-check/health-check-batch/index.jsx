@@ -25,6 +25,7 @@ import {
 } from 'antd';
 import './health-check-batch.css';
 import moment from 'moment';
+import { formatDateTime } from '../../../../utils/formatDate';
 import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck, createHealthConsentForMultipleClasses } from '../../../../api/healthCheckAPI';
 
 const { Title, Text } = Typography;

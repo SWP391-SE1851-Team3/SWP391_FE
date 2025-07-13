@@ -6,6 +6,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 import {getAllHealthCheckResults, updateHealthCheckResult} from '../../../../api/healthCheckAPI';
 import {fetchStudentsByClass} from '../../../../api/medicalEventsAPI';
+import { getCurrentDateString } from '../../../../utils/formatDate';
 const HealthCheckRecord = () => {
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,7 +76,7 @@ const HealthCheckRecord = () => {
 
   const stats = {
     total: records.length,
-    today: records.filter(r => r.checkDate === new Date().toISOString().split('T')[0]).length,
+    today: records.filter(r => r.checkDate === getCurrentDateString()).length,
     thisWeek: records.filter(r => {
       const recordDate = new Date(r.checkDate);
       const today = new Date();

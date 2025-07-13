@@ -23,6 +23,7 @@ import {
 } from 'antd';
 import './consent-management.css';
 import {getConsentForms, getConsentFormDetail} from '../../../../api/vaccinationAPI';
+import { formatDate } from '../../../../utils/formatDate';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -133,16 +134,7 @@ const ConsentManagement = () => {
     return 'Chờ phản hồi';
   };
 
-  // Hàm format ngày dd/MM/yyyy
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
+
 
   return (
     <div className="consent-management-container">

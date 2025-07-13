@@ -32,6 +32,7 @@ import {
 } from '@ant-design/icons';
 import './Events.css';
 import moment from 'moment';
+import { formatDateTime } from '../../../utils/formatDate';
 import {
   createEmergencyEvent,
   updateMedicalEvent,
@@ -1220,7 +1221,7 @@ const App = () => {
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Thời gian:</Typography.Text><br />
-                <Typography.Text>{moment(selectedEvent.eventDateTime).format('HH:mm, DD/MM/YYYY')}</Typography.Text>
+                <Typography.Text>{formatDateTime(selectedEvent.eventDateTime)}</Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Trạng thái:</Typography.Text><br />

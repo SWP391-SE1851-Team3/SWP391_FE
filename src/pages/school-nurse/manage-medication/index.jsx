@@ -29,6 +29,7 @@ import {
   ClockCircleTwoTone
 } from '@ant-design/icons';
 import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails } from '../../../api/medicalSubmissionNurse';
+import { formatDateTime } from '../../../utils/formatDate';
 import './Medication.css';
 
 const { Title } = Typography;
@@ -98,7 +99,7 @@ const MedicationManagement = () => {
         className: submission.className || '',
         medication: submission.medicationDetails.map(m => m.medicineName).join(', '),
         status: mapStatusToFE(submission.status),
-        time: new Date(submission.submissionDate).toLocaleString('vi-VN'),
+                  time: formatDateTime(submission.submissionDate),
         actions: mapStatusToFE(submission.status) === 'pending' ? ['view', 'confirm', 'cancel'] : ['view'],
         rejectReason: '',
         medicationDetails: submission.medicationDetails
@@ -482,9 +483,7 @@ const MedicationManagement = () => {
             const allowUpdate = listStatus === 'confirmed';
 
             return (
-              <Timeline.Item key={idx} dot={
-                <span className="timeline-time-badge">{item.time}</span>
-              } color="transparent">
+             
                 <div className={cardClass}>
                   <div className="timeline-header">
                     <span className="timeline-student">Phát thuốc cho {item.student}</span>
@@ -529,7 +528,7 @@ const MedicationManagement = () => {
                     <div className="timeline-medication">{item.medication}</div>
                   </div>
                 </div>
-              </Timeline.Item>
+             
             );
           })}
         </Timeline>
@@ -562,7 +561,7 @@ const MedicationManagement = () => {
                 <span>{getStatusTag(selectedRecord.status)}</span>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Thời gian gửi:</Typography.Text><br />
+                <Typography.Text type="secondary" strong>Thời gian:</Typography.Text><br />
                 <Typography.Text>{selectedRecord.time}</Typography.Text>
               </Col>
               {detailData?.nurseName && (
@@ -586,7 +585,7 @@ const MedicationManagement = () => {
               {detailData?.submissionDate && (
                 <Col span={12} style={{ marginBottom: 6 }}>
                   <Typography.Text type="secondary" strong>Ngày gửi:</Typography.Text><br />
-                  <Typography.Text>{new Date(detailData.submissionDate).toLocaleString('vi-VN')}</Typography.Text>
+                  <Typography.Text>{formatDateTime(detailData.submissionDate)}</Typography.Text>
                 </Col>
               )}
               {detailData?.medicineImage && (

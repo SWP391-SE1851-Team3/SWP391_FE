@@ -31,6 +31,7 @@ import {
   getVaccineTypeByName,
   updateVaccinationRecord 
 } from '../../../../api/vaccinationAPI';
+import { formatDateTime, getCurrentDateString } from '../../../../utils/formatDate';
 
 
 import { fetchStudentsByClass } from '../../../../api/medicalEventsAPI';
@@ -130,7 +131,7 @@ const VaccinationRecords = () => {
 
   const stats = {
     total: records.length,
-    today: records.filter(r => r.observation_time === new Date().toISOString().split('T')[0]).length,
+    today: records.filter(r => r.observation_time === getCurrentDateString()).length,
     thisWeek: records.length,
     thisMonth: records.length
   };
@@ -251,7 +252,7 @@ const VaccinationRecords = () => {
       </div>
 
       {/* Statistics */}
-      <Row gutter={16} style={{ marginBottom: '24px' }}>
+      <Row key="stats-row" gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
           <Card >
             <Statistic
@@ -334,7 +335,7 @@ const VaccinationRecords = () => {
           else if (displayStatus === 'Cần theo dõi') badgeStatus = 'error';
           else if (displayStatus === 'Chờ ghi nhận') badgeStatus = 'warning';
           return (
-            <div key={record.id} className="records-card">
+            <div key={record.vaccinationRecordID || record.id || Math.random()} className="records-card">
               <div className="records-card-header">
                 <div>
                   <Title level={4}>{record.studentName}</Title>
@@ -373,40 +374,40 @@ const VaccinationRecords = () => {
         {selectedRecord && (
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
             <Row gutter={[24, 16]}>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="student" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong>Học sinh:</Text><br />
                 <Text strong style={{ fontSize: 16 }}>{selectedRecord.studentName}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="class" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="class"></span> Lớp:</Text><br />
                 <Text strong>{selectedRecord.className}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="vaccine" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Tên vaccine:</Text><br />
                 <Text strong>{selectedRecord.vaccineName}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="status" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Trạng thái:</Text><br />
                 <Text strong>{selectedRecord.status}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="createNurse" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Y tá tạo:</Text><br />
                 <Text>{selectedRecord.createNurseName}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="editNurse" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Y tá chỉnh sửa:</Text><br />
                 <Text>{selectedRecord.editNurseName}</Text>
               </Col>
            
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="symptoms" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="symptom"></span> Triệu chứng:</Text><br />
                 <Text>{selectedRecord.symptoms}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="severity" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="severity"></span> Mức độ:</Text><br />
                 <Text>{selectedRecord.severity}</Text>
               </Col>
-              <Col span={24} style={{ marginBottom: 6 }}>
+              <Col key="notes" span={24} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="note"></span> Ghi chú:</Text><br />
                 <Text>{selectedRecord.notes}</Text>
               </Col>
@@ -436,7 +437,7 @@ const VaccinationRecords = () => {
             form={editForm}
             layout="vertical"
           >
-            <Row gutter={16}>
+            <Row key="row1" gutter={16}>
               <Col span={12}>
                 <Form.Item name="studentName" label="Tên học sinh">
                   <Input disabled/>
@@ -448,7 +449,7 @@ const VaccinationRecords = () => {
                 </Form.Item>
               </Col>
             </Row>
-            <Row gutter={16}>
+            <Row key="row2" gutter={16}>
               <Col span={12}>
                 <Form.Item name="vaccineBatchId" label="Mã lô vaccine" style={{ display: 'none' }}>
                   <Input />
@@ -463,7 +464,7 @@ const VaccinationRecords = () => {
                 </Form.Item>
               </Col>
             </Row>
-            <Row gutter={16}>
+            <Row key="row3" gutter={16}>
               <Col span={12}>
                 <Form.Item name="severity" label="Mức độ" rules={[{ required: true, message: 'Vui lòng chọn mức độ' }]}>
                  <Select>
@@ -488,7 +489,7 @@ const VaccinationRecords = () => {
               </Col>
             </Row>
             {editingStatus === 'Cần theo dõi' && (
-              <Row gutter={16}>
+              <Row key="observation-row" gutter={16}>
                 <Col span={12}>
                   <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[{ required: true, message: 'Vui lòng nhập thời gian theo dõi' }]}> 
                     <Input type="datetime-local" />
@@ -501,7 +502,7 @@ const VaccinationRecords = () => {
                 </Col>
               </Row>
             )}
-            <Row gutter={16}>
+            <Row key="notes-row" gutter={16}>
               <Col span={12}>
                 <Form.Item name="notes" label="Ghi chú">
                   <Input />

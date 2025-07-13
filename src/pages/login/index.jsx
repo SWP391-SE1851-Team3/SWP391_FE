@@ -47,7 +47,6 @@ const Login = () => {
         roles
       } = data;
 
-      console.log('🔍 Extracted data:', { token, id, username, email: responseEmail, roles }); // Debug log
 
       // Điều hướng theo vai trò
       const userRole = values.role; // Use the original role number for navigation
@@ -60,14 +59,6 @@ const Login = () => {
       localStorage.setItem('roles', JSON.stringify(roles || []));
       localStorage.setItem('role', userRole); // Add role for compatibility with ProtectedRoute
 
-      console.log('🔍 Saved to localStorage:', {
-        email: localStorage.getItem('email'),
-        username: localStorage.getItem('username'),
-        userId: localStorage.getItem('userId'),
-        token: localStorage.getItem('token'),
-        roles: localStorage.getItem('roles'),
-        role: localStorage.getItem('role')
-      }); // Debug log
 
       message.success('Đăng nhập thành công!');
 

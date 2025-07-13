@@ -26,6 +26,7 @@ import {
 } from 'antd';
 import './Vaccination-batch.css';
 import moment from 'moment';
+import { formatDateTime } from '../../../../utils/formatDate';
 
 import { createVaccinationBatch, getVaccineTypeByName, getVaccinationBatches, updateVaccinationBatch, sendConsentFormByClassName } from '../../../../api/vaccinationAPI';
 
