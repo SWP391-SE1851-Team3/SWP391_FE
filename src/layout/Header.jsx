@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { Layout, Menu, Avatar, Badge, Button, message } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
-import { LogoutOutlined, LoginOutlined } from '@ant-design/icons';
-
+import { BellOutlined, LogoutOutlined, LoginOutlined } from '@ant-design/icons';
+import { useVaccination } from '../context/VaccinationContext';
 const { Header } = Layout;
 import './Header.css';
 
@@ -48,7 +48,11 @@ const HeaderLayout = () => {
   const allowedPaths = menuItems.map(item => item.path);
   const currentPath = allowedPaths.find(path => location.pathname.startsWith(path)) || allowedPaths[0];
   const userName = localStorage.getItem('email') || 'Người dùng';
+
+  const { newVaccinationCount } = useVaccination();
+
   const fullName = localStorage.getItem('fullname');
+
 
   const handleLogout = () => {
     localStorage.clear();
@@ -79,6 +83,7 @@ const HeaderLayout = () => {
           <span className="logo-text">Y tế Học đường</span>
         </div>
 
+
         <Menu
           mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
           selectedKeys={[currentPath]}
@@ -89,9 +94,11 @@ const HeaderLayout = () => {
           }))}
         />
 
+
         <div className="user-controls">
           {isAuthenticated ? (
             <>
+
               <div className="welcome-message">
                 {fullName ? `Xin chào, ${fullName}` : `Xin chào, ${userName}`}
               </div>
