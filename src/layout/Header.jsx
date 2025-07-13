@@ -45,6 +45,8 @@ const HeaderLayout = () => {
   const isAuthenticated = localStorage.getItem('token');
   const role = Number(localStorage.getItem('role')) || 1;
   const menuItems = getMenuByRole(role);
+  const allowedPaths = menuItems.map(item => item.path);
+  const currentPath = allowedPaths.find(path => location.pathname.startsWith(path)) || allowedPaths[0];
   const userName = localStorage.getItem('email') || 'Người dùng';
   const fullName = localStorage.getItem('fullname');
 
@@ -79,9 +81,7 @@ const HeaderLayout = () => {
 
         <Menu
           mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
-          selectedKeys={[
-            menuItems.find(item => location.pathname.startsWith(item.path))?.path || '/'
-          ]}
+          selectedKeys={[currentPath]}
           className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
           items={menuItems.map(item => ({
             key: item.path,
