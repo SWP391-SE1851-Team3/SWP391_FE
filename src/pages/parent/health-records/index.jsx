@@ -19,7 +19,7 @@ const StudentHealthRecord = () => {
   const [hasProfile, setHasProfile] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-  const parentId = localStorage.getItem('parentId');
+  const parentId = localStorage.getItem('userId');
 
   // Lấy danh sách học sinh của phụ huynh
   useEffect(() => {

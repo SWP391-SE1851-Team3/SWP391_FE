@@ -18,7 +18,8 @@ import {
 } from '@ant-design/icons';
 import {
   getStudentHealthProfiles,
-  submitMedicationForm
+  submitMedicationForm,
+  uploadMedicineImage
 } from '../../../api/medicalSubmission';
 import MedicineHistory from './medicalHistory';
 import './medicineForm.css';
@@ -30,10 +31,10 @@ const MedicineForm = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
-  const parentId = localStorage.getItem('parentId');
   const [form] = Form.useForm();
 
-  // Load danh sách học sinh
+  const parentId = localStorage.getItem('userId');
+
   useEffect(() => {
     if (!parentId) {
       message.error('Vui lòng đăng nhập!');
@@ -41,26 +42,26 @@ const MedicineForm = () => {
     }
     setLoading(true);
     getStudentHealthProfiles(parentId)
-      .then(res => {
-        setStudents(res.data || []);
+      .then(data => {
+        setStudents(data || []);
       })
       .catch(() => message.error('Không tải được danh sách học sinh'))
       .finally(() => setLoading(false));
   }, [parentId]);
 
+  // Chỉ cho upload file .png
+  const beforeUpload = (file) => {
+    const isPng = file.type === 'image/png';
+    if (!isPng) {
+      message.error('Chỉ chấp nhận file PNG!');
+    }
+    return isPng ? false : Upload.LIST_IGNORE;
+  };
+
   const onFinish = async (values) => {
     try {
-      const parentId = localStorage.getItem('parentId');
       const studentId = selectedStudentId;
 
-      // Upload ảnh thuốc nếu có
-      let imageUrl = '';
-      if (values.medicineImage && values.medicineImage.fileList.length > 0) {
-        const file = values.medicineImage.file.originFileObj;
-        imageUrl = await fakeUploadImage(file);
-      }
-
-      // Chuẩn hóa danh sách thuốc
       const medicationDetails = values.medicines.map(item => ({
         medicineName: item.medicineName,
         dosage: item.dosage,
@@ -68,41 +69,49 @@ const MedicineForm = () => {
         note: item.note || ""
       }));
 
-      // Thêm thời gian submissionDate
       const submissionDate = new Date().toISOString();
 
       const submitData = {
         parentId: parseInt(parentId),
         studentId: parseInt(studentId),
-        medicineImage: imageUrl,
-        medicationDetails: medicationDetails,
+        medicineImage: '', // upload ảnh sau
+        medicationDetails,
         submissionDate
       };
 
-      await submitMedicationForm(submitData);
-      message.success("Gửi đơn thuốc thành công!");
+      const result = await submitMedicationForm(submitData);
+      const submissionId = result.submissionId || result.id;
+
+      if (
+        values.medicineImage &&
+        values.medicineImage.fileList &&
+        values.medicineImage.fileList.length > 0
+      ) {
+        const fileObj = values.medicineImage.fileList[0].originFileObj;
+        if (fileObj) {
+          await uploadMedicineImage(submissionId, fileObj, true);
+          message.success("Đơn thuốc & ảnh đã được gửi thành công!");
+        } else {
+          message.warning("Không tìm thấy file hợp lệ để upload.");
+        }
+      } else {
+        message.success("Đơn thuốc đã được gửi thành công!");
+      }
+
       form.resetFields();
+      setSelectedStudentId(null);
     } catch (error) {
       message.error("Có lỗi xảy ra khi gửi đơn thuốc!");
     }
-  };
-
-  // Hàm upload giả lập tạm thời
-  const fakeUploadImage = async (file) => {
-    // Ở đây bạn thay bằng logic upload ảnh thực tế về server (nếu backend đã hỗ trợ upload file)
-    console.log("Upload file:", file);
-    return "https://dummyimage.com/200x200/000/fff&text=Uploaded";
   };
 
   return (
     <div className="medicine-form-container">
       <div className="medicine-form-header-center">
         <Typography.Title level={3} className="medicine-form-title">
-          Gửi Thuốc cho Học sinh
+          Gửi Thuốc Cho Học Sinh
         </Typography.Title>
-        {/* <div className="medicine-form-subtitle">
-          Chọn học sinh để nhập hồ sơ sức khỏe
-        </div> */}
+
         <Form.Item className="medicine-form-select-wrapper" required>
           <Select
             value={selectedStudentId ?? undefined}
@@ -125,6 +134,7 @@ const MedicineForm = () => {
           </Select>
         </Form.Item>
       </div>
+
       <Spin spinning={loading}>
         {selectedStudentId && (
           <Form
@@ -141,7 +151,15 @@ const MedicineForm = () => {
               {(fields, { add, remove }) => (
                 <>
                   {fields.map(({ key, name, ...restField }) => (
-                    <div key={key} style={{ border: '1px solid #ddd', padding: 16, marginBottom: 16, borderRadius: 8 }}>
+                    <div
+                      key={key}
+                      style={{
+                        border: '1px solid #ddd',
+                        padding: 16,
+                        marginBottom: 16,
+                        borderRadius: 8
+                      }}
+                    >
                       <Row gutter={16}>
                         <Col span={8}>
                           <Form.Item
@@ -216,9 +234,19 @@ const MedicineForm = () => {
               )}
             </Form.List>
 
-            <Form.Item name="medicineImage" label="Ảnh thuốc (chỉ upload 1 lần)">
-              <Upload maxCount={1}>
-                <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
+            <Form.Item
+              name="medicineImage"
+              label="Ảnh thuốc (chỉ nhận PNG, chỉ upload 1 lần)"
+              valuePropName="fileList"
+              getValueFromEvent={e => (Array.isArray(e) ? e : e && e.fileList)}
+            >
+              <Upload
+                maxCount={1}
+                beforeUpload={beforeUpload}
+                accept="image/png"
+                listType="picture"
+              >
+                <Button icon={<UploadOutlined />}>Chọn ảnh PNG</Button>
               </Upload>
             </Form.Item>
 
