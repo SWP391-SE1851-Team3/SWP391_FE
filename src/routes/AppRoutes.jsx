@@ -6,6 +6,11 @@ import MainLayout from '../layout/MainLayout';
 import PrivateRoute from './ProtectedRoute';
 import StudentHealthRecord from '../pages/parent/health-records';
 import ParentPage from '../pages/parent';
+import ManagerPage from '../pages/manager';
+import UserManagement from '../pages/manager/manager-user';
+import VaccineApprovalPage from '../pages/manager/manager-event';
+import ManagerSchoolNurse from '../pages/manager/manager-school';
+import ManagerSupplies from '../pages/manager/manager-supply';
 import MedicineForm from '../pages/parent/medicine-submission';
 import HealthCheckNotification from '../pages/parent/health-check';
 import ParentVaccineConfirmation from '../pages/parent/vaccination';
@@ -32,11 +37,37 @@ const AppRoutes = () => {
             <ParentPage />
           </PrivateRoute>
         } />
-        <Route path="manager" element={
+
+        <Route path="manager-dashboard" element={
           <PrivateRoute>
             <ManagerPage />
           </PrivateRoute>
         } />
+
+        <Route path="manager-supply" element={
+          <PrivateRoute>
+            <ManagerSupplies />
+          </PrivateRoute>
+        } />
+
+        <Route path="manager-event" element={
+          <PrivateRoute>
+            <VaccineApprovalPage />
+          </PrivateRoute>
+        } />
+
+        <Route path="manager" element={
+          <PrivateRoute>
+            <Home />
+          </PrivateRoute>
+        } />
+
+        <Route path="manager-users" element={
+          <PrivateRoute>
+            <UserManagement />
+          </PrivateRoute>
+        } />
+
         <Route path="health-records" element={
           <PrivateRoute allowedRoles={[1]}>
             <StudentHealthRecord />
@@ -80,9 +111,15 @@ const AppRoutes = () => {
             <ManageVaccination />
           </PrivateRoute>
         } />
-         <Route path='manage-health-check' element={
-          <PrivateRoute allowedRoles={[2]}>
+
+        <Route path='manage-health-check' element={
+          <PrivateRoute>
             <HealthCheckNurse />
+          </PrivateRoute>
+        } />
+        <Route path='manager-school' element={
+          <PrivateRoute>
+            <ManagerSchoolNurse />
           </PrivateRoute>
         } />
       </Route>

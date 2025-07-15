@@ -132,7 +132,7 @@ const Index = () => {
             }
           ]}
         />
-
+            
         {activeTab === 'dashboard' && (
           <div className="health-check-dashboard-flex">
             {/* Statistics Cards */}
@@ -257,4 +257,5 @@ const Index = () => {
   );
 };
 
-export default Index; 
+export default Index;
+

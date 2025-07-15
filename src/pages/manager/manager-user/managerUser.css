@@ -1,0 +1,198 @@
+/* ===== USER MANAGEMENT CONTAINER ===== */
+.user-management-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding-top: 28px;
+  /* padding-bottom: 40px; */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.user-management-header {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1890ff;
+  margin-bottom: 25px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e9ecef;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+/* ===== ROLE SELECT ===== */
+.role-select {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  justify-content: center;
+}
+.role-select .ant-select {
+  min-width: 160px;
+}
+
+/* ===== ANTD TABLE CUSTOMIZATION ===== */
+.ant-table {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 32px;
+}
+.ant-table-thead > tr > th {
+  background: linear-gradient(135deg, #f5faff 0%, #e3f4fd 100%);
+  color: #1683c2;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 13px;
+  border: none;
+}
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+  font-size: 15px;
+  padding: 10px 8px;
+}
+.ant-table-tbody > tr:hover {
+  background: #f3f7fa !important;
+}
+.ant-table-tbody > tr:nth-child(even) {
+  background: #fafbfc;
+}
+.ant-table-tbody > tr:nth-child(even):hover {
+  background: #f3f7fa !important;
+}
+
+/* ===== SWITCH STYLE ===== */
+.ant-switch {
+  background: #d4dbe8;
+}
+.ant-switch-checked {
+  background: #28a745 !important;
+}
+
+/* ===== FORM CARD ===== */
+.user-management-form-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px 25px 0 25px;
+  margin-top: 34px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  border: 1px solid #e9ecef;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.form-header {
+  margin: 0 0 28px 0;
+  color: #1683c2;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 3px solid #1890ff;
+  padding-bottom: 14px;
+}
+
+/* ===== ANTD FORM ===== */
+.ant-form-item-label > label {
+  color: #495057 !important;
+  font-weight: 500;
+  font-size: 15px;
+}
+.ant-input,
+.ant-select-selector {
+  border-radius: 8px !important;
+  font-size: 15px !important;
+  padding: 8px 12px !important;
+  background: #fff !important;
+  border: 2px solid #e9ecef !important;
+  transition: border-color 0.2s;
+}
+.ant-input:focus,
+.ant-input-focused,
+.ant-select-focused .ant-select-selector {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.08) !important;
+}
+.ant-form-item-explain-error {
+  font-size: 13px;
+}
+
+/* ===== BUTTONS ===== */
+.ant-btn-primary {
+  background: #1890ff !important;
+  border-color: #1890ff !important;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 7px 24px;
+  font-size: 15px;
+  transition: all 0.2s;
+}
+.ant-btn-primary:hover {
+  background: #125cb2 !important;
+  border-color: #125cb2 !important;
+}
+.ant-btn[style*="background: #52c41a"] {
+  background: #52c41a !important;
+  border: none !important;
+  color: #fff !important;
+}
+.ant-btn[style*="background: #52c41a"]:hover {
+  background: #388e13 !important;
+}
+.ant-btn[style*="background: #1890ff"] {
+  color: #fff !important;
+}
+.ant-btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.ant-table-cell > div[style*="flex-direction: column"] {
+  gap: 6px;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 900px) {
+  .user-management-container {
+    padding-top: 12px;
+    padding-bottom: 28px;
+  }
+  .user-management-form-card {
+    padding: 18px 5px 0 5px;
+  }
+}
+
+@media (max-width: 650px) {
+  .user-management-header {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+  .user-management-form-card {
+    padding: 10px 2px 0 2px;
+  }
+  .form-header {
+    font-size: 1.1rem;
+    padding-bottom: 8px;
+  }
+}
+
+/* ===== UTILITY ===== */
+.text-center {
+  text-align: center;
+}
+.text-success {
+  color: #28a745;
+}
+.text-danger {
+  color: #dc3545;
+}
+.text-warning {
+  color: #ffc107;
+}
+.text-info {
+  color: #17a2b8;
+}
