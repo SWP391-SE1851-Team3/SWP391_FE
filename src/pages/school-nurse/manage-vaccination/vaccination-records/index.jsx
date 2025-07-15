@@ -22,7 +22,8 @@ import {
   message,
   Row,
   Col,
-  Statistic
+  Statistic,
+  DatePicker
 } from 'antd';
 import './vaccination-records.css';
 import {
@@ -32,9 +33,11 @@ import {
   updateVaccinationRecord 
 } from '../../../../api/vaccinationAPI';
 import { formatDateTime, getCurrentDateString } from '../../../../utils/formatDate';
+import moment from 'moment';
 
 
 import { fetchStudentsByClass } from '../../../../api/medicalEventsAPI';
+import { isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -175,10 +178,10 @@ const VaccinationRecords = () => {
       severity: record.severity,
       notes: record.notes,
       observation_notes: record.observation_notes,
-      observation_time: record.observation_time,
+      observation_time: record.observation_time ? moment(record.observation_time) : null,
       status: record.status,
       className: record.className,
-      parentID: record.parentID,
+      parentID: record.parentID, 
       editNurseID: editNurseID,
       studentName: record.studentName,
       editNurseName: editNurseName,
@@ -191,7 +194,11 @@ const VaccinationRecords = () => {
     try {
       const values = await editForm.validateFields();
       const recordId = editingRecord.vaccinationRecordID || editingRecord.id;
-      // Chỉ lấy đúng các trường cần thiết cho API
+      // Đồng bộ logic với vaccination-batch
+      let observation_time = null;
+      if (values.observation_time && typeof values.observation_time.toISOString === 'function') {
+        observation_time = values.observation_time.toISOString();
+      }
       const updateData = {
         studentId: values.studentId,
         vaccineBatchId: values.vaccineBatchId,
@@ -200,7 +207,7 @@ const VaccinationRecords = () => {
         severity: values.severity,
         notes: values.notes,
         observation_notes: values.observation_notes,
-        observation_time: values.observation_time,
+        observation_time,
         status: values.status,
         className: values.className,
         consentId: values.consentId !== undefined ? values.consentId : (editingRecord?.consentId || undefined),
@@ -459,7 +466,20 @@ const VaccinationRecords = () => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="symptoms" label="Triệu chứng" rules={[{ required: true, message: 'Vui lòng nhập triệu chứng' }]}>
+                <Form.Item name="symptoms" label="Triệu chứng" 
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập triệu chứng' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
                   <Input />
                 </Form.Item>
               </Col>
@@ -491,12 +511,33 @@ const VaccinationRecords = () => {
             {editingStatus === 'Cần theo dõi' && (
               <Row key="observation-row" gutter={16}>
                 <Col span={12}>
-                  <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[{ required: true, message: 'Vui lòng nhập thời gian theo dõi' }]}> 
-                    <Input type="datetime-local" />
+                  <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[
+                    { required: true, message: 'Vui lòng nhập thời gian theo dõi' },
+                    { validator: (_, value) => value === undefined || value === '' || new Date(value) > new Date() ? Promise.resolve() : Promise.reject('Thời gian theo dõi phải là tương lai!') }
+                  ]}> 
+                    <DatePicker
+                      showTime
+                      style={{ width: '100%' }}
+                      format="YYYY-MM-DD HH:mm"
+                      placeholder="Chọn thời gian theo dõi"
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item name="observation_notes" label="Ghi chú theo dõi" rules={[{ required: true, message: 'Vui lòng nhập ghi chú theo dõi' }]}> 
+                  <Form.Item name="observation_notes" label="Ghi chú theo dõi" 
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập ghi chú theo dõi' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
                     <Input />
                   </Form.Item>
                 </Col>
@@ -504,7 +545,20 @@ const VaccinationRecords = () => {
             )}
             <Row key="notes-row" gutter={16}>
               <Col span={12}>
-                <Form.Item name="notes" label="Ghi chú">
+                <Form.Item name="notes" label="Ghi chú"  
+                rules={[
+                    { required: true, message: 'Vui lòng nhập ghi chú' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
                   <Input />
                 </Form.Item>
               </Col>

@@ -27,6 +27,8 @@ import {
 import './Vaccination-batch.css';
 import moment from 'moment';
 import { formatDateTime } from '../../../../utils/formatDate';
+import { hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations/stringValidations';
+import {  isUpdateDateAfterOrEqualCreateDate } from '../../../../validations';
 
 import { createVaccinationBatch, getVaccineTypeByName, getVaccinationBatches, updateVaccinationBatch, sendConsentFormByClassName } from '../../../../api/vaccinationAPI';
 
@@ -196,10 +198,11 @@ const VaccinationScheduleManager = () => {
         message.error('Vui lòng chọn ngày tiêm hợp lệ!');
         return;
       }
-
+      const createdAt = new Date().toISOString();
+     
       const payload = {
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: createdAt,
+        updated_at: createdAt,
         created_by_nurse_id: nurseId,
         created_by_nurse_name: nurseName,
         edit_nurse_id: nurseId,
@@ -284,11 +287,16 @@ const VaccinationScheduleManager = () => {
       const vaccineTypeID = Number(values.vaccineTypeID || 0);
       const quantityReceived = Number(values.quantity_received);
       const scheduledDate = values.scheduledDate.toISOString();
-
+      const createdAt = selectedSchedule.created_at;
+      const updatedAt = new Date().toISOString();
+      if (!isUpdateDateAfterOrEqualCreateDate(updatedAt, createdAt)) {
+        message.error('Ngày cập nhật phải lớn hơn hoặc bằng ngày tạo!');
+        return;
+      }
       // Chỉ gửi đúng các trường cần thiết cho API
       const payload = {
-        created_at: selectedSchedule.created_at, // giữ nguyên ngày tạo cũ
-        updated_at: new Date().toISOString(),
+        created_at: createdAt, // giữ nguyên ngày tạo cũ
+        updated_at: updatedAt,
         edit_nurse_id: nurseId,
         dot: String(values.vaccine_batch || ''),
         quantity_received: quantityReceived,
@@ -533,7 +541,7 @@ const VaccinationScheduleManager = () => {
               <div className="vaccination-schedule-card-info">
                 <Space><CalendarOutlined /><Text>Ngày tiêm: {schedule.scheduledDate}</Text></Space>
                 <Space><EnvironmentOutlined /><Text>Địa điểm: {schedule.location}</Text></Space>
-                <Space><TeamOutlined /><Text>{schedule.studentsCount} liều vắc xin</Text></Space>
+                
               </div>
 
               <div className="vaccination-schedule-card-info" style={{ marginTop: 8 }}>
@@ -541,18 +549,18 @@ const VaccinationScheduleManager = () => {
                   <Text strong>Y tá chỉnh sửa:</Text> <Text>{schedule.edit_nurse_name || '-'}</Text>
                 </Space>
                 <Space>
-                  <Text strong>Ngày tạo:</Text> <Text>{schedule.created_at ? (() => { const d = new Date(schedule.created_at); const vn = new Date(d.getTime() + 7*60*60*1000); return vn.toLocaleString('vi-VN'); })() : '-'}</Text>
+                  <Text strong>Ngày tạo:</Text> <Text>{schedule.created_at ? formatDateTime(schedule.created_at) : '-'}</Text>
                 </Space>
               </div>
 
               {(schedule.notes || schedule.updated_at) && (
                 <div className="vaccination-schedule-card-info" style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>
+                  <Space>
                     <Text type="secondary">Ghi chú:</Text> <Text>{schedule.notes || '-'}</Text>
-                  </span>
-                  <span>
-                    <Text strong>Cập nhật:</Text> <Text>{schedule.updated_at ? (() => { const d = new Date(schedule.updated_at); const vn = new Date(d.getTime() + 7*60*60*1000); return vn.toLocaleString('vi-VN'); })() : '-'}</Text>
-                  </span>
+                    </Space>
+                  <Space>
+                    <Text strong>Cập nhật:</Text> <Text>{schedule.updated_at ? formatDateTime(schedule.updated_at) : '-'}</Text>
+                    </Space>
                 </div>
               )}
 
@@ -620,7 +628,18 @@ const VaccinationScheduleManager = () => {
           <Form.Item
             name="vaccine_batch"
             label="Tên đợt vaccine"
-            rules={[{ required: true, message: 'Vui lòng nhập tên đợt vaccine' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập tên đợt vaccine' },
+              
+               { validator: (_, value) => {
+                  if (value === undefined || value === '') return Promise.resolve();
+                  if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input placeholder="Nhập tên đợt vaccine" />
           </Form.Item>
@@ -628,20 +647,22 @@ const VaccinationScheduleManager = () => {
           <Form.Item
             name="location"
             label="Địa điểm"
-            rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập địa điểm' },
+              
+               { validator: (_, value) => {
+                  if (value === undefined || value === '') return Promise.resolve();
+                  if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input />
           </Form.Item>
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="quantity_received"
-                label="Số lượng vaccine nhận"
-                rules={[{ required: true, message: 'Vui lòng nhập số lượng vaccine nhận' }]}
-              >
-                <Input type="number" min={1} placeholder="Nhập số lượng vaccine nhận" />
-              </Form.Item>
-            </Col>
             <Col span={12}>
               <Form.Item
                 name="scheduledDate"
@@ -656,6 +677,16 @@ const VaccinationScheduleManager = () => {
           <Form.Item
             name="notes"
             label="Ghi chú"
+            rules={[
+               { validator: (_, value) => {
+                  if (value === undefined || value === '') return Promise.resolve();
+                  if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <TextArea rows={4} placeholder="Ghi chú thêm về đợt tiêm..." />
           </Form.Item>
@@ -663,6 +694,7 @@ const VaccinationScheduleManager = () => {
             name="status"
             label="Trạng thái"
             initialValue="Chờ xác nhận"
+            style={{ display: 'none' }}
           >
             <Select disabled>
               <Option value="Chờ xác nhận">Chờ xác nhận</Option>
@@ -675,6 +707,7 @@ const VaccinationScheduleManager = () => {
             name="nurse_name"
             label="Y tá phụ trách"
             initialValue={localStorage.getItem('fullname') || 'Y tá Mặc định'}
+            style={{ display: 'none' }}
           >
             <Input 
               disabled 
@@ -737,7 +770,18 @@ const VaccinationScheduleManager = () => {
               <Form.Item
                 name="vaccine_batch"
                 label={<span style={{ fontWeight: 600 }}>Tên đợt vaccine</span>}
-                rules={[{ required: true, message: 'Vui lòng nhập tên đợt vaccine' }]}
+                rules={[
+                  { required: true, message: 'Vui lòng nhập tên đợt vaccine' },
+                  
+                   { validator: (_, value) => {
+                      if (value === undefined || value === '') return Promise.resolve();
+                      if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                      if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                     return Promise.resolve();
+                    }
+                  }
+                ]}
+              
                 style={{ marginBottom: 18 }}
               >
                 <Input placeholder="Nhập tên đợt vaccine" style={{ borderRadius: 8 }} />
@@ -745,30 +789,43 @@ const VaccinationScheduleManager = () => {
             </Col>
             <Col span={12}>
               <Form.Item
-                name="nurse_name"
-                label={<span style={{ fontWeight: 600 }}>Y tá phụ trách</span>}
-                style={{ marginBottom: 18 }}
-              >
-                <Input disabled style={{ borderRadius: 8, background: '#f0f5ff' }} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
                 name="location"
                 label={<span style={{ fontWeight: 600 }}>Địa điểm</span>}
                 style={{ marginBottom: 18 }}
+                rules={[
+                  { required: true, message: 'Vui lòng nhập địa điểm' },
+                  
+                   { validator: (_, value) => {
+                      if (value === undefined || value === '') return Promise.resolve();
+                      if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                      if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                     return Promise.resolve();
+                    }
+                  }
+                ]}
               >
                 <Input style={{ borderRadius: 8 }} />
               </Form.Item>
             </Col>
+          </Row>
+          <Row gutter={16}>
+          <Col span={12}>
+              <Form.Item
+                name="nurse_name"
+                label={<span style={{ fontWeight: 600 }}>Y tá phụ trách</span>}
+                style={{ display: 'none' }}
+                
+              >
+                <Input disabled style={{ borderRadius: 8, background: '#f0f5ff' }} />
+              </Form.Item>
+            </Col>
+           
             <Col span={12}>
               <Form.Item
                 name="status"
                 label={<span style={{ fontWeight: 600 }}>Trạng thái</span>}
                 rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-                style={{ marginBottom: 18 }}
+                style={{ display: 'none' }}
                 initialValue={"Chờ xác nhận"}
               >
                 {/* <Select style={{ borderRadius: 8 }} disabled>
@@ -781,16 +838,7 @@ const VaccinationScheduleManager = () => {
             </Col>
           </Row>
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="quantity_received"
-                label={<span style={{ fontWeight: 600 }}>Số lượng vaccine nhận</span>}
-                rules={[{ required: true, message: 'Vui lòng nhập số lượng vaccine nhận' }]}
-                style={{ marginBottom: 18 }}
-              >
-                <Input type="number" min={1} placeholder="Nhập số lượng vaccine nhận" style={{ borderRadius: 8 }} />
-              </Form.Item>
-            </Col>
+           
             <Col span={12}>
               <Form.Item
                 name="scheduledDate"
@@ -806,6 +854,16 @@ const VaccinationScheduleManager = () => {
             name="notes"
             label={<span style={{ fontWeight: 600 }}>Ghi chú</span>}
             style={{ marginBottom: 0 }}
+                 validateTrigger="onChange"
+            rules={[
+               { validator: (_, value) => {
+                  if (value === undefined || value === '') return Promise.resolve();
+                  if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                 return Promise.resolve();
+                }
+              }
+            ]}
           >
             <TextArea rows={4} placeholder="Ghi chú thêm về đợt tiêm..." style={{ borderRadius: 8 }} />
           </Form.Item>
