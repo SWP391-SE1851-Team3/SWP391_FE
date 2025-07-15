@@ -23,6 +23,7 @@ import {
 } from 'antd';
 import './consent-management.css';
 import {getConsentForms, getConsentFormDetail} from '../../../../api/vaccinationAPI';
+import { formatDate } from '../../../../utils/formatDate';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -44,16 +45,19 @@ const ConsentManagement = () => {
           studentName: item.fullNameOfStudent || '',
           parentName: item.fullNameOfParent || '',
           vaccine: item.vaccineName || '',
-          scheduledDate: item.localDate || (item.scheduledDate ? item.scheduledDate.substring(0, 10) : ''),
-          consentStatus: item.status === 'pending' ? 'chờ xác nhận' : item.status === 'approved' ? 'đã xác nhận' : item.status === 'rejected' ? 'từ chối' : item.status || '',
+          scheduledDate: item.scheduledDate ? item.scheduledDate.substring(0, 10) : '',
           sentDate: item.send_date ? item.send_date.substring(0, 10) : '',
-          responseDate: item.expire_date ? item.expire_date.substring(0, 10) : '',
-          reason: item.reason || '',
+          expireDate: item.expire_date ? item.expire_date.substring(0, 10) : '',
           className: item.className || '',
+          location: item.location || '',
+          status: mapStatusToUI(item.status || ''),
+          reason: item.reason || '',
+          isAgree: mapIsAgree(item.isAgree),
           hasAllergy: item.hasAllergy || '',
-          isAgree: item.isAgree || ''
+          batchID: item.bacthID || '',
         }));
         setConsents(mapped);
+        console.log('consents:', mapped);
       } catch (err) {
         setConsents([]);
         message.error('Không thể tải danh sách phiếu đồng ý');
@@ -65,26 +69,28 @@ const ConsentManagement = () => {
   const filteredConsents = consents.filter(consent => {
     const matchesSearch = consent.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          consent.parentName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || consent.consentStatus === statusFilter;
+    let matchesStatus = true;
+    if (statusFilter !== 'all') {
+      matchesStatus = consent.isAgree === statusFilter;
+    }
     const matchesClass = classFilter === 'all' || consent.className === classFilter;
-    
     return matchesSearch && matchesStatus && matchesClass;
   });
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'chờ xác nhận': return 'warning';
-      case 'đã xác nhận': return 'success';
-      case 'từ chối': return 'error';
+      case 'Chờ phản hồi': return 'warning';
+      case 'Đồng ý': return 'success';
+      case 'Không đồng ý': return 'error';
       default: return 'default';
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'chờ xác nhận': return 'Chờ xác nhận';
-      case 'đã xác nhận': return 'Đã xác nhận';
-      case 'từ chối': return 'Từ chối';
+      case 'Chờ xác nhận': return 'Chờ xác nhận';
+      case 'Đã phê duyệt': return 'Đã phê duyệt';
+      case 'Từ chối': return 'Từ chối';
       default: return status;
     }
   };
@@ -105,10 +111,30 @@ const ConsentManagement = () => {
 
   const stats = {
     total: consents.length,
-    pending: consents.filter(c => c.consentStatus === 'chờ xác nhận').length,
-    approved: consents.filter(c => c.consentStatus === 'đã xác nhận').length,
-    rejected: consents.filter(c => c.consentStatus === 'từ chối').length
+    pending: consents.filter(c => c.isAgree === 'Chờ phản hồi').length,
+    approved: consents.filter(c => c.isAgree === 'Đồng ý').length,
+    rejected: consents.filter(c => c.isAgree === 'Không đồng ý').length
   };
+
+  // Mapping status for UI <-> API
+  const mapStatusToUI = (status) => {
+    if (status === 'ĐÃ PHÊ DUYỆT') return 'Đã phê duyệt';
+    return status;
+  };
+  const mapStatusToAPI = (status) => {
+    if (status === 'Đã phê duyệt') return 'ĐÃ PHÊ DUYỆT';
+    return status;
+  };
+
+  // Mapping isAgree về 3 giá trị chuẩn
+  const mapIsAgree = (val) => {
+    if (!val || val.trim() === '' || val === 'Chờ phản hồi' || val === 'Chờ xác nhận') return 'Chờ phản hồi';
+    if (val === true || val === 'Đồng ý' || val === 'Đã đồng ý' || val === 'Đã phê duyệt' || val === 'ĐÃ PHÊ DUYỆT') return 'Đồng ý';
+    if (val === false || val === 'Không đồng ý' || val === 'Từ chối') return 'Không đồng ý';
+    return 'Chờ phản hồi';
+  };
+
+
 
   return (
     <div className="consent-management-container">
@@ -141,7 +167,7 @@ const ConsentManagement = () => {
         <Col span={6}>
           <Card>
             <Statistic 
-              title="Đã xác nhận" 
+              title="Đã phê duyệt" 
               value={stats.approved}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -159,50 +185,41 @@ const ConsentManagement = () => {
       </Row>
 
       {/* Filters */}
-      <Card title="Bộ lọc" className="consent-management-filters">
-        <Row gutter={16}>
-          <Col span={6}>
-            <Input
+      
+    <div className="consent-management-filters">
+            <Input.Search
               placeholder="Tìm kiếm học sinh, phụ huynh..."
-              prefix={<SearchOutlined />}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              style={{width: 300}}
               allowClear
             />
-          </Col>
-          <Col span={6}>
             <Select
-              style={{ width: '100%' }}
+              style={{ width: 220 }}
               value={statusFilter}
               onChange={setStatusFilter}
               placeholder="Trạng thái"
             >
               <Option value="all">Tất cả trạng thái</Option>
-              <Option value="chờ xác nhận">Chờ xác nhận</Option>
-              <Option value="đã xác nhận">Đã xác nhận</Option>
-              <Option value="từ chối">Từ chối</Option>
+              <Option value="Chờ phản hồi">Chờ phản hồi</Option>
+              <Option value="Đồng ý">Đồng ý</Option>
+              <Option value="Không đồng ý">Không đồng ý</Option>
             </Select>
-          </Col>
-          <Col span={6}>
             <Select
-              style={{ width: '100%' }}
+              style={{ width: 180 }}
               value={classFilter}
               onChange={setClassFilter}
               placeholder="Lớp học"
             >
               <Option value="all">Tất cả lớp</Option>
-              <Option value="6A">Lớp 6A</Option>
-              <Option value="6B">Lớp 6B</Option>
-              <Option value="6C">Lớp 6C</Option>
+              <Select.Option value="Lớp 5A">Lớp 5A</Select.Option>
+              <Select.Option value="Lớp 4B">Lớp 4B</Select.Option>
+              <Select.Option value="Lớp 3C">Lớp 3C</Select.Option>
+              <Select.Option value="Lớp 2A">Lớp 2A</Select.Option>
+              <Select.Option value="Lớp 1B">Lớp 1B</Select.Option>
             </Select>
-          </Col>
-          <Col span={6}>
-            <Button icon={<FilterOutlined />} block>
-              Áp dụng bộ lọc
-            </Button>
-          </Col>
-        </Row>
-      </Card>
+        </div>
+     
 
       {/* Consent List */}
       <div className="consent-management-list">
@@ -216,20 +233,24 @@ const ConsentManagement = () => {
                 </Text>
               </div>
               <Badge 
-                status={getStatusColor(consent.consentStatus)} 
-                text={getStatusText(consent.consentStatus)}
+                status={getStatusColor(consent.isAgree)} 
+                text={consent.isAgree}
               />
             </div>
 
             <div className="consent-card-info">
-              <Space><Text type="secondary">Vaccine:</Text> <Text>{consent.vaccine}</Text></Space>
-              <Space><Text type="secondary">Ngày tiêm:</Text> <Text>{consent.scheduledDate}</Text></Space>
-              <Space><Text type="secondary">Gửi phiếu:</Text> <Text>{consent.sentDate}</Text></Space>
+              <Space><Text type="secondary">Vaccine:</Text> <Text>{consent.vaccine}</Text></Space>            
+              <Space><Text type="secondary">Địa điểm:</Text> <Text>{consent.location}</Text></Space>  
+                         
+            </div>
+            <div className="consent-card-info">
+              <Space><Text type="secondary">Ngày tiêm:</Text> <Text>{formatDate(consent.scheduledDate)}</Text></Space>
+              <Space><Text type="secondary">Ngày gửi phiếu:</Text> <Text>{consent.sentDate}</Text></Space>
             </div>
 
-            {consent.responseDate && (
+            {consent.expireDate && (
               <div className="consent-card-info">
-                <Space><Text type="secondary">Ngày phản hồi:</Text> <Text>{consent.responseDate}</Text></Space>
+                <Space><Text type="secondary">Ngày hết hạn phản hồi:</Text> <Text>{consent.expireDate}</Text></Space>
               </div>
             )}
 
@@ -249,7 +270,7 @@ const ConsentManagement = () => {
               >
                 Xem chi tiết
               </Button>
-              {consent.consentStatus === 'chờ xác nhận' && (
+              {consent.isAgree === 'Chờ phản hồi' && (
                 <Button 
                   icon={<SendOutlined />}
                   onClick={() => handleResendConsent(consent.id)}
@@ -264,13 +285,15 @@ const ConsentManagement = () => {
 
       {/* Detail Modal */}
       <Modal
-        title="Chi tiết phiếu đồng ý"
+      title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết phiếu đồng ý</span>}
+       
         open={isDetailModalOpen}
         onCancel={() => setIsDetailModalOpen(false)}
         footer={null}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         {selectedConsent && (
-          <div>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
             <Row gutter={16}>
               <Col span={12}>
                 <Text type="secondary">Học sinh:</Text>
@@ -295,7 +318,7 @@ const ConsentManagement = () => {
               <Col span={12}>
                 <Text type="secondary">Ngày tiêm dự kiến:</Text>
                 <br />
-                <Text strong>{selectedConsent.localDate || (selectedConsent.scheduledDate ? selectedConsent.scheduledDate.substring(0, 10) : '')}</Text>
+                <Text strong>{formatDate(selectedConsent.scheduledDate)}</Text>
               </Col>
               <Col span={12}>
                 <Text type="secondary">Ngày gửi phiếu:</Text>
@@ -310,7 +333,7 @@ const ConsentManagement = () => {
               <Col span={12}>
                 <Text type="secondary">Trạng thái:</Text>
                 <br />
-                <Text strong>{selectedConsent.status || ''}</Text>
+                <Text strong>{mapIsAgree(selectedConsent.isAgree) || ''}</Text>
               </Col>
               <Col span={12}>
                 <Text type="secondary">Dị ứng:</Text>
@@ -320,7 +343,7 @@ const ConsentManagement = () => {
               <Col span={12}>
                 <Text type="secondary">Đồng ý tiêm:</Text>
                 <br />
-                <Text strong>{selectedConsent.isAgree || ''}</Text>
+                <Text strong>{mapIsAgree(selectedConsent.isAgree) || ''}</Text>
               </Col>
             </Row>
             {selectedConsent.reason && (

@@ -12,6 +12,7 @@
   "dependencies": {
     "@ant-design/charts": "^2.4.0",
     "antd": "^5.26.0",
+    "aos": "^2.3.4",
     "axios": "^1.10.0",
     "file-saver": "^2.0.5",
     "moment": "^2.30.1",

@@ -17,34 +17,51 @@ const Login = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await loginByRole(values.role, values.email, values.password);
+      // Convert role number to string for API
+      const roleMap = {
+        1: 'PARENT',
+        // 2: 'NURSE', 
+        // 3: 'ADMIN'
+        2: 'NURSE'
+      };
+      
+      const response = await loginByRole(
+        roleMap[values.role], 
+        values.email, 
+        values.password
+      );
       const data = response?.data;
 
-      if (!data || typeof data.role !== 'number') {
-        message.error('Dữ liệu đăng nhập không hợp lệ!');
+      console.log('🔍 Login response data:', data); // Debug log
+
+      if (!data || !data.token) {
+        message.error('Đăng nhập thất bại!');
         return;
       }
 
       const {
-        email,
-        role: userRole,
-        parentId,
-        nurseId,
-        token
+        token,
+        id,
+        username,
+        email: responseEmail,
+        roles
       } = data;
-      const fullname = data.fullname || data.fullName;
+
+
+      // Điều hướng theo vai trò
+      const userRole = values.role; // Use the original role number for navigation
 
       // Lưu thông tin người dùng vào localStorage
-      localStorage.setItem('email', email);
-      localStorage.setItem('role', String(userRole));
-      localStorage.setItem('token', token || 'your-auth-token');
-      if (parentId) localStorage.setItem('parentId', parentId);
-      if (fullname) localStorage.setItem('fullname', fullname);
-      if (nurseId) localStorage.setItem('nurseId', nurseId);
+      localStorage.setItem('email', responseEmail || values.email); // Use response email or form email
+      localStorage.setItem('username', username || '');
+      localStorage.setItem('userId', id || '');
+      localStorage.setItem('token', token || '');
+      localStorage.setItem('roles', JSON.stringify(roles || []));
+      localStorage.setItem('role', userRole); // Add role for compatibility with ProtectedRoute
+
 
       message.success('Đăng nhập thành công!');
 
-      // Điều hướng theo vai trò
       switch (userRole) {
         case 1:
           navigate('/parent');
@@ -54,10 +71,10 @@ const Login = () => {
           navigate('/school-nurse');
           window.location.reload();
           break;
-        case 3:
-          navigate('/manager');
-          window.location.reload();
-          break;
+        // case 3:
+        //   navigate('/manager');
+        //   window.location.reload();
+        //   break;
         default:
           message.warning('Vai trò không hợp lệ!');
           break;
@@ -125,7 +142,7 @@ const Login = () => {
               <Select placeholder="Chọn vai trò">
                 <Select.Option value={1}>Phụ huynh</Select.Option>
                 <Select.Option value={2}>Nhân viên y tế</Select.Option>
-                <Select.Option value={3}>Quản lý</Select.Option>
+                {/* <Select.Option value={3}>Quản lý</Select.Option> */}
               </Select>
             </Form.Item>
 

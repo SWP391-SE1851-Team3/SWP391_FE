@@ -20,9 +20,10 @@ import {
   Tag
 } from 'antd';
 import HealthCheckBatch from './health-check-batch';
-//import HealthCheckConsent from './health-check-consent';
-
-
+import HealthCheckConsent from './health-check-consent';
+import HealthCheckRecord from './health-check-record';
+import HealthConsultation from './health-consultation';
+import './health-check.css';
 
 const { Text } = Typography;
 
@@ -131,7 +132,8 @@ const Index = () => {
             }
           ]}
         />
-{activeTab === 'dashboard' && (
+            
+        {activeTab === 'dashboard' && (
           <div className="health-check-dashboard-flex">
             {/* Statistics Cards */}
             <Row gutter={[24, 24]}>
@@ -200,7 +202,7 @@ const Index = () => {
                           </div>
                           <Tag color={getStatusColor(activity.status)}>
                             {getStatusText(activity.status)}
-</Tag>
+                          </Tag>
                         </Space>
                       </Card>
                     ))}
@@ -256,3 +258,4 @@ const Index = () => {
 };
 
 export default Index;
+

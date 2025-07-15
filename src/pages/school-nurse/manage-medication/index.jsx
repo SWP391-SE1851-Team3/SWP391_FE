@@ -29,8 +29,9 @@ import {
   ClockCircleTwoTone
 } from '@ant-design/icons';
 import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails } from '../../../api/medicalSubmissionNurse';
+import { formatDateTime } from '../../../utils/formatDate';
 import './Medication.css';
-
+import { hasNoSpecialCharacters } from '../../../validations';
 const { Title } = Typography;
 const { Option } = Select;
 
@@ -98,11 +99,17 @@ const MedicationManagement = () => {
         className: submission.className || '',
         medication: submission.medicationDetails.map(m => m.medicineName).join(', '),
         status: mapStatusToFE(submission.status),
-        time: new Date(submission.submissionDate).toLocaleString('vi-VN'),
+                  time: formatDateTime(submission.submissionDate),
         actions: mapStatusToFE(submission.status) === 'pending' ? ['view', 'confirm', 'cancel'] : ['view'],
         rejectReason: '',
         medicationDetails: submission.medicationDetails
       }));
+      // Sắp xếp theo ngày và giờ giảm dần (mới nhất lên đầu)
+      formattedData.sort((a, b) => {
+        const dateA = new Date(submissions[a.id - 1].submissionDate);
+        const dateB = new Date(submissions[b.id - 1].submissionDate);
+        return dateB - dateA;
+      });
       setData(formattedData);
 
       // Không lọc theo ngày nữa, lấy tất cả submissions cho timelineData
@@ -116,6 +123,12 @@ const MedicationManagement = () => {
           color: 'orange',
           rejectReason: submission.rejectReason || ''
         }));
+      // Sắp xếp lại timelineData theo ngày và giờ giảm dần
+      todayTimeline.sort((a, b) => {
+        const dateA = new Date(submissions[a.id - 1].submissionDate);
+        const dateB = new Date(submissions[b.id - 1].submissionDate);
+        return dateB - dateA;
+      });
       setTimelineData(todayTimeline);
     } catch (error) {
       message.error('Failed to fetch medication submissions');
@@ -225,7 +238,7 @@ const MedicationManagement = () => {
       render: (status) => getStatusTag(status)
     },
     {
-      title: 'Thời gian gửi',
+      title: 'Thời gian',
       dataIndex: 'time',
       key: 'time',
       width: '20%'
@@ -470,9 +483,7 @@ const MedicationManagement = () => {
             const allowUpdate = listStatus === 'confirmed';
 
             return (
-              <Timeline.Item key={idx} dot={
-                <span className="timeline-time-badge">{item.time}</span>
-              } color="transparent">
+             
                 <div className={cardClass}>
                   <div className="timeline-header">
                     <span className="timeline-student">Phát thuốc cho {item.student}</span>
@@ -517,60 +528,99 @@ const MedicationManagement = () => {
                     <div className="timeline-medication">{item.medication}</div>
                   </div>
                 </div>
-              </Timeline.Item>
+             
             );
           })}
         </Timeline>
       </Card>
 
       <Modal
-        title="Chi tiết phiếu gửi thuốc"
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết phiếu gửi thuốc</span>}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         {selectedRecord && (
-          <div>
-            <p><strong>Học sinh:</strong> {selectedRecord.student}</p>
-            <p><strong>Tên thuốc:</strong> {selectedRecord.medication}</p>
-            <p><strong>Trạng thái:</strong> {getStatusTag(selectedRecord.status)}</p>
-            <p><strong>Thời gian gửi:</strong> {selectedRecord.time}</p>
-            {selectedRecord.status === 'expired' && selectedRecord.rejectReason && (
-              <p><strong>Lý do từ chối:</strong> {selectedRecord.rejectReason}</p>
-            )}
-            {selectedRecord.status === 'uncompleted' && selectedRecord.rejectReason && (
-              <p><strong>Lý do từ chối:</strong> {selectedRecord.rejectReason}</p>
-            )}
-            {detailLoading && <p>Đang tải chi tiết...</p>}
-            {detailData && !Array.isArray(detailData) && (
-              <div style={{marginTop: 16}}>
-                {detailData.nurseName && <p><strong>Y tá nhận:</strong> {detailData.nurseName}</p>}
-                {detailData.studentClass && <p><strong>Lớp:</strong> {detailData.studentClass}</p>}
-                {detailData.submissionDate && <p><strong>Ngày gửi:</strong> {new Date(detailData.submissionDate).toLocaleString('vi-VN')}</p>}
-                {detailData.medicineImage && <p><strong>Ảnh thuốc:</strong> <img src={detailData.medicineImage} alt="medicine" style={{maxWidth: 120}} /></p>}
-                {detailData.medicationDetails && Array.isArray(detailData.medicationDetails) && detailData.medicationDetails.length > 0 && (
-                  <div style={{marginTop: 16}}>
-                    <strong>Chi tiết thuốc:</strong>
-                    <ul>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+            <Row gutter={[24, 16]}>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Học sinh:</Typography.Text><br />
+                <Typography.Text strong style={{ fontSize: 16 }}>{selectedRecord.student}</Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Lớp:</Typography.Text><br />
+                <Typography.Text strong>{detailData?.studentClass || selectedRecord.className}</Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Tên thuốc:</Typography.Text><br />
+                <Typography.Text>{selectedRecord.medication}</Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Trạng thái:</Typography.Text><br />
+                <span>{getStatusTag(selectedRecord.status)}</span>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Thời gian:</Typography.Text><br />
+                <Typography.Text>{selectedRecord.time}</Typography.Text>
+              </Col>
+              {detailData?.nurseName && (
+                <Col span={12} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Y tá nhận:</Typography.Text><br />
+                  <Typography.Text>{detailData.nurseName}</Typography.Text>
+                </Col>
+              )}
+              {selectedRecord.status === 'expired' && selectedRecord.rejectReason && (
+                <Col span={24} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Lý do từ chối:</Typography.Text><br />
+                  <Typography.Text>{selectedRecord.rejectReason}</Typography.Text>
+                </Col>
+              )}
+              {selectedRecord.status === 'uncompleted' && selectedRecord.rejectReason && (
+                <Col span={24} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Lý do từ chối:</Typography.Text><br />
+                  <Typography.Text>{selectedRecord.rejectReason}</Typography.Text>
+                </Col>
+              )}
+              {detailData?.submissionDate && (
+                <Col span={12} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Ngày gửi:</Typography.Text><br />
+                  <Typography.Text>{formatDateTime(detailData.submissionDate)}</Typography.Text>
+                </Col>
+              )}
+              {detailData?.medicineImage && (
+                <Col span={12} style={{ marginBottom: 6 }}>
+                  <Typography.Text type="secondary" strong>Ảnh thuốc:</Typography.Text><br />
+                  <img src={detailData.medicineImage} alt="medicine" style={{maxWidth: 120}} />
+                </Col>
+              )}
+              {detailLoading && (
+                <Col span={24}><Typography.Text>Đang tải chi tiết...</Typography.Text></Col>
+              )}
+              {detailData?.medicationDetails && Array.isArray(detailData.medicationDetails) && detailData.medicationDetails.length > 0 && (
+                <Col span={24} style={{ marginTop: 12 }}>
+                  <Typography.Text type="secondary" strong>Chi tiết thuốc:</Typography.Text>
+                  <div style={{marginTop: 8}}>
+                    <ul style={{paddingLeft: 20}}>
                       {detailData.medicationDetails.map((item) => (
                         <li key={item.medicationDetailId} style={{marginBottom: 8}}>
-                          <div><strong>Tên thuốc:</strong> {item.medicineName}</div>
-                          <div><strong>Liều dùng:</strong> {item.dosage}</div>
-                          <div><strong>Thời gian sử dụng:</strong> {item.timeToUse}</div>
-                          <div><strong>Ghi chú:</strong> {item.note}</div>
+                          <div><Typography.Text type="secondary">Tên thuốc:</Typography.Text> <Typography.Text>{item.medicineName}</Typography.Text></div>
+                          <div><Typography.Text type="secondary">Liều dùng:</Typography.Text> <Typography.Text>{item.dosage}</Typography.Text></div>
+                          <div><Typography.Text type="secondary">Thời gian sử dụng:</Typography.Text> <Typography.Text>{item.timeToUse}</Typography.Text></div>
+                          <div><Typography.Text type="secondary">Ghi chú:</Typography.Text> <Typography.Text>{item.note}</Typography.Text></div>
                         </li>
                       ))}
                     </ul>
                   </div>
-                )}
-              </div>
-            )}
+                </Col>
+              )}
+            </Row>
           </div>
         )}
       </Modal>
 
       <Modal
-        title="Xác nhận từ chối phiếu"
+        title={<span style={{ fontWeight: 900, fontSize: 20, color: '#FDE366' }}>Xác nhận từ chối phiếu</span>}
         open={rejectModalVisible}
         onOk={handleReject}
         onCancel={() => {
@@ -579,16 +629,28 @@ const MedicationManagement = () => {
         }}
         okText="Xác nhận"
         cancelText="Hủy"
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
-        <Form form={rejectForm}>
-          <Form.Item
-            name="reason"
-            label="Lý do từ chối"
-            rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
-          >
-            <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phiếu..." />
-          </Form.Item>
-        </Form>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(255,77,79,0.08)', border: '1px solid #ffe6e6' }}>
+          <Form form={rejectForm} layout="vertical">
+            <Form.Item
+              name="reason"
+              label={<span style={{ fontWeight: 600, color: '#ff4d4f' }}>Lý do từ chối</span>}
+              rules={[
+                { required: true, message: 'Vui lòng nhập lý do từ chối' },
+                
+                 { validator: (_, value) => {
+                    if (value === undefined || value === '') return Promise.resolve();
+                    if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                    return Promise.resolve();
+                  }
+                }
+              ]}
+            >
+              <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phiếu..." />
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
 
       <Modal
@@ -606,7 +668,16 @@ const MedicationManagement = () => {
           <Form.Item
             name="reason"
             label="Lý do từ chối"
-            rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập lý do từ chối' },
+              
+               { validator: (_, value) => {
+                  if (value === undefined || value === '') return Promise.resolve();
+                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phát thuốc..." />
           </Form.Item>

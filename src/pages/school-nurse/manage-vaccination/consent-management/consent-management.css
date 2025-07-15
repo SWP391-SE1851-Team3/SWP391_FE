@@ -123,7 +123,7 @@
   margin-bottom: 20px;
   color: #495057;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 20px;
 }
 .consent-card-info-col {
   font-size: 14px;
@@ -221,7 +221,7 @@
   .consent-card-info-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 16px;
   }
   .consent-card-header {
     flex-direction: column;
@@ -232,16 +232,19 @@
 
 .consent-card-info {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: max-content 1fr max-content 1fr;
   gap: 0 32px;
   margin-bottom: 20px;
   color: #495057;
   align-items: center;
 }
+.consent-card-info .ant-typography[type="secondary"] {
+  white-space: nowrap;
+}
 @media (max-width: 768px) {
   .consent-card-info {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 16px;
   }
 }
 

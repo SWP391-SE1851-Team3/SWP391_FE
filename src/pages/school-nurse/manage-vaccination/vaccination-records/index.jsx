@@ -22,19 +22,22 @@ import {
   message,
   Row,
   Col,
-  Statistic
+  Statistic,
+  DatePicker
 } from 'antd';
 import './vaccination-records.css';
 import {
   geVaccinationRecords,
   getVaccinationRecordDetail,
-  createVaccinationRecord,
   getVaccineTypeByName,
   updateVaccinationRecord 
 } from '../../../../api/vaccinationAPI';
+import { formatDateTime, getCurrentDateString } from '../../../../utils/formatDate';
+import moment from 'moment';
 
 
 import { fetchStudentsByClass } from '../../../../api/medicalEventsAPI';
+import { isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -45,7 +48,7 @@ const VaccinationRecords = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('all');
-  const [vaccineFilter, setVaccineFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [vaccineOptions, setVaccineOptions] = useState([]);
@@ -53,6 +56,7 @@ const VaccinationRecords = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm] = Form.useForm();
   const [editingRecord, setEditingRecord] = useState(null);
+  const [editingStatus, setEditingStatus] = useState('');
 
   
 
@@ -62,23 +66,24 @@ const VaccinationRecords = () => {
         const res = await geVaccinationRecords();
         console.log('DEBUG RAW DATA:', res.data);
         const mapped = (res.data || []).map(item => ({
-          id: item.vaccinationRecordID,
-          vaccinationRecordID: item.vaccinationRecordID,
-          studentID: item.studentID,
-          studentName: item.studentName,
-          className: item.className,
-          batchID: item.batchID,
-          vaccineName: item.vaccineName,
+          notes: item.notes,
+          observation_time: item.observation_time,
           symptoms: item.symptoms,
           severity: item.severity,
-          notes: item.notes,
           observation_notes: item.observation_notes,
-          observation_time: item.observation_time,
           status: item.status,
+          className: item.className,
+          consentId: item.consentId,
+          parentID: item.parentID,
+          batchID: item.batchID,
+          vaccineName: item.vaccineName,
+          vaccinationRecordID: item.vaccinationRecordID,
+          studentID: item.studentID,
           createNurseID: item.createNurseID,
-          createNurseName: item.createNurseName,
           editNurseID: item.editNurseID,
+          createNurseName: item.createNurseName,
           editNurseName: item.editNurseName,
+          studentName: item.studentName
         }));
         setRecords(mapped);
       } catch (err) {
@@ -109,52 +114,27 @@ const VaccinationRecords = () => {
     }
   }, [isCreateModalOpen, form]);
 
+  // Map status for display and filter
+  const mapStatus = (status) => {
+    if (!status) return 'Chờ ghi nhận';
+    if (status === 'Hoàn thành') return 'Đã hoàn thành';
+    if (status === 'Đang theo dõi') return 'Cần theo dõi';
+    return status;
+  };
+
   const filteredRecords = records.filter(record => {
+    const displayStatus = mapStatus(record.status);
     const matchesSearch =
       (record.studentName && record.studentName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (record.vaccineName && record.vaccineName.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesClass = classFilter === 'all' || record.className === classFilter;
-    const matchesVaccine = vaccineFilter === 'all' || record.vaccineName === vaccineFilter;
-    return matchesSearch && matchesClass && matchesVaccine;
+    const matchesStatus = statusFilter === 'all' || displayStatus === statusFilter;
+    return matchesSearch && matchesClass && matchesStatus;
   });
-
-  const handleCreateRecord = async () => {
-    try {
-      const values = await form.validateFields();
-      await createVaccinationRecord(values);
-      setIsCreateModalOpen(false);
-      form.resetFields();
-      message.success('Ghi nhận tiêm chủng thành công!');
-      // Reload danh sách sau khi tạo mới
-      const res = await geVaccinationRecords();
-      const mapped = (res.data || []).map(item => ({
-        id: item.vaccinationRecordID,
-        vaccinationRecordID: item.vaccinationRecordID,
-        studentID: item.studentID,
-        studentName: item.studentName,
-        className: item.className,
-        batchID: item.batchID,
-        vaccineName: item.vaccineName,
-        symptoms: item.symptoms,
-        severity: item.severity,
-        notes: item.notes,
-        observation_notes: item.observation_notes,
-        observation_time: item.observation_time,
-        status: item.status,
-        createNurseID: item.createNurseID,
-        createNurseName: item.createNurseName,
-        editNurseID: item.editNurseID,
-        editNurseName: item.editNurseName,
-      }));
-      setRecords(mapped);
-    } catch (error) {
-      message.error('Vui lòng điền đầy đủ thông tin bắt buộc hoặc có lỗi khi ghi nhận tiêm chủng');
-    }
-  };
 
   const stats = {
     total: records.length,
-    today: records.filter(r => r.observation_time === new Date().toISOString().split('T')[0]).length,
+    today: records.filter(r => r.observation_time === getCurrentDateString()).length,
     thisWeek: records.length,
     thisMonth: records.length
   };
@@ -193,26 +173,32 @@ const VaccinationRecords = () => {
     editForm.setFieldsValue({
       studentId: record.studentId || record.studentID,
       vaccineBatchId: record.vaccineBatchId || record.batchID,
-      vaccineBatchName: record.vaccineName || record.vaccineName,
+      vaccineBatchName: record.vaccineName,
       symptoms: record.symptoms,
       severity: record.severity,
       notes: record.notes,
       observation_notes: record.observation_notes,
-      observation_time: record.observation_time,
+      observation_time: record.observation_time ? moment(record.observation_time) : null,
       status: record.status,
       className: record.className,
-      parentID: record.parentID,
+      parentID: record.parentID, 
       editNurseID: editNurseID,
       studentName: record.studentName,
       editNurseName: editNurseName,
+      consentId: record.consentId
     });
+    setEditingStatus(record.status || '');
   };
 
   const handleUpdateRecord = async () => {
     try {
       const values = await editForm.validateFields();
       const recordId = editingRecord.vaccinationRecordID || editingRecord.id;
-      // Chỉ lấy đúng các trường cần thiết cho API
+      // Đồng bộ logic với vaccination-batch
+      let observation_time = null;
+      if (values.observation_time && typeof values.observation_time.toISOString === 'function') {
+        observation_time = values.observation_time.toISOString();
+      }
       const updateData = {
         studentId: values.studentId,
         vaccineBatchId: values.vaccineBatchId,
@@ -221,13 +207,14 @@ const VaccinationRecords = () => {
         severity: values.severity,
         notes: values.notes,
         observation_notes: values.observation_notes,
-        observation_time: values.observation_time,
+        observation_time,
         status: values.status,
         className: values.className,
+        consentId: values.consentId !== undefined ? values.consentId : (editingRecord?.consentId || undefined),
         parentID: values.parentID,
         editNurseID: values.editNurseID,
-        studentName: values.studentName,
         editNurseName: values.editNurseName,
+        studentName: values.studentName
       };
       await updateVaccinationRecord(recordId, updateData);
       setIsEditModalOpen(false);
@@ -237,33 +224,30 @@ const VaccinationRecords = () => {
       // Reload danh sách sau khi cập nhật
       const res = await geVaccinationRecords();
       const mapped = (res.data || []).map(item => ({
-        id: item.vaccinationRecordID,
-        vaccinationRecordID: item.vaccinationRecordID,
-        studentID: item.studentID,
-        studentName: item.studentName,
-        className: item.className,
-        batchID: item.batchID,
-        vaccineName: item.vaccineName,
+        notes: item.notes,
+        observation_time: item.observation_time,
         symptoms: item.symptoms,
         severity: item.severity,
-        notes: item.notes,
         observation_notes: item.observation_notes,
-        observation_time: item.observation_time,
         status: item.status,
+        className: item.className,
+        consentId: item.consentId,
+        parentID: item.parentID,
+        batchID: item.batchID,
+        vaccineName: item.vaccineName,
+        vaccinationRecordID: item.vaccinationRecordID,
+        studentID: item.studentID,
         createNurseID: item.createNurseID,
-        createNurseName: item.createNurseName,
-        
         editNurseID: item.editNurseID,
+        createNurseName: item.createNurseName,
         editNurseName: item.editNurseName,
+        studentName: item.studentName
       }));
       setRecords(mapped);
     } catch (error) {
       message.error('Vui lòng điền đầy đủ thông tin hoặc có lỗi khi cập nhật hồ sơ tiêm chủng');
     }
   };
-
-  // Tạo danh sách vaccine động từ records
-  const vaccineOptionsList = Array.from(new Set(records.map(r => r.vaccineName).filter(Boolean)));
 
   return (
     <div className='vaccination-records-container ' >
@@ -272,19 +256,10 @@ const VaccinationRecords = () => {
           <Title level={2}>Ghi nhận Kết quả tiêm</Title>
 
         </div>
-
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setIsCreateModalOpen(true)}
-          className='vaccination-records-create-btn'
-        >
-          Ghi nhận tiêm chủng
-        </Button>
       </div>
 
       {/* Statistics */}
-      <Row gutter={16} style={{ marginBottom: '24px' }}>
+      <Row key="stats-row" gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
           <Card >
             <Statistic
@@ -324,240 +299,134 @@ const VaccinationRecords = () => {
       </Row>
 
       {/* Filters */}
-      <Card style={{ marginBottom: '24px' }}>
+      <div className="vaccination-records-filters">
+        <Input
+          placeholder="Tìm kiếm học sinh, vaccine..."
+          prefix={<SearchOutlined />}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{width:250}}
+        />
+        <Select
+          style={{ width: 150}}
+          value={classFilter}
+          onChange={setClassFilter}
+          placeholder="Lớp học"
+        >
+          <Option value="all">Tất cả lớp</Option>
+          <Option value="Lớp 5A">Lớp 5A</Option>
+          <Option value="Lớp 4B">Lớp 4B</Option>
+          <Option value="Lớp 3C">Lớp 3C</Option>
+          <Option value="Lớp 2A">Lớp 2A</Option>
+          <Option value="Lớp 1B">Lớp 1B</Option>
+        </Select>
+        <Select
+          style={{ width: 180 }}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          placeholder="Trạng thái"
+        >
+          <Option value="all">Tất cả trạng thái</Option>
+          <Option value="Chờ ghi nhận">Chờ ghi nhận</Option>
+          <Option value="Đã hoàn thành">Đã hoàn thành</Option>
+          <Option value="Cần theo dõi">Cần theo dõi</Option>
+        </Select>
+      </div>
       
-        <Row gutter={16}>
-          <Col span={6}>
-            <Input
-              placeholder="Tìm kiếm học sinh, vaccine..."
-              prefix={<SearchOutlined />}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </Col>
-          <Col span={6}>
-            <Select
-              style={{ width: '100%' }}
-              value={classFilter}
-              onChange={setClassFilter}
-              placeholder="Lớp học"
-            >
-              <Option value="all">Tất cả lớp</Option>
-              <Option value="Lớp 5A">Lớp 5A</Option>
-              <Option value="Lớp 4B">Lớp 4B</Option>
-              <Option value="Lớp 3C">Lớp 3C</Option>
-            </Select>
-          </Col>
-          <Col span={12}>
-            <Select
-              style={{ width: '100%' }}
-              value={vaccineFilter}
-              onChange={setVaccineFilter}
-              placeholder="Loại vaccine"
-            >
-              <Option value="all">Tất cả vaccine</Option>
-              {vaccineOptionsList.map((vaccine) => (
-                <Option key={vaccine} value={vaccine}>{vaccine}</Option>
-              ))}
-            </Select>
-          </Col>
-          
-        </Row>
-      </Card>
-
       {/* Records List */}
       <div className="vaccination-records-list">
-        {filteredRecords.map((record) => (
-          <div key={record.id} className="records-card">
-            <div className="records-card-header">
-              <div>
-                <Title level={4}>{record.studentName}</Title>
-                <Text type="secondary">
-                  Lớp: {record.className}    | Tên vaccine: {record.vaccineName}
-                </Text>
+        {filteredRecords.map((record) => {
+          const displayStatus = mapStatus(record.status);
+          let badgeStatus = 'default';
+          if (displayStatus === 'Đã hoàn thành') badgeStatus = 'success';
+          else if (displayStatus === 'Cần theo dõi') badgeStatus = 'error';
+          else if (displayStatus === 'Chờ ghi nhận') badgeStatus = 'warning';
+          return (
+            <div key={record.vaccinationRecordID || record.id || Math.random()} className="records-card">
+              <div className="records-card-header">
+                <div>
+                  <Title level={4}>{record.studentName}</Title>
+                  <Text type="secondary">
+                    Lớp: {record.className}    | Tên vaccine: {record.vaccineName}
+                  </Text>
+                </div>
+                <Badge status={badgeStatus} text={displayStatus} />
               </div>
-              <Badge status={record.status === 'Hoàn thành' ? 'success' : (record.status === 'Đang theo dõi' ? 'warning' : 'default')} text={record.status || ''} />
+          
+              <div className="records-card-info">
+                <Space><Text type="secondary">Y tá phụ trách:</Text> <Text>{record.createNurseName}</Text></Space>
+                <Space><Text type="secondary">Ghi chú:</Text> <Text>{record.notes}</Text></Space>
+              </div>
+              <div className="records-card-actions">
+                <Button icon={<EyeOutlined />} onClick={() => handleViewDetail(record)}>Xem chi tiết</Button>
+                {displayStatus === 'Chờ ghi nhận' ? (
+                  <Button type="primary" onClick={() => handleEditRecord(record)} style={{ marginLeft: 8 }}>Ghi nhận hồ sơ</Button>
+                ) : (
+                  <Button type="primary" onClick={() => handleEditRecord(record)} style={{ marginLeft: 8 }}>Chỉnh sửa</Button>
+                )}
+              </div>
             </div>
-            <div className="records-card-info">
-              <Space><Text type="secondary">Ngày giờ theo dõi:</Text> <Text>{record.observation_time ? record.observation_time.replace('T', ' ').substring(0, 16) : ''}</Text></Space>
-            </div>
-            <div className="records-card-info">
-              <Space><Text type="secondary">Tên vaccine:</Text> <Text>{record.vaccineName}</Text></Space>
-              <Space><Text type="secondary">Ghi chú:</Text> <Text>{record.notes}</Text></Space>
-            </div>
-            <div className="records-card-actions">
-              <Button icon={<EyeOutlined />} onClick={() => handleViewDetail(record)}>Xem chi tiết</Button>
-              <Button type="primary" onClick={() => handleEditRecord(record)} style={{ marginLeft: 8 }}>Chỉnh sửa</Button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <Modal
-        title="Ghi nhận kết quả tiêm chủng"
-        open={isCreateModalOpen}
-        onCancel={() => {
-          setIsCreateModalOpen(false);
-          form.resetFields();
-        }}
-        onOk={handleCreateRecord}
-        okText="Ghi nhận"
-        cancelText="Hủy"
-      >
-        <Form
-          form={form}
-          layout="vertical"
-        >
-          <Form.Item name="studentId" label="Mã học sinh" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="className" label="Lớp" rules={[{ required: true, message: 'Vui lòng nhập lớp' }]}>
-            <Select placeholder="Chọn lớp" onChange={handleClassChange} allowClear>
-              <Option value="Lớp 5A">Lớp 5A</Option>
-              <Option value="Lớp 4B">Lớp 4B</Option>
-              <Option value="Lớp 3C">Lớp 3C</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="studentName" label="Tên học sinh" rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}>
-            <Select placeholder="Chọn học sinh" allowClear onChange={value => {
-              const selected = studentOptions.find(s => s.fullName === value);
-              form.setFieldsValue({
-                studentId: selected ? selected.studentID : '',
-                parentID: selected ? selected.parentID : ''
-              });
-            }}>
-              {studentOptions.map((student) => (
-                <Option key={student.studentID} value={student.fullName}>
-                  {student.fullName}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="parentID" label="Mã phụ huynh" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="vaccineBatchId" label="Mã lô vaccine" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="vaccineBatchName" label="Tên lô vaccine">
-            <Select
-              
-              onChange={async value => {
-                try {
-                  const res = await getVaccineTypeByName(value);
-                  if (Array.isArray(res.data) && res.data.length > 0) {
-                    // Giả sử lấy id đầu tiên nếu có nhiều
-                    form.setFieldsValue({ vaccineBatchId: res.data[0].id });
-                  } else {
-                    form.setFieldsValue({ vaccineBatchId: '' });
-                  }
-                } catch {
-                  form.setFieldsValue({ vaccineBatchId: '' });
-                }
-              }}
-            >
-              {vaccineOptions.map((vaccine) => (
-                <Option key={vaccine.id} value={vaccine.name}>{vaccine.name}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="symptoms" label="Triệu chứng">
-            <Input />
-          </Form.Item>
-          <Form.Item name="severity" label="Mức độ">
-            <Input />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <Input />
-          </Form.Item>
-          <Form.Item name="observation_notes" label="Ghi chú theo dõi">
-            <Input />
-          </Form.Item>
-          <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[{ required: true, message: 'Vui lòng nhập thời gian theo dõi' }]}>
-            <Input type="datetime-local" />
-          </Form.Item>
-          <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}>
-            <Select placeholder="Chọn trạng thái">
-              <Option value="Hoàn thành">Hoàn thành</Option>
-              <Option value="Đang theo dõi">Đang theo dõi</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="createNurseName" label="Tên y tá tạo" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="createNurseID" label="Mã y tá tạo" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="editNurseName" label="Tên y tá chỉnh sửa" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="editnurseID" label="Mã y tá chỉnh sửa" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
+        
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết hồ sơ tiêm chủng</span>}
         open={detailModalOpen}
         onCancel={() => setDetailModalOpen(false)}
         footer={null}
-        bodyStyle={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
       >
         {selectedRecord && (
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
             <Row gutter={[24, 16]}>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="student" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong>Học sinh:</Text><br />
                 <Text strong style={{ fontSize: 16 }}>{selectedRecord.studentName}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="class" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="class"></span> Lớp:</Text><br />
                 <Text strong>{selectedRecord.className}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="vaccine" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Tên vaccine:</Text><br />
                 <Text strong>{selectedRecord.vaccineName}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="status" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Trạng thái:</Text><br />
                 <Text strong>{selectedRecord.status}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="createNurse" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Y tá tạo:</Text><br />
                 <Text>{selectedRecord.createNurseName}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="editNurse" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Y tá chỉnh sửa:</Text><br />
                 <Text>{selectedRecord.editNurseName}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong> Ngày giờ theo dõi:</Text><br />
-                <Text>{selectedRecord.observation_time ? selectedRecord.observation_time.replace('T', ' ').substring(0, 16) : ''}</Text>
-              </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+           
+              <Col key="symptoms" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="symptom"></span> Triệu chứng:</Text><br />
                 <Text>{selectedRecord.symptoms}</Text>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
+              <Col key="severity" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="severity"></span> Mức độ:</Text><br />
                 <Text>{selectedRecord.severity}</Text>
               </Col>
-              <Col span={24} style={{ marginBottom: 6 }}>
+              <Col key="notes" span={24} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="note"></span> Ghi chú:</Text><br />
                 <Text>{selectedRecord.notes}</Text>
               </Col>
-              <Col span={24} style={{ marginBottom: 6 }}>
-                <Text type="secondary" strong><span role="img" aria-label="observation"></span> Ghi chú theo dõi:</Text><br />
-                <Text>{selectedRecord.observation_notes}</Text>
-              </Col>
+            
             </Row>
           </div>
         )}
       </Modal>
 
       <Modal
-        title="Cập nhật hồ sơ tiêm chủng"
+    
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Cập nhật hồ sơ tiêm chủng</span>}
         open={isEditModalOpen}
         onCancel={() => {
           setIsEditModalOpen(false);
@@ -567,57 +436,148 @@ const VaccinationRecords = () => {
         onOk={handleUpdateRecord}
         okText="Cập nhật"
         cancelText="Hủy"
+        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        width={1000}
       >
-        <Form
-          form={editForm}
-          layout="vertical"
-        >
-          <Form.Item name="studentId" label="Mã học sinh" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="studentName" label="Tên học sinh">
-            <Input disabled/>
-          </Form.Item>
-          <Form.Item name="className" label="Lớp">
-            <Input disabled/>
-          </Form.Item>
-          <Form.Item name="vaccineBatchId" label="Mã lô vaccine" style={{ display: 'none' }}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="vaccineBatchName" label="Tên lô vaccine">
-            <Input />
-          </Form.Item>
-          <Form.Item name="symptoms" label="Triệu chứng">
-            <Input />
-          </Form.Item>
-          <Form.Item name="severity" label="Mức độ">
-            <Input />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <Input />
-          </Form.Item>
-          <Form.Item name="observation_notes" label="Ghi chú theo dõi">
-            <Input />
-          </Form.Item>
-          <Form.Item name="observation_time" label="Thời gian theo dõi">
-            <Input type="datetime-local" />
-          </Form.Item>
-          <Form.Item name="status" label="Trạng thái">
-            <Select>
-              <Option value="Hoàn thành">Hoàn thành</Option>
-              <Option value="Đang theo dõi">Đang theo dõi</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="parentID" label="Mã phụ huynh" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="editNurseID" label="Mã y tá chỉnh sửa" style={{ display: 'none' }}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item name="editNurseName" label="Tên y tá chỉnh sửa">
-            <Input disabled />
-          </Form.Item>
-        </Form>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <Form
+            form={editForm}
+            layout="vertical"
+          >
+            <Row key="row1" gutter={16}>
+              <Col span={12}>
+                <Form.Item name="studentName" label="Tên học sinh">
+                  <Input disabled/>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="className" label="Lớp">
+                  <Input disabled/>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row key="row2" gutter={16}>
+              <Col span={12}>
+                <Form.Item name="vaccineBatchId" label="Mã lô vaccine" style={{ display: 'none' }}>
+                  <Input />
+                </Form.Item>
+                <Form.Item name="vaccineBatchName" label="Tên vaccine" >
+                  <Input disabled/> 
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="symptoms" label="Triệu chứng" 
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập triệu chứng' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row key="row3" gutter={16}>
+              <Col span={12}>
+                <Form.Item name="severity" label="Mức độ" rules={[{ required: true, message: 'Vui lòng chọn mức độ' }]}>
+                 <Select>
+                    <Option value="Ổn định">Ổn định</Option>
+                    <Option value="Trung bình">Trung bình</Option>
+                    <Option value="Nặng">Nặng</Option>
+                    </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="status" label="Trạng thái">
+                  <Select
+                    onChange={value => {
+                      setEditingStatus(value);
+                      editForm.setFieldsValue({ status: value });
+                    }}
+                  >
+                    <Option value="Hoàn thành">Hoàn thành</Option>
+                    <Option value="Cần theo dõi">Cần theo dõi</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            {editingStatus === 'Cần theo dõi' && (
+              <Row key="observation-row" gutter={16}>
+                <Col span={12}>
+                  <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[
+                    { required: true, message: 'Vui lòng nhập thời gian theo dõi' },
+                    { validator: (_, value) => value === undefined || value === '' || new Date(value) > new Date() ? Promise.resolve() : Promise.reject('Thời gian theo dõi phải là tương lai!') }
+                  ]}> 
+                    <DatePicker
+                      showTime
+                      style={{ width: '100%' }}
+                      format="YYYY-MM-DD HH:mm"
+                      placeholder="Chọn thời gian theo dõi"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item name="observation_notes" label="Ghi chú theo dõi" 
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập ghi chú theo dõi' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
+                    <Input />
+                  </Form.Item>
+                </Col>
+              </Row>
+            )}
+            <Row key="notes-row" gutter={16}>
+              <Col span={12}>
+                <Form.Item name="notes" label="Ghi chú"  
+                rules={[
+                    { required: true, message: 'Vui lòng nhập ghi chú' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item name="studentId" label="Mã học sinh" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="parentID" label="Mã phụ huynh" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="editNurseID" label="Mã y tá chỉnh sửa" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="editNurseName" label="Tên y tá chỉnh sửa" style={{ display: 'none' }}>
+              <Input disabled />
+            </Form.Item>
+            
+          </Form>
+        </div>
       </Modal>
     </div>
   );

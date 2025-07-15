@@ -27,6 +27,45 @@
   margin-right: 8px;
 }
 
+.page-header {
+  margin-bottom: 30px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e6f0ff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* căn giữa nội dung */
+  background: none;
+  z-index: 2;
+  margin-top: 38px;
+}
+
+.page-header h2 {
+  color: #1890ff;
+  font-size: 28px;
+  margin: 0;
+  text-align: center;
+  font-weight: bold;
+  background: none;
+  z-index: 2;
+  position: relative;
+  line-height: 1.2;
+  width: 100%;
+  word-break: break-word;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page-header h2 {
+    font-size: 20px;
+  }
+  .page-header .custom-underline {
+    width: 48px;
+    height: 2px;
+    margin-top: 8px;
+  }
+} 
+
 .health-record-container textarea {
   width: 100%;
   min-height: 100px;
@@ -86,6 +125,11 @@
   margin-right: 8px;
 }
 
+.info-row1 {
+  display: flex;
+  gap: 50px;
+}
+
 @media screen and (max-width: 768px) {
   .health-record-container {
     padding: 16px;
@@ -93,4 +137,78 @@
   .submit-btn {
     max-width: 100%;
   }
+}
+
+.info-row1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px !important; /* Khoảng cách giữa 2 cột */
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 60px;
+}
+
+.status-success {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.status-error {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+.status-warning {
+  background-color: #fffbe6;
+  color: #faad14;
+  border: 1px solid #ffe58f;
+}
+
+/* History cards */
+.history-card {
+  background-color: #f8f9fa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 60px;
+}
+
+.status-success {
+  background-color: #f6ffed !important;
+  color: #52c41a !important;
+  border: 1px solid #b7eb8f !important;
+}
+
+.status-error {
+  background-color: #fff2f0 !important;
+  color: #ff4d4f !important;
+  border: 1px solid #ffccc7 !important;
+}
+
+.status-warning {
+  background-color: #fffbe6 !important;
+  color: #ff4d4f !important;
+  border: 1px solid #ffccc7 !important;
 }

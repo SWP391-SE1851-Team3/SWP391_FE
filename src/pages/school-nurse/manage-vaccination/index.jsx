@@ -32,13 +32,12 @@ import ConsentManagement from './consent-management';
 import VaccinationRecords from './vaccination-records';
 import PostVaccinationObservation from './post-vaccination';
 import './Manage-Vaccination.css';
-
 const { Title, Text } = Typography;
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Mock data for dashboard
+
   const dashboardStats = {
     totalSchedules: 15,
     pendingConsents: 48,
