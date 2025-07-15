@@ -28,7 +28,6 @@ import moment from 'moment';
 import { formatDateTime } from '../../../../utils/formatDate';
 import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck, createHealthConsentForMultipleClasses } from '../../../../api/healthCheckAPI';
 import { isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
-import {  isUpdateDateAfterOrEqualCreateDate } from '../../../../validations';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -134,7 +133,7 @@ const HealthCheckBatchManager = () => {
      
       // Chuẩn bị dữ liệu đúng format API
       const nurseName = localStorage.getItem('fullname') || 'Y tá';
-      const nurseID = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+      const nurseID = Number(localStorage.getItem('userId') || "");
       const data = {
         schedule_Date: values.scheduledDate ? values.scheduledDate.toISOString() : now,
         name: values.batchName,
@@ -199,12 +198,9 @@ const HealthCheckBatchManager = () => {
       const values = await editForm.validateFields();
       const nowUpdate = new Date().toISOString();
       const createdAt = selectedBatch.create_at;
-      if (!isUpdateDateAfterOrEqualCreateDate(nowUpdate, createdAt)) {
-        message.error('Ngày cập nhật phải lớn hơn hoặc bằng ngày tạo!');
-        return;
-      }
+    
       const nurseName = localStorage.getItem('fullname') || 'Y tá';
-      const nurseID = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+      const nurseID = Number(localStorage.getItem('userId') || "");
       const data = {
         health_ScheduleID: selectedBatch.id,
         schedule_Date: values.scheduledDate ? values.scheduledDate.toISOString() : nowUpdate,
@@ -235,7 +231,41 @@ const HealthCheckBatchManager = () => {
       setSelectedBatch(null);
       editForm.resetFields();
     } catch (error) {
-      message.error('Vui lòng điền đầy đủ thông tin hoặc có lỗi khi cập nhật!');
+      console.error('Lỗi cập nhật đợt khám:', error);
+      if (error?.response?.data) {
+        const errData = error.response.data;
+        // Nếu có message hoặc errors chi tiết từ BE
+        if (typeof errData === 'object' && (errData.message || errData.errors)) {
+          Modal.error({
+            title: 'Lỗi cập nhật đợt khám',
+            content: (
+              <div>
+                {errData.message && <div style={{ marginBottom: 8 }}>{errData.message}</div>}
+                {Array.isArray(errData.errors) && errData.errors.length > 0 && (
+                  <ul style={{ paddingLeft: 18 }}>
+                    {errData.errors.map((err, idx) => (
+                      <li key={idx} style={{ color: '#fa541c' }}>{err}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ),
+            okText: 'OK'
+          });
+        } else {
+          Modal.error({
+            title: 'Lỗi cập nhật đợt khám',
+            content: JSON.stringify(errData),
+            okText: 'OK'
+          });
+        }
+      } else {
+        Modal.error({
+          title: 'Lỗi cập nhật đợt khám',
+          content: 'Vui lòng điền đầy đủ thông tin hoặc có lỗi khi cập nhật!',
+          okText: 'OK'
+        });
+      }
     }
   };
 
@@ -282,7 +312,7 @@ const HealthCheckBatchManager = () => {
         cancelButtonProps: { style: { background: '#fff' } },
         centered: true,
         onOk: async () => {
-          const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+          const nurseId = Number(localStorage.getItem('userId') ||"");
           const data = {
             className: values.className,
             healthScheduleId: selectedBatchForConsent.id,
@@ -525,8 +555,7 @@ const HealthCheckBatchManager = () => {
                      { validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
                         if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
-                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
-                        
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!'); 
                         return Promise.resolve();
                       }
                     }

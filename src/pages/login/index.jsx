@@ -42,7 +42,7 @@ const Login = () => {
       const {
         token,
         id,
-        username,
+        fullName,
         email: responseEmail,
         roles
       } = data;
@@ -53,7 +53,7 @@ const Login = () => {
 
       // Lưu thông tin người dùng vào localStorage
       localStorage.setItem('email', responseEmail || values.email); // Use response email or form email
-      localStorage.setItem('username', username || '');
+      localStorage.setItem('fullname', fullName || '');
       localStorage.setItem('userId', id || '');
       localStorage.setItem('token', token || '');
       localStorage.setItem('roles', JSON.stringify(roles || []));

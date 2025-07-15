@@ -40,6 +40,7 @@ export const createEmergencyEvent = async (eventData) => {
 // Update medical event
 export const updateMedicalEvent = async (eventId, eventTypeId, eventData) => {
   try {
+    console.log('Calling:', `/api/medical-events/${eventId}?eventTypeId=${eventTypeId}`, eventData)
     const response = await apiClient.put(
       `/api/medical-events/${eventId}?eventTypeId=${eventTypeId}`,
       eventData

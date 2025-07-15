@@ -26,11 +26,9 @@ import {
 } from 'antd';
 import './Vaccination-batch.css';
 import moment from 'moment';
-import { formatDateTime } from '../../../../utils/formatDate';
-import { hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations/stringValidations';
-import {  isUpdateDateAfterOrEqualCreateDate } from '../../../../validations';
-
-import { createVaccinationBatch, getVaccineTypeByName, getVaccinationBatches, updateVaccinationBatch, sendConsentFormByClassName } from '../../../../api/vaccinationAPI';
+import { formatDateTime, formatDateTimePlus14Hours } from '../../../../utils/formatDate';
+import { hasNoSpecialCharacters, isOnlyWhitespace, isFirstCharUppercase  } from '../../../../validations/stringValidations';
+import { createVaccinationBatch, getVaccineTypeByName, getVaccinationBatches, updateVaccinationBatch, sendConsentFormByClassName} from '../../../../api/vaccinationAPI';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -187,7 +185,7 @@ const VaccinationScheduleManager = () => {
   const handleCreateSchedule = async () => {
     try {
       const values = await form.validateFields();
-      const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+      const nurseId = Number(localStorage.getItem('userId') || 1);
       const nurseName = localStorage.getItem('fullname') || 'Y tá Mặc định';
       const vaccineTypeID = Number(values.vaccineTypeID || 0);
       const quantityReceived = Number(values.quantity_received);
@@ -228,7 +226,18 @@ const VaccinationScheduleManager = () => {
       setIsCreateModalOpen(false);
       message.success('Đợt tiêm chủng đã được tạo thành công');
     } catch (error) {
-      message.error('Vui lòng điền đầy đủ thông tin bắt buộc hoặc có lỗi khi tạo đợt tiêm');
+      // Nếu có phản hồi cụ thể từ API, hiện ra cho user bằng Modal
+      let errorMsg = 'Vui lòng điền đầy đủ thông tin bắt buộc hoặc có lỗi khi tạo đợt tiêm';
+      if (error?.response?.data) {
+        errorMsg = error.response.data;
+      } else if (typeof error === 'string') {
+        errorMsg = error;
+      }
+      Modal.error({
+        title: 'Thông báo lỗi',
+        content: errorMsg,
+        okText: 'OK',
+      });
     }
   };
 
@@ -281,7 +290,7 @@ const VaccinationScheduleManager = () => {
   const handleUpdateSchedule = async () => {
     try {
       const values = await editForm.validateFields();
-      const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+      const nurseId = Number(localStorage.getItem('userId') || "");
       const nurseName = localStorage.getItem('fullname') || 'Y tá Mặc định';
       const batchId = editForm.getFieldValue('batchId');
       const vaccineTypeID = Number(values.vaccineTypeID || 0);
@@ -289,10 +298,7 @@ const VaccinationScheduleManager = () => {
       const scheduledDate = values.scheduledDate.toISOString();
       const createdAt = selectedSchedule.created_at;
       const updatedAt = new Date().toISOString();
-      if (!isUpdateDateAfterOrEqualCreateDate(updatedAt, createdAt)) {
-        message.error('Ngày cập nhật phải lớn hơn hoặc bằng ngày tạo!');
-        return;
-      }
+    
       // Chỉ gửi đúng các trường cần thiết cho API
       const payload = {
         created_at: createdAt, // giữ nguyên ngày tạo cũ
@@ -330,7 +336,7 @@ const VaccinationScheduleManager = () => {
         notes: updatedBatchData.notes,
         vaccineTypeID: updatedBatchData.vaccineTypeID,
         created_at: updatedBatchData.created_at,
-        updated_at: updatedBatchData.updated_at,
+        updated_at: updatedBatchData.updated_at ? formatDateTimePlus14Hours(updatedBatchData.updated_at) : '',
         edit_nurse_id: updatedBatchData.edit_nurse_id,
         edit_nurse_name: updatedBatchData.edit_nurse_name,
       };
@@ -431,7 +437,7 @@ const VaccinationScheduleManager = () => {
         centered: true,
         onOk: async () => {
           try {
-            const nurseId = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
+            const nurseId = Number(localStorage.getItem('userId') || "");
             const data = {
               className: values.className,
               batchId: selectedBatchForConsent.batchID,
@@ -446,8 +452,21 @@ const VaccinationScheduleManager = () => {
             setIsConsentModalOpen(false);
             consentForm.resetFields();
           } catch (error) {
-            message.error('Gửi phiếu đồng ý thất bại!');
-          } finally {
+            let errorMsg = 'Gửi phiếu đồng ý thất bại!';
+            if (error?.response?.data?.message) {
+              errorMsg = error.response.data.message;
+            }
+            Modal.error({
+              title: 'Có lỗi khi gửi phiếu',
+              content: (
+                <div>
+                  {errorMsg.split('\n').map((line, idx) => (
+                    <div key={idx}>{line}</div>
+                  ))}
+                </div>
+              ),
+              okText: 'Đóng'
+            });
             setSendingConsent(false);
           }
         },
@@ -635,7 +654,7 @@ const VaccinationScheduleManager = () => {
                   if (value === undefined || value === '') return Promise.resolve();
                   if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                   if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
-                  
+                  if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                   return Promise.resolve();
                 }
               }
@@ -654,6 +673,7 @@ const VaccinationScheduleManager = () => {
                   if (value === undefined || value === '') return Promise.resolve();
                   if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                   if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                   
                   return Promise.resolve();
                 }
@@ -682,7 +702,7 @@ const VaccinationScheduleManager = () => {
                   if (value === undefined || value === '') return Promise.resolve();
                   if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                   if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
-                  
+                  if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                   return Promise.resolve();
                 }
               }
@@ -777,6 +797,7 @@ const VaccinationScheduleManager = () => {
                       if (value === undefined || value === '') return Promise.resolve();
                       if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                       if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                      if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                      return Promise.resolve();
                     }
                   }
@@ -799,6 +820,7 @@ const VaccinationScheduleManager = () => {
                       if (value === undefined || value === '') return Promise.resolve();
                       if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                       if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                      if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                      return Promise.resolve();
                     }
                   }
@@ -860,6 +882,7 @@ const VaccinationScheduleManager = () => {
                   if (value === undefined || value === '') return Promise.resolve();
                   if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                   if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                  return Promise.resolve();
                 }
               }

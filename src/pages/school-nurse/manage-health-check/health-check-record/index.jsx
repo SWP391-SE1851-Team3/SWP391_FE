@@ -6,7 +6,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 import {getAllHealthCheckResults, updateHealthCheckResult} from '../../../../api/healthCheckAPI';
 
-import { getCurrentDateString } from '../../../../utils/formatDate';
+import { getCurrentDateString, formatDateTime } from '../../../../utils/formatDate';
 import { isPositiveNumber,isNumeric, isFever,isHypothermia,hasNoSpecialCharacters,isOnlyNumbers,isOnlyWhitespace } from '../../../../validations';
 
 import { isValidVisionFormat, isValidVisionRange } from '../../../../validations/stringValidations';
@@ -112,7 +112,7 @@ const HealthCheckRecord = () => {
   const handleUpdate = async () => {
     try {
       const values = await updateForm.validateFields();
-      const nurseId = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
+      const nurseId = localStorage.getItem('userId') || localStorage.getItem('nurseID') || '';
       await updateHealthCheckResult(selectedRecord.checkID, nurseId, values);
       message.success('Cập nhật hồ sơ thành công!');
       setIsUpdateModalOpen(false);
@@ -237,11 +237,11 @@ const HealthCheckRecord = () => {
               />
             </div>
             <div className="health-check-record-card-info">
-              <Space><Text type="secondary">Ngày khám:</Text> <Text>{record.checkDate}</Text></Space>
+              <Space><Text type="secondary">Ngày khám:</Text> <Text>{record.checkDate ? formatDateTime(record.checkDate) : ''}</Text></Space>
               <Space><Text type="secondary">Y tá tạo hồ sơ:</Text> <Text>{record.nurseName}</Text></Space>
             </div>
             <div className="health-check-record-card-info">
-              <Space><Text type="secondary">Ngày cập nhật:</Text> <Text>{record.update_at ? record.update_at.split('T')[0] : ''}</Text></Space>
+              <Space><Text type="secondary">Ngày cập nhật:</Text> <Text>{record.update_at ? formatDateTime(record.update_at) : ''}</Text></Space>
               <Space><Text type="secondary">Y tá cập nhật:</Text> <Text>{record.updatedByNurseName} </Text></Space>
             </div>
             <div className="health-check-record-card-actions">
@@ -290,8 +290,8 @@ const HealthCheckRecord = () => {
             <Row gutter={[24, 16]}>
               <Col span={12}><Text strong>Kết luận chung:</Text><br /><Text>{selectedRecord.overallResult}</Text></Col>
               <Col span={12}><Text strong>Trạng thái:</Text><br /><Text>{selectedRecord.status}</Text></Col>
-              <Col span={12}><Text strong>Ngày khám:</Text><br /><Text>{selectedRecord.checkDate}</Text></Col>
-              <Col span={12}><Text strong>Ngày cập nhật:</Text><br /><Text>{selectedRecord.update_at ? selectedRecord.update_at.split('T')[0] : ''}</Text></Col>
+              <Col span={12}><Text strong>Ngày khám:</Text><br /><Text>{selectedRecord.checkDate ? formatDateTime(selectedRecord.checkDate) : ''}</Text></Col>
+              <Col span={12}><Text strong>Ngày cập nhật:</Text><br /><Text>{selectedRecord.update_at ? formatDateTime(selectedRecord.update_at) : ''}</Text></Col>
               <Col span={12}><Text strong>Y tá tạo:</Text><br /><Text>{selectedRecord.nurseName}</Text></Col>
               <Col span={12}><Text strong>Y tá cập nhật:</Text><br /><Text>{selectedRecord.updatedByNurseName}</Text></Col>
             </Row>
