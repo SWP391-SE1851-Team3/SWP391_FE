@@ -102,6 +102,7 @@
   color: #1890ff;
   font-size: 28px;
   margin: 0;
+  margin-top: -16px;
 }
 
 .page-header::after {

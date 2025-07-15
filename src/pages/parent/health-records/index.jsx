@@ -19,7 +19,7 @@ const StudentHealthRecord = () => {
   const [hasProfile, setHasProfile] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-  const parentId = localStorage.getItem('parentId');
+  const parentId = localStorage.getItem('userId');
 
   // Lấy danh sách học sinh của phụ huynh
   useEffect(() => {
@@ -123,11 +123,11 @@ const StudentHealthRecord = () => {
   return (
     <Card
       title={
-        <span className="health-record-title">
+        <h2 className="health-record-title">
           {selectedStudentId
             ? `Hồ sơ sức khỏe của ${students.find(s => s.studentID === selectedStudentId)?.fullName || 'Không rõ'}`
             : 'Chọn học sinh để nhập hồ sơ sức khỏe'}
-        </span>
+        </h2>
       }
       className="health-record-container"
     >

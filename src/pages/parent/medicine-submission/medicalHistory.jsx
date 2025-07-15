@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Spin, Modal } from 'antd';
 import { getMedicationSubmissionsByParentId } from '../../../api/medicalSubmission';
 
-// Mapping trạng thái
 const statusText = {
   pending: 'Chờ xác nhận',
   approved: 'Đã xác nhận',
@@ -14,7 +13,10 @@ const MedicineHistory = ({ parentId }) => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [detailModal, setDetailModal] = useState({ open: false, data: null });
 
-  // Load lịch sử đơn thuốc khi thay đổi parentId
+  // Debug log
+  console.log('parentId in MedicineHistory:', parentId);
+  console.log('history:', history);
+
   useEffect(() => {
     if (!parentId) {
       setHistory([]);
@@ -31,7 +33,6 @@ const MedicineHistory = ({ parentId }) => {
       .finally(() => setHistoryLoading(false));
   }, [parentId]);
 
-  // Xem chi tiết đơn thuốc
   const handleViewDetail = (idx) => {
     setDetailModal({
       open: true,
@@ -39,7 +40,6 @@ const MedicineHistory = ({ parentId }) => {
     });
   };
 
-  // Định dạng ngày
   const formatDate = (dateString) => {
     if (!dateString) return '---';
     const d = new Date(dateString);
@@ -58,6 +58,16 @@ const MedicineHistory = ({ parentId }) => {
         </div>
       ) : (
         <>
+          {/* Test đơn giản để check dữ liệu */}
+          {history.length > 0 && (
+            <div>
+              <b>Test render:</b>
+              {history.map((item, idx) => (
+                <div key={idx}>{item.studentName}</div>
+              ))}
+            </div>
+          )}
+          {/* Code cũ giữ nguyên */}
           {history.map((item, idx) => (
             <div
               key={idx}
@@ -100,7 +110,7 @@ const MedicineHistory = ({ parentId }) => {
                   fontSize: 16
                 }}
               >
-                {statusText[item.status || 'pending']}
+                {statusText[(item.status || 'pending').toLowerCase()]}
               </span>
             </div>
           ))}
@@ -128,7 +138,7 @@ const MedicineHistory = ({ parentId }) => {
               <b>Ngày gửi:</b> {formatDate(detailModal.data.submissionDate)}
             </div>
             <div style={{ marginBottom: 8 }}>
-              <b>Trạng thái:</b> {statusText[detailModal.data.status || 'pending']}
+              <b>Trạng thái:</b> {statusText[(detailModal.data.status || 'pending').toLowerCase()]}
             </div>
             <hr />
             {(detailModal.data.medicationDetails || []).map((med, idx) => (

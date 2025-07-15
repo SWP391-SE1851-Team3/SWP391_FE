@@ -1,153 +1,541 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './healthCheckNotification.css';
+import { getStudentsByParent } from '../../../api/consent_form';
+import {
+  getHealthConsentByParent,
+  updateHealthConsent,
+  getHealthCheckResultsByStudent
+} from '../../../api/healthCheck_parent';
+import { message, Form, Input, Radio, Button, Spin, Modal } from 'antd';
 
 const ParentHealthCheck = () => {
+  const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [consent, setConsent] = useState('');
-  const [reason, setReason] = useState('');
+  const [healthConsentForms, setHealthConsentForms] = useState([]);
+  const [healthCheckResults, setHealthCheckResults] = useState([]);
+  const [currentConsentForm, setCurrentConsentForm] = useState(null);
+  const [hasHealthConsentForm, setHasHealthConsentForm] = useState(false);
+  const [hasPendingForm, setHasPendingForm] = useState(false);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingForm, setLoadingForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedResult, setSelectedResult] = useState(null);
+  const [form] = Form.useForm();
+  const parentId = localStorage.getItem('userId');
 
-  // Dữ liệu mẫu cho danh sách học sinh
-  const [students] = useState([
-    {
-      id: 1,
-      name: 'Nguyễn Văn A',
-      class: '5A',
-      pendingChecks: 1,
-      healthHistory: [
-        {
-          id: 1,
-          date: '10/06/2024',
-          result: 'Bình thường',
-          note: 'Không có vấn đề sức khỏe',
-        },
-      ]
-    },
-    {
-      id: 2,
-      name: 'Nguyễn Thị B',
-      class: '3B',
-      pendingChecks: 0,
-      healthHistory: []
-    }
-  ]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (consent === '') {
-      alert('Vui lòng chọn Đồng ý hoặc Không đồng ý');
+  useEffect(() => {
+    if (!parentId) {
+      message.error('Vui lòng đăng nhập!');
       return;
     }
-    // Xử lý gửi xác nhận
-    alert('Gửi xác nhận thành công!');
-    setSelectedStudent(null);
-    setConsent('');
-    setReason('');
+    fetchStudents();
+  }, [parentId]);
+
+  const fetchStudents = async () => {
+    setLoadingStudents(true);
+    try {
+      const res = await getStudentsByParent(parentId);
+      console.log('API raw response:', res);
+
+      const studentsData = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+      console.log('studentsData:', studentsData);
+
+      setStudents(studentsData);
+    } catch (error) {
+      console.error(error);
+      message.error('Không tải được danh sách học sinh');
+      setStudents([]);
+    } finally {
+      setLoadingStudents(false);
+    }
   };
 
-  return (
-    <div className="vaccine-record-container">
-      {selectedStudent && (
-        <button 
-          className="back-btn"
-          onClick={() => setSelectedStudent(null)}
-        >
-          Quay lại
-        </button>
+  const isFormExpired = (expireDate) => {
+    if (!expireDate) return false;
+    const currentDate = new Date();
+    const expDate = new Date(expireDate);
+    return currentDate > expDate;
+  };
+
+  const processExpiredForms = (forms) => {
+    return Array.isArray(forms)
+      ? forms.map(form => {
+        const isPending = !form.isAgreed ||
+          form.isAgreed === "" ||
+          form.isAgreed.toLowerCase() === "chờ phản hồi";
+
+        if (isPending && isFormExpired(form.expire_date)) {
+          return {
+            ...form,
+            isAgreed: "Từ chối",
+            notes: form.notes || "Từ chối do quá hạn phản hồi",
+            isExpiredRejection: true
+          };
+        }
+        return form;
+      })
+      : [];
+  };
+
+  const handleViewDetails = async (student) => {
+    const studentId = Number(student.studentID || student.studentId || student.id);
+    if (!studentId) {
+      message.error("Không tìm thấy studentId!");
+      return;
+    }
+
+    setSelectedStudent(student);
+    setLoadingForm(true);
+
+    try {
+      // Lấy thông tin health consent theo parentId
+      const consentRes = await getHealthConsentByParent(parentId);
+      const allConsentForms =
+        Array.isArray(consentRes)
+          ? consentRes
+          : Array.isArray(consentRes?.data)
+            ? consentRes.data
+            : [];
+
+      // Lọc các form của học sinh hiện tại
+      let studentConsentForms = allConsentForms.filter(form =>
+        Number(form.studentID) === studentId
+      );
+
+      // Xử lý các form hết hạn
+      studentConsentForms = processExpiredForms(studentConsentForms);
+
+      // Lấy kết quả health check
+      let healthResults = [];
+      try {
+        const resultsRes = await getHealthCheckResultsByStudent(studentId);
+        healthResults = Array.isArray(resultsRes)
+          ? resultsRes
+          : Array.isArray(resultsRes?.data)
+            ? resultsRes.data
+            : [];
+      } catch (error) {
+        console.log('Không có kết quả health check:', error.message);
+        healthResults = [];
+      }
+
+      setHealthConsentForms(Array.isArray(studentConsentForms) ? studentConsentForms : []);
+      setHealthCheckResults(Array.isArray(healthResults) ? healthResults : []);
+
+      let currentForm = null;
+      let hasPending = false;
+
+      if (!Array.isArray(studentConsentForms) || studentConsentForms.length === 0) {
+        setHasHealthConsentForm(false);
+        setHasPendingForm(false);
+      } else {
+        setHasHealthConsentForm(true);
+
+        // Tìm form "Chờ phản hồi" đầu tiên và chưa hết hạn
+        const pendingForm = studentConsentForms.find(form => {
+          const isPending = !form.isAgreed ||
+            form.isAgreed === "" ||
+            form.isAgreed.toLowerCase() === "chờ phản hồi";
+          const notExpired = !isFormExpired(form.expire_date);
+          return isPending && notExpired;
+        });
+
+        if (pendingForm) {
+          currentForm = pendingForm;
+          hasPending = true;
+        } else {
+          // Nếu không có form pending hoặc form đã hết hạn, lấy form mới nhất
+          currentForm = studentConsentForms[0];
+          hasPending = false;
+        }
+
+        setHasPendingForm(hasPending);
+
+        if (hasPending && currentForm) {
+          form.setFieldsValue({
+            isAgreed: undefined,
+            notes: currentForm.notes || ""
+          });
+        }
+      }
+
+      setCurrentConsentForm(currentForm || null);
+    } catch (error) {
+      message.error("Không thể lấy thông tin chi tiết: " + error.message);
+      setHasHealthConsentForm(false);
+      setHasPendingForm(false);
+      setHealthConsentForms([]);
+      setHealthCheckResults([]);
+      setCurrentConsentForm(null);
+    } finally {
+      setLoadingForm(false);
+    }
+  };
+
+  const handleSubmit = async (values) => {
+    if (values.isAgreed === "Không đồng ý" && !values.notes?.trim()) {
+      message.warning('Vui lòng nhập lý do khi không đồng ý');
+      return;
+    }
+    if (!currentConsentForm || !currentConsentForm.formID) {
+      message.error('Không tìm thấy ID form đồng ý. Vui lòng thử lại!');
+      return;
+    }
+    const formId = Number(currentConsentForm.formID);
+    if (isNaN(formId) || formId <= 0) {
+      message.error('ID form đồng ý không hợp lệ');
+      return;
+    }
+
+    const payload = {
+      isAgreed: values.isAgreed || "",
+      notes: (values.notes || "").trim()
+    };
+
+    setSubmitting(true);
+    try {
+      await updateHealthConsent(formId, payload);
+      message.success('Gửi xác nhận thành công!');
+
+      const updatedForm = {
+        ...currentConsentForm,
+        isAgreed: values.isAgreed,
+        notes: values.notes || ""
+      };
+      setCurrentConsentForm(updatedForm);
+
+      const updatedForms = (Array.isArray(healthConsentForms) ? healthConsentForms : []).map(form =>
+        form.formID === formId ? updatedForm : form
+      );
+      setHealthConsentForms(updatedForms);
+
+      setHasPendingForm(false);
+      form.resetFields();
+    } catch (error) {
+      const errorMessage = error.message || 'Gửi xác nhận thất bại!';
+      message.error(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetState = () => {
+    setSelectedStudent(null);
+    setHealthConsentForms([]);
+    setHealthCheckResults([]);
+    setCurrentConsentForm(null);
+    setHasHealthConsentForm(false);
+    setHasPendingForm(false);
+    setShowDetailModal(false);
+    setSelectedResult(null);
+    form.resetFields();
+  };
+
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return "Chưa có dữ liệu";
+    try {
+      const date = new Date(dateTimeString);
+      return date.toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return "Không hợp lệ";
+    }
+  };
+
+  const handleViewResultDetails = (result) => {
+    setSelectedResult(result);
+    setShowDetailModal(true);
+  };
+
+  const renderNotificationInfo = () => (
+    <div className="student-info">
+      <h2>Thông Báo Kiểm Tra Sức Khỏe</h2>
+      {hasHealthConsentForm && hasPendingForm && currentConsentForm && !isFormExpired(currentConsentForm.expire_date) ? (
+        <>
+          <div className="info-row1">
+            <span><strong>Họ tên học sinh:</strong> {currentConsentForm.studentName}</span>
+            <span><strong>Lớp:</strong> {currentConsentForm.className}</span>
+          </div>
+          <p><strong>Chương trình kiểm tra:</strong> {currentConsentForm.healthScheduleName}</p>
+          <div className="info-row">
+            <span><strong>Ngày gửi:</strong> {formatDateTime(currentConsentForm.send_date)}</span>
+            <span><strong>Hạn phản hồi:</strong> {formatDateTime(currentConsentForm.expire_date)}</span>
+          </div>
+        </>
+      ) : (
+        <p className="no-schedule">Chưa có lịch kiểm tra sức khỏe cần duyệt</p>
       )}
-      <h2>Xác nhận khám sức khỏe cho học sinh</h2>
-      {!selectedStudent ? (
-        <div className="students-list">
-          {students.map((student) => (
-            <div key={student.id} className="student-card">
-              <div className="student-avatar">
-                {student.name.charAt(0)}
-              </div>
-              <div className="student-content">
-                <h3>
-                  {student.name}
-                  {student.pendingChecks > 0 && (
-                    <span className="notification-dot" title={`${student.pendingChecks} thông báo mới`}></span>
-                  )}
-                </h3>
-                <div className="student-info">
-                  <p><strong>Lớp:</strong> {student.class}</p>
-                </div>
-                <div className="action-buttons">
-                  <button 
-                    className="view-btn"
-                    onClick={() => setSelectedStudent(student)}
-                  >
-                    Xem Thông Tin
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+    </div>
+  );
+
+  const renderHealthCheckResults = () => {
+    const resultsArr = Array.isArray(healthCheckResults) ? healthCheckResults : [];
+    if (resultsArr.length === 0) {
+      return <div className="empty-history">Chưa có kết quả kiểm tra sức khỏe.</div>;
+    }
+
+    return resultsArr.map((result, index) => (
+      <li key={index} className="history-card">
+        <span className={`status-badge ${result.status === "Hoàn thành" ? "status-success" : "status-warning"}`}>
+          {result.status || "Chưa rõ"}
+        </span>
+        <div className="history-card-row">
+          <span className="history-label">Học sinh:</span> {result.fullName}
+          <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {result.className}
         </div>
+        <div className="history-card-row">
+          <span className="history-label">Ngày tạo:</span> {formatDateTime(result.create_at)}
+        </div>
+        <div className="history-card-row">
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => handleViewResultDetails(result)}
+            style={{ marginTop: '10px' }}
+          >
+            Xem Chi Tiết
+          </Button>
+        </div>
+      </li>
+    ));
+  };
+
+  const renderConsentHistory = () => {
+    const formsArr = Array.isArray(healthConsentForms) ? healthConsentForms : [];
+    const processedForms = formsArr.filter(form => {
+      const hasResponse = form.isAgreed && form.isAgreed !== "" && form.isAgreed.toLowerCase() !== "chờ phản hồi";
+      const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
+      return hasResponse || isPendingButExpired;
+    });
+
+    if (processedForms.length === 0) {
+      return null;
+    }
+
+    return processedForms.map((form, index) => {
+      let displayStatus = form.isAgreed;
+      let statusClass = "status-success";
+      let displayNotes = form.notes;
+
+      const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
+
+      if (isPendingButExpired) {
+        displayStatus = "Từ chối";
+        statusClass = "status-error";
+        displayNotes = displayNotes || "Từ chối do quá hạn phản hồi";
+      } else if (form.isAgreed === "Không đồng ý") {
+        displayStatus = "Từ chối";
+        statusClass = "status-error";
+      } else if (form.isAgreed === "Đồng ý") {
+        displayStatus = "Đồng ý";
+        statusClass = "status-success";
+      }
+
+      return (
+        <li key={index} className="history-card">
+          <span className={`status-badge ${statusClass}`}>
+            {displayStatus}
+          </span>
+          {isPendingButExpired && (
+            <span className="expired-badge" style={{ marginLeft: '10px', backgroundColor: '#ff4d4f', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
+              Quá hạn
+            </span>
+          )}
+          <div className="history-card-row">
+            <span className="history-label">Học sinh:</span> {form.studentName}
+            <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {form.className}
+          </div>
+          <div className="history-card-row">
+            <span className="history-label">Chương trình:</span> {form.healthScheduleName}
+          </div>
+          <div className="history-card-row">
+            <span className="history-label">Ngày gửi:</span> {formatDateTime(form.send_date)}
+          </div>
+          <div className="history-card-row">
+            <span className="history-label">Hạn phản hồi:</span> {formatDateTime(form.expire_date)}
+          </div>
+          {displayNotes && (
+            <div className="history-card-row">
+              <span className="history-label">Ghi chú:</span> {displayNotes}
+            </div>
+          )}
+        </li>
+      );
+    });
+  };
+
+  const renderDetailModal = () => (
+    <Modal
+      title="Chi tiết kết quả kiểm tra sức khỏe"
+      open={showDetailModal}
+      onCancel={() => setShowDetailModal(false)}
+      footer={[
+        <Button key="close" onClick={() => setShowDetailModal(false)}>
+          Đóng
+        </Button>
+      ]}
+      width={600}
+    >
+      {selectedResult && (
+        <div className="result-detail">
+          <div className="detail-row">
+            <strong>Học sinh:</strong> {selectedResult.fullName}
+          </div>
+          <div className="detail-row">
+            <strong>Lớp:</strong> {selectedResult.className}
+          </div>
+          <div className="detail-row">
+            <strong>Chiều cao:</strong> {selectedResult.height || "N/A"} cm
+          </div>
+          <div className="detail-row">
+            <strong>Cân nặng:</strong> {selectedResult.weight || "N/A"} kg
+          </div>
+          <div className="detail-row">
+            <strong>BMI:</strong> {selectedResult.bmi || "N/A"}
+          </div>
+          <div className="detail-row">
+            <strong>Nhiệt độ:</strong> {selectedResult.temperature || "N/A"}°C
+          </div>
+          <div className="detail-row">
+            <strong>Thị lực trái:</strong> {selectedResult.visionLeft || "N/A"}
+          </div>
+          <div className="detail-row">
+            <strong>Thị lực phải:</strong> {selectedResult.visionRight || "N/A"}
+          </div>
+          <div className="detail-row">
+            <strong>Thính giác:</strong> {selectedResult.hearing || "N/A"}
+          </div>
+          <div className="detail-row">
+            <strong>Răng miệng:</strong> {selectedResult.dentalCheck || "N/A"}
+          </div>
+          <div className="detail-row">
+            <strong>Kết quả tổng thể:</strong> {selectedResult.overallResult || "N/A"}
+          </div>
+          <div className="detail-row">
+            <strong>Ngày tạo:</strong> {formatDateTime(selectedResult.create_at)}
+          </div>
+          <div className="detail-row">
+            <strong>Y tá:</strong> {selectedResult.createdByNurseName || "N/A"}
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+
+  return (
+    <div className="health-check-container">
+      {!selectedStudent ? (
+        <>
+          <div className="page-header">
+            <h2>Thông Tin Kiểm Tra Sức Khỏe Học Sinh</h2>
+            <span className="custom-underline"></span>
+          </div>
+
+          <div className="students-list">
+            {loadingStudents ? (
+              <Spin tip="Đang tải danh sách học sinh..." />
+            ) : Array.isArray(students) && students.length > 0 ? (
+              students.map((student) => (
+                <div key={student.studentID || student.studentId || student.id} className="student-card">
+                  <div className="student-avatar">{student.fullName?.charAt(0)}</div>
+                  <div className="student-content">
+                    <h3>{student.fullName}</h3>
+                    <h4>{student.className}</h4>
+                    <div className="action-buttons">
+                      <button className="view-btn" onClick={() => handleViewDetails(student)}>
+                        Xem Thông Tin
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>Không có học sinh nào.</p>
+            )}
+          </div>
+        </>
+      ) : loadingForm ? (
+        <Spin tip="Đang tải thông tin chi tiết..." />
       ) : (
         <>
-          <div className="student-info">
-            <p><strong>Họ tên:</strong> {selectedStudent.name}</p>
-            <p><strong>Lớp:</strong> {selectedStudent.class}</p>
-            <p><strong>Loại khám:</strong> Khám sức khỏe tổng quát</p>
-            <p><strong>Địa điểm:</strong> Tại trường</p>
-            <p><strong>Ngày khám dự kiến:</strong> 20/06/2025</p>
-          </div>
+          <Button type="link" onClick={resetState}>← Quay lại</Button>
 
-          <form onSubmit={handleSubmit} className="consent-form">
-            <label>Bạn có đồng ý cho con tham gia khám sức khỏe này không?</label>
-            <div className="radio-group">
-              <label>
-                <input
-                  type="radio"
-                  value="yes"
-                  checked={consent === 'yes'}
-                  onChange={() => setConsent('yes')}
-                />
-                Đồng ý
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  value="no"
-                  checked={consent === 'no'}
-                  onChange={() => setConsent('no')}
-                />
-                Không đồng ý
-              </label>
+          {renderNotificationInfo()}
+
+          {/* Hiển thị form khi có form đang chờ phản hồi và chưa hết hạn */}
+          {hasHealthConsentForm && hasPendingForm && currentConsentForm && !isFormExpired(currentConsentForm.expire_date) && (
+            <div className="health-check-form">
+              <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                initialValues={{
+                  notes: currentConsentForm.notes || ""
+                }}
+              >
+                <Form.Item name="notes" label="Ghi chú (nếu có):" className="short-textarea">
+                  <Input.TextArea
+                    placeholder="Nhập ghi chú về tình trạng sức khỏe của con hoặc lý do từ chối..."
+                    autoSize={{ minRows: 2, maxRows: 4 }}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="isAgreed"
+                  label="Bạn có đồng ý cho con tham gia kiểm tra sức khỏe này không?"
+                  rules={[{ required: true, message: 'Vui lòng chọn đồng ý hay không đồng ý' }]}
+                >
+                  <Radio.Group>
+                    <Radio value="Đồng ý">Đồng ý</Radio>
+                    <Radio value="Không đồng ý">Không đồng ý</Radio>
+                  </Radio.Group>
+                </Form.Item>
+
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" loading={submitting} size="large">
+                    Gửi xác nhận
+                  </Button>
+                </Form.Item>
+              </Form>
             </div>
+          )}
 
-            {consent === 'no' && (
-              <div className="reason-field">
-                <label>Lý do từ chối (bắt buộc):</label>
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  required
-                  placeholder="Nhập lý do tại đây..."
-                />
-              </div>
-            )}
-
-            <button type="submit" className="submit-btn">Gửi xác nhận</button>
-          </form>
-
-          <div className="history-section">
-            <h3>Lịch sử khám sức khỏe</h3>
-            {selectedStudent.healthHistory.length > 0 ? (
+          {/* Lịch sử đồng ý kiểm tra */}
+          {Array.isArray(healthConsentForms) && healthConsentForms.length > 0 && (
+            <div className="history-section" style={{ marginTop: '30px' }}>
+              <h3>Lịch sử đồng ý kiểm tra sức khỏe</h3>
               <ul>
-                {selectedStudent.healthHistory.map((item) => (
-                  <li key={item.id} className="history-item">
-                    <p><strong>Ngày khám:</strong> {item.date}</p>
-                    <p><strong>Kết quả:</strong> {item.result}</p>
-                    <p><strong>Ghi chú:</strong> {item.note}</p>
-                  </li>
-                ))}
+                {renderConsentHistory()}
+                {(Array.isArray(healthConsentForms)
+                  ? healthConsentForms.filter(form => {
+                    const hasResponse = form.isAgreed && form.isAgreed !== "" && form.isAgreed.toLowerCase() !== "chờ phản hồi";
+                    const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
+                    return hasResponse || isPendingButExpired;
+                  })
+                  : []
+                ).length === 0 && (
+                    <div className="empty-history">Chưa có lịch sử đồng ý kiểm tra sức khỏe.</div>
+                  )}
               </ul>
-            ) : (
-              <p>Chưa có lịch sử khám sức khỏe.</p>
-            )}
+            </div>
+          )}
+
+          {/* Kết quả kiểm tra sức khỏe */}
+          <div className="history-section" style={{ marginTop: '30px' }}>
+            <h3>Kết quả kiểm tra sức khỏe</h3>
+            <ul>
+              {renderHealthCheckResults()}
+            </ul>
           </div>
+
+          {/* Modal hiển thị chi tiết kết quả */}
+          {renderDetailModal()}
         </>
       )}
     </div>
