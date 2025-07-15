@@ -235,7 +235,7 @@ export const getStudentVaccinationRecordsFollowedByNurse = async () => {
       timestamp: new Date().toISOString()
     });
     
-    const response = await axios.get('http://localhost:8080/api/vaccination_records/StudentFollowedbyNurse');
+    const response = await apiClient.get('/vaccination_records/StudentFollowedbyNurse');
     
     console.log('✅ [Vaccination API] Lấy danh sách hồ sơ theo dõi sau tiêm thành công:', {
       timestamp: new Date().toISOString(),

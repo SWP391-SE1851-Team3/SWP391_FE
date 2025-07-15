@@ -31,7 +31,7 @@ import {
 import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails } from '../../../api/medicalSubmissionNurse';
 import { formatDateTime } from '../../../utils/formatDate';
 import './Medication.css';
-
+import { hasNoSpecialCharacters } from '../../../validations';
 const { Title } = Typography;
 const { Option } = Select;
 
@@ -238,7 +238,7 @@ const MedicationManagement = () => {
       render: (status) => getStatusTag(status)
     },
     {
-      title: 'Thời gian gửi',
+      title: 'Thời gian',
       dataIndex: 'time',
       key: 'time',
       width: '20%'
@@ -636,7 +636,16 @@ const MedicationManagement = () => {
             <Form.Item
               name="reason"
               label={<span style={{ fontWeight: 600, color: '#ff4d4f' }}>Lý do từ chối</span>}
-              rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+              rules={[
+                { required: true, message: 'Vui lòng nhập lý do từ chối' },
+                
+                 { validator: (_, value) => {
+                    if (value === undefined || value === '') return Promise.resolve();
+                    if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                    return Promise.resolve();
+                  }
+                }
+              ]}
             >
               <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phiếu..." />
             </Form.Item>
@@ -659,7 +668,16 @@ const MedicationManagement = () => {
           <Form.Item
             name="reason"
             label="Lý do từ chối"
-            rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập lý do từ chối' },
+              
+               { validator: (_, value) => {
+                  if (value === undefined || value === '') return Promise.resolve();
+                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phát thuốc..." />
           </Form.Item>
