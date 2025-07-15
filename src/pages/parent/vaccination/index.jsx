@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ParentVaccineConfirmation.css';
-import { getStudentsByParent, ViewConsentForm, submitConsentForm } from '../../../api/consent_form';
+import { getStudentsByParent, viewConsentForm, submitConsentForm } from '../../../api/consent_form';
 import { message, Form, Input, Radio, Button, Spin } from 'antd';
 
 const ParentVaccineConfirmation = () => {
@@ -13,7 +13,7 @@ const ParentVaccineConfirmation = () => {
   const [loadingForm, setLoadingForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
-  const parentId = localStorage.getItem('parentId');
+  const parentId = localStorage.getItem('userId');
 
   useEffect(() => {
     if (!parentId) {
@@ -27,9 +27,16 @@ const ParentVaccineConfirmation = () => {
     setLoadingStudents(true);
     try {
       const res = await getStudentsByParent(parentId);
-      setStudents(res.data);
+      console.log('API raw response:', res);
+
+      const studentsData = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+      console.log('studentsData:', studentsData);
+
+      setStudents(studentsData);
     } catch (error) {
+      console.error(error);
       message.error('Không tải được danh sách học sinh');
+      setStudents([]);
     } finally {
       setLoadingStudents(false);
     }
@@ -45,7 +52,7 @@ const ParentVaccineConfirmation = () => {
     setLoadingForm(true);
 
     try {
-      const res = await ViewConsentForm(id);
+      const res = await viewConsentForm(id);
       const dataList = res?.data;
 
       let consentData;
