@@ -112,8 +112,15 @@ const MedicationManagement = () => {
       });
       setData(formattedData);
 
-      // Không lọc theo ngày nữa, lấy tất cả submissions cho timelineData
+      // Lọc chỉ lấy các thuốc phát trong ngày hôm nay cho timelineData
+      const todayDate = new Date();
+      const todayStr = todayDate.toISOString().split('T')[0];
       const todayTimeline = submissions
+        .filter(submission => {
+          const subDate = new Date(submission.submissionDate);
+          const subDateStr = subDate.toISOString().split('T')[0];
+          return subDateStr === todayStr;
+        })
         .map((submission, idx) => ({
           id: idx + 1,
           time: new Date(submission.submissionDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),

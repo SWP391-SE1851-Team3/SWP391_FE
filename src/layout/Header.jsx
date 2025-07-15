@@ -1,8 +1,21 @@
-import React, { useEffect } from 'react';
-import { Layout, Menu, Avatar, Badge, Button, message } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Layout, Menu, Avatar, Badge, Button, message, Tooltip } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from "../assets/images/logo.jpg";
-import { LogoutOutlined, LoginOutlined } from '@ant-design/icons';
+import { 
+  LogoutOutlined, 
+  LoginOutlined, 
+  MenuFoldOutlined, 
+  MenuUnfoldOutlined,
+  HomeOutlined,
+  MedicineBoxOutlined,
+  HeartOutlined,
+  SafetyOutlined,
+  UserOutlined,
+  SettingOutlined,
+  CalendarOutlined,
+  TeamOutlined
+} from '@ant-design/icons';
 
 const { Header } = Layout;
 import './Header.css';
@@ -16,17 +29,17 @@ const ROLE_MENUS = {
     { key: 'vaccination', label: 'Tiêm chủng', path: '/vaccination' },
   ],
   2: [
-    { key: 'home', label: 'Trang chủ', path: '/' },
-    { key: 'manage-medication', label: 'Quản lí thuốc', path: '/manage-medication' },
-    { key: 'medical-events', label: 'Sự kiện y tế ', path: '/medical-events' },
-    { key: 'manage-vaccination', label: 'Tiêm Chủng', path: '/manage-vaccination' },
-    { key: 'manage-health-check', label: 'Kiểm tra y tế', path: '/manage-health-check' },
+    { key: 'home', label: 'Trang chủ', path: '/', icon: <HomeOutlined /> },
+    { key: 'manage-medication', label: 'Quản lí thuốc', path: '/manage-medication', icon: <MedicineBoxOutlined /> },
+    { key: 'medical-events', label: 'Sự kiện y tế', path: '/medical-events', icon: <CalendarOutlined /> },
+    { key: 'manage-vaccination', label: 'Tiêm Chủng', path: '/manage-vaccination', icon: <SafetyOutlined /> },
+    { key: 'manage-health-check', label: 'Kiểm tra y tế', path: '/manage-health-check', icon: <HeartOutlined /> },
   ],
   3: [
-    { key: 'home', label: 'Trang chủ', path: '/' },
-    { key: 'user-management', label: 'Quản lý người dùng', path: '/users' },
-    { key: 'school-management', label: 'Quản lý trường học', path: '/schools' },
-    { key: 'system-settings', label: 'Cài đặt hệ thống', path: '/settings' },
+    { key: 'home', label: 'Trang chủ', path: '/', icon: <HomeOutlined /> },
+    { key: 'user-management', label: 'Quản lý người dùng', path: '/users', icon: <TeamOutlined /> },
+    { key: 'school-management', label: 'Quản lý trường học', path: '/schools', icon: <UserOutlined /> },
+    { key: 'system-settings', label: 'Cài đặt hệ thống', path: '/settings', icon: <SettingOutlined /> },
   ]
 };
 
@@ -42,11 +55,33 @@ const getMenuByRole = (role) => {
 const HeaderLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [tempExpanded, setTempExpanded] = useState(false);
+  
   const isAuthenticated = localStorage.getItem('token');
   const role = Number(localStorage.getItem('role')) || 1;
   const menuItems = getMenuByRole(role);
-  const allowedPaths = menuItems.map(item => item.path);
-  const currentPath = allowedPaths.find(path => location.pathname.startsWith(path)) || allowedPaths[0];
+  
+  const getCurrentSelectedKey = () => {
+    const currentPathname = location.pathname;
+    
+    if (currentPathname === '/') {
+      return '/';
+    }
+    
+    const sortedMenuItems = [...menuItems].sort((a, b) => b.path.length - a.path.length);
+    
+    for (const item of sortedMenuItems) {
+      if (item.path !== '/' && currentPathname.startsWith(item.path)) {
+        return item.path;
+      }
+    }
+    
+    return '/';
+  };
+
+  const selectedKey = getCurrentSelectedKey();
   const userName = localStorage.getItem('email') || 'Người dùng';
   const fullName = localStorage.getItem('fullname');
 
@@ -60,68 +95,150 @@ const HeaderLayout = () => {
     navigate('/login');
   };
 
+  const toggleCollapsed = () => {
+    setCollapsed(!collapsed);
+    setTempExpanded(false);
+  };
+
+  const handleMenuMouseEnter = () => {
+    if (collapsed) {
+      setIsHovered(true);
+      setTempExpanded(true);
+    }
+  };
+
+  const handleMenuMouseLeave = () => {
+    setIsHovered(false);
+    setTempExpanded(false);
+  };
+
+  const isMenuExpanded = !collapsed || tempExpanded;
+
   useEffect(() => {
     if (role === 2 || role === 3) {
       document.body.classList.add("nurse-admin-layout");
+      
+      if (isMenuExpanded) {
+        document.body.classList.remove("menu-collapsed");
+        document.body.classList.add("menu-expanded");
+      } else {
+        document.body.classList.add("menu-collapsed");
+        document.body.classList.remove("menu-expanded");
+      }
+      
+      if (tempExpanded) {
+        document.body.classList.add("menu-temp-expanded");
+      } else {
+        document.body.classList.remove("menu-temp-expanded");
+      }
     } else {
-      document.body.classList.remove("nurse-admin-layout");
+      document.body.classList.remove("nurse-admin-layout", "menu-collapsed", "menu-expanded", "menu-temp-expanded");
     }
+    
+    setTimeout(() => {
+      const siteContent = document.querySelector('.site-content');
+      const contentWrapper = document.querySelector('.content-wrapper');
+      if (siteContent) {
+        siteContent.style.transform = 'translateX(0)';
+      }
+      if (contentWrapper) {
+        contentWrapper.style.width = '100%';
+      }
+    }, 50);
+    
     return () => {
-      document.body.classList.remove("nurse-admin-layout");
+      document.body.classList.remove("nurse-admin-layout", "menu-collapsed", "menu-expanded", "menu-temp-expanded");
     };
-  }, [role]);
+  }, [role, collapsed, tempExpanded, isMenuExpanded]);
+
+  const isVerticalMenu = role === 2 || role === 3;
 
   return (
-    <Header className="header">
-      <div className="header-container">
-        <div className="logo-section">
-          <img src={Logo} alt="Logo" className="logo-image" />
-          <span className="logo-text">Y tế Học đường</span>
-        </div>
+    <>
+      <Header className="header">
+        <div className="header-container">
+          <div className="logo-section">
+            <img src={Logo} alt="Logo" className="logo-image" />
+            <span className="logo-text">Y tế Học đường</span>
+          </div>
 
-        <Menu
-          mode={role === 2 || role === 3 ? "vertical" : "horizontal"}
-          selectedKeys={[currentPath]}
-          className={`nav-menu${role === 2 || role === 3 ? " vertical-menu" : ""}`}
-          items={menuItems.map(item => ({
-            key: item.path,
-            label: <Link to={item.path}>{item.label}</Link>
-          }))}
-        />
+          <div 
+            className={`menu-container ${isVerticalMenu ? 'vertical-container' : 'horizontal-container'}`}
+            onMouseEnter={handleMenuMouseEnter}
+            onMouseLeave={handleMenuMouseLeave}
+          >
+            <Menu
+              mode={isVerticalMenu ? "vertical" : "horizontal"}
+              selectedKeys={[selectedKey]}
+              className={`nav-menu${isVerticalMenu ? " vertical-menu" : " horizontal-menu"} ${collapsed ? " collapsed-menu" : ""} ${tempExpanded ? " temp-expanded" : ""}`}
+              // Disable overflow behavior completely
+              overflowedIndicator={false}
+              style={{ 
+                border: 'none', 
+                background: 'transparent',
+                display: 'flex',
+                width: '100%'
+              }}
+              items={menuItems.map(item => ({
+                key: item.path,
+                icon: isVerticalMenu ? item.icon : undefined, // Only icons for vertical menu
+                label: <Link to={item.path}>{item.label}</Link>,
+                title: (isVerticalMenu && collapsed && !isHovered) ? item.label : undefined,
+                style: isVerticalMenu ? {} : { 
+                  flex: 1, 
+                  justifyContent: 'center',
+                  textAlign: 'center'
+                }
+              }))}
+            />
+          </div>
 
-        <div className="user-controls">
-          {isAuthenticated ? (
-            <>
-              <div className="welcome-message">
-                {fullName ? `Xin chào, ${fullName}` : `Xin chào, ${userName}`}
-              </div>
-              <div className="user-info">
-                <Avatar size="small" className="user-avatar">
-                  {(fullName && fullName[0]) ? fullName[0].toUpperCase() : (userName ? (userName.split('@')[0][0]?.toUpperCase() || 'U') : 'U')}
-                </Avatar>
-                <span className="username">{fullName || userName}</span>
-              </div>
+          <div className="user-controls">
+            {isAuthenticated ? (
+              <>
+                <div className="welcome-message">
+                  {fullName ? `Xin chào, ${fullName}` : `Xin chào, ${userName}`}
+                </div>
+                <div className="user-info">
+                  <Avatar size="small" className="user-avatar">
+                    {(fullName && fullName[0]) ? fullName[0].toUpperCase() : (userName ? (userName.split('@')[0][0]?.toUpperCase() || 'U') : 'U')}
+                  </Avatar>
+                  <span className="username">{fullName || userName}</span>
+                </div>
+                <Tooltip title="Đăng xuất" placement="bottom">
+                  <Button
+                    type="link"
+                    icon={<LogoutOutlined />}
+                    className="logout-button"
+                    onClick={handleLogout}
+                  >
+                    Đăng xuất
+                  </Button>
+                </Tooltip>
+              </>
+            ) : (
               <Button
-                type="link"
-                icon={<LogoutOutlined />}
-                className="logout-button"
-                onClick={handleLogout}
+                type="primary"
+                icon={<LoginOutlined />}
+                onClick={handleLogin}
               >
-                Đăng xuất
+                Đăng nhập
               </Button>
-            </>
-          ) : (
-            <Button
-              type="primary"
-              icon={<LoginOutlined />}
-              onClick={handleLogin}
-            >
-              Đăng nhập
-            </Button>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </Header>
+      </Header>
+
+      {isVerticalMenu && (
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={toggleCollapsed}
+          className="collapse-button"
+          title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
+        />
+      )}
+    </>
   );
 };
 
