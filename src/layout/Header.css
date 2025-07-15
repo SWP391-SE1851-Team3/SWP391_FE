@@ -5,7 +5,6 @@
   position: fixed;
   width: 100%;
   z-index: 1000;
-
 }
 
 .header-container {
@@ -15,8 +14,9 @@
   align-items: center;
   justify-content: space-between;
   height: 64px;
-  padding: 0px 10px 0px 10px;
-  gap: 4px;
+  padding: 0px 20px;
+  gap: 24px;
+  transition: all 0.3s ease;
 }
 
 .logo-section {
@@ -24,6 +24,7 @@
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+  min-width: 200px;
 }
 
 .logo-image {
@@ -39,72 +40,179 @@
   white-space: nowrap;
 }
 
-.nav-menu {
-  display: flex;
+/* Menu container styling - STABLE VERSION */
+.menu-container {
   flex: 1;
-  justify-content: space-between;
-  margin-left: 0;
-  padding-left: 0;
-  width: auto;
-  /* Xóa gap ở đây vì chúng ta sẽ kiểm soát spacing qua menu items */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: calc(100vw - 600px);
+  min-width: 0;
 }
 
-/* Điều chỉnh khoảng cách giữa các menu items */
-.nav-menu .ant-menu-item {
-  padding: 0 16px; /* Tăng padding để tạo khoảng cách đều */
-  margin: 0; /* Đặt margin về 0 */
-  font-size: 16px;
-  color: #262626;
-  transition: color 0.3s ease;
-  position: relative; /* Thêm position relative để hỗ trợ việc căn chỉnh */
+.horizontal-container {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  justify-content: center;
 }
 
-/* Thêm border right cho mỗi item để tạo phân cách đều */
-.nav-menu .ant-menu-item:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 16px; /* Chiều cao của đường phân cách */
-  width: 1px;
-  background-color: #e8e8e8;
+/* Horizontal menu styling - SIMPLIFIED AND STABLE */
+.horizontal-menu {
+  display: flex;
+  width: 100%;
+  height: 64px;
+  border-bottom: none;
+  background: transparent;
+  line-height: 64px;
 }
 
-/* Loại bỏ khoảng cách đặc biệt cho item đầu tiên */
-.nav-menu .ant-menu-item:first-child {
-  padding-left: 16px; /* Giữ padding giống các items khác */
+/* Override Ant Design Menu completely for horizontal */
+.horizontal-menu.ant-menu {
+  display: flex;
+  width: 100%;
+  border-bottom: none;
+  background: transparent;
+  line-height: 64px;
 }
 
+.horizontal-menu.ant-menu-horizontal {
+  border-bottom: none;
+  display: flex;
+  width: 100%;
+}
+
+/* Hide overflow behavior completely */
+.horizontal-menu .ant-menu-overflow {
+  display: none;
+}
+
+.horizontal-menu .ant-menu-overflow-item {
+  display: none;
+}
+
+.horizontal-menu .ant-menu-overflow-item-suffix {
+  display: none;
+}
+
+.horizontal-menu .ant-menu-overflow-item-rest {
+  display: none;
+}
+
+.horizontal-menu .ant-menu-submenu {
+  display: none;
+}
+
+/* Menu items styling */
+.horizontal-menu .ant-menu-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 12px;
+  margin: 0;
+  height: 64px;
+  line-height: 64px;
+  border-radius: 0;
+  position: relative;
+  min-width: 0;
+  max-width: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: #595959;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease, border-bottom-color 0.2s ease;
+}
+
+/* Remove icons from horizontal menu */
+.horizontal-menu .ant-menu-item .anticon {
+  display: none;
+}
+
+.horizontal-menu .ant-menu-item a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: inherit;
+}
+
+/* Hover state - simplified */
+.horizontal-menu .ant-menu-item:hover {
+  color: #1890ff;
+  border-bottom-color: rgba(24, 144, 255, 0.5);
+  background: transparent;
+}
+
+.horizontal-menu .ant-menu-item:hover a {
+  color: #1890ff;
+}
+
+/* Selected state - simplified */
+.horizontal-menu .ant-menu-item-selected {
+  color: #1890ff;
+  font-weight: 600;
+  border-bottom-color: #1890ff;
+  background: transparent;
+}
+
+.horizontal-menu .ant-menu-item-selected a {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+/* Remove all default Ant Design effects */
+.horizontal-menu .ant-menu-item::before,
+.horizontal-menu .ant-menu-item::after {
+  display: none;
+}
+
+.horizontal-menu .ant-menu-item-selected::before {
+  display: none;
+}
+
+/* User controls */
 .user-controls {
   display: flex;
   align-items: center;
-  gap: 20px;
-  
+  gap: 16px;
+  min-width: 300px;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 
 .welcome-message {
   color: #1890ff;
   font-weight: 600;
-  margin-right: 2px;
-  display: inline-block;
-  font-size: 15px;
+  font-size: 14px;
   white-space: nowrap;
+  transition: opacity 0.3s ease;
 }
 
 .username {
   color: rgba(0, 0, 0, 0.85);
   font-weight: 500;
-  margin-right: 8px;
-  font-size: 15px;
+  font-size: 14px;
   white-space: nowrap;
+  transition: opacity 0.3s ease;
 }
 
 .notification-badge {
@@ -117,15 +225,43 @@
 
 .logout-button {
   color: #ff4d4f;
+  transition: all 0.3s ease;
+  font-size: 12px;
 }
 
 .logout-button:hover {
   color: #ff7875;
+  background-color: #fff2f0;
+}
+
+/* Vertical menu styles - KEEP AS IS */
+.collapse-button {
+  color: #1890ff;
+  font-size: 18px;
+  padding: 8px;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.3s ease;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-bottom: none;
+  cursor: pointer;
+  position: fixed;
+  bottom: 0;
+  left: 10px;
+  z-index: 1300;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.collapse-button:hover {
+  background-color: #f0f7ff;
+  color: #0050b3;
+  transform: translateY(-2px);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .vertical-menu {
   position: fixed;
-  top: 64px; /* height of header */
+  top: 64px;
   left: 0;
   height: calc(100vh - 64px);
   min-width: 200px;
@@ -134,31 +270,114 @@
   box-shadow: 2px 0 8px rgba(0,0,0,0.04);
   border-radius: 0 8px 8px 0;
   margin: 0;
-  padding: 16px 0 0 0;
+  padding: 16px 0 60px 0;
   z-index: 1100;
-  display: flex !important;
-  flex-direction: column !important;
+  display: flex;
+  flex-direction: column;
   justify-content: flex-start;
   align-items: stretch;
-  padding-top: 0;
-  padding-left: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
-/* Make logo-section and menu items align left together */
-.vertical-menu + .logo-section,
-.logo-section {
+.vertical-menu.collapsed-menu {
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.vertical-menu.collapsed-menu.temp-expanded {
+  min-width: 200px;
+  max-width: 240px;
+  box-shadow: 4px 0 16px rgba(0,0,0,0.15);
+  z-index: 1200;
+}
+
+.nurse-admin-layout .logo-section {
   margin-left: 0;
   padding-left: 0;
+  position: relative;
+  z-index: 1200;
 }
 
 .vertical-menu .ant-menu-item {
-  padding-left: 24px !important;
-  padding-right: 24px !important;
-  padding: 14px 32px;
+  padding: 14px 24px;
   border-bottom: 1px solid #f0f0f0;
   width: 100%;
-  margin-left: 0 !important;
+  margin: 4px 8px;
   text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  border-radius: 8px;
+  background: transparent;
+  color: #595959;
+}
+
+.vertical-menu .ant-menu-item:hover {
+  background-color: #f0f7ff;
+  color: #1890ff;
+  transform: translateX(4px);
+}
+
+.vertical-menu .ant-menu-item-selected {
+  background-color: #1890ff;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.vertical-menu .ant-menu-item-selected .anticon {
+  color: #fff;
+}
+
+.vertical-menu .ant-menu-item-selected a {
+  color: #fff;
+}
+
+.vertical-menu.collapsed-menu .ant-menu-item {
+  padding: 14px 18px;
+  justify-content: center;
+  text-align: center;
+  margin: 4px 6px;
+}
+
+.vertical-menu.collapsed-menu .ant-menu-item .anticon {
+  margin: 0;
+  font-size: 18px;
+}
+
+.vertical-menu.collapsed-menu .ant-menu-item a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.vertical-menu.collapsed-menu .ant-menu-item span:not(.anticon) {
+  display: none;
+}
+
+.vertical-menu.collapsed-menu.temp-expanded .ant-menu-item {
+  padding: 14px 24px;
+  justify-content: flex-start;
+  text-align: left;
+  margin: 4px 8px;
+}
+
+.vertical-menu.collapsed-menu.temp-expanded .ant-menu-item span:not(.anticon) {
+  display: inline;
+}
+
+.vertical-menu.collapsed-menu.temp-expanded .ant-menu-item .anticon {
+  margin-right: 12px;
+}
+
+.vertical-menu.collapsed-menu.temp-expanded .ant-menu-item a {
+  gap: 12px;
+  justify-content: flex-start;
 }
 
 .vertical-menu .ant-menu-item:last-child {
@@ -166,35 +385,234 @@
 }
 
 .vertical-menu .ant-menu {
-  padding-left: 0 !important;
-}
-
-/* Remove extra margin/padding from logo-section in header-container when vertical menu is present */
-.header-container .logo-section {
-  margin-left: 0;
   padding-left: 0;
+  background: transparent;
 }
 
-/* Optional: If needed, reduce left padding for .vertical-menu .ant-menu-item to match logo */
-@media (max-width: 768px) {
-  .vertical-menu {
-    min-width: 120px;
-    max-width: 140px;
-    padding: 4px 0 0 0;
+.vertical-menu.collapsed-menu:not(.temp-expanded) .ant-menu-item {
+  position: relative;
+}
+
+.vertical-menu.collapsed-menu:not(.temp-expanded) .ant-menu-item:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1600;
+  margin-left: 8px;
+  pointer-events: none;
+}
+
+.vertical-menu.collapsed-menu:not(.temp-expanded) .ant-menu-item:hover::before {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-right-color: rgba(0, 0, 0, 0.85);
+  z-index: 1600;
+  margin-left: 4px;
+  pointer-events: none;
+}
+
+/* Layout adjustments */
+body.nurse-admin-layout .site-content {
+  margin-left: 200px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.nurse-admin-layout.menu-collapsed .site-content {
+  margin-left: 60px;
+}
+
+body.nurse-admin-layout.menu-temp-expanded .site-content {
+  margin-left: 200px;
+}
+
+body.nurse-admin-layout .content-wrapper {
+  max-width: calc(100vw - 240px);
+  margin: 0;
+  width: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.nurse-admin-layout.menu-collapsed .content-wrapper {
+  max-width: calc(100vw - 100px);
+}
+
+body.nurse-admin-layout.menu-temp-expanded .content-wrapper {
+  max-width: calc(100vw - 240px);
+}
+
+body.nurse-admin-layout .site-footer {
+  margin-left: 200px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.nurse-admin-layout.menu-collapsed .site-footer {
+  margin-left: 60px;
+}
+
+body.nurse-admin-layout.menu-temp-expanded .site-footer {
+  margin-left: 200px;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .header-container {
+    padding: 0px 16px;
+    gap: 16px;
   }
+  
+  .logo-section {
+    min-width: 180px;
+  }
+  
+  .user-controls {
+    min-width: 250px;
+  }
+  
+  .horizontal-menu .ant-menu-item {
+    padding: 0 8px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0px 12px;
+    gap: 8px;
+  }
+  
+  .logo-section {
+    min-width: 140px;
+  }
+  
+  .logo-text {
+    font-size: 16px;
+  }
+  
+  .horizontal-menu .ant-menu-item {
+    padding: 0 6px;
+    font-size: 13px;
+  }
+  
+  .welcome-message {
+    display: none;
+  }
+  
+  .username {
+    font-size: 12px;
+  }
+  
+  .user-controls {
+    min-width: 120px;
+    gap: 8px;
+  }
+  
+  .vertical-menu {
+    min-width: 60px;
+    max-width: 60px;
+    padding: 4px 0 60px 0;
+  }
+  
+  .vertical-menu.temp-expanded {
+    min-width: 180px;
+    max-width: 180px;
+  }
+  
   body.nurse-admin-layout .site-content,
-  body.nurse-admin-layout .content-wrapper {
+  body.nurse-admin-layout.menu-collapsed .site-content,
+  body.nurse-admin-layout.menu-temp-expanded .site-content {
     margin-left: 60px;
   }
-  .vertical-menu .ant-menu-item {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
+  
+  .collapse-button {
+    left: 10px;
   }
 }
 
-/* When vertical menu is active, add left padding to main content */
-body.nurse-admin-layout .site-content,
-body.nurse-admin-layout .content-wrapper {
-  margin-left: 120px;
-  transition: margin 0.2s;
+@media (max-width: 576px) {
+  .horizontal-menu .ant-menu-item {
+    padding: 0 4px;
+    font-size: 11px;
+  }
+  
+  .user-info .username {
+    display: none;
+  }
+  
+  .logout-button span {
+    display: none;
+  }
+}
+
+/* Additional stable styling */
+.vertical-menu .ant-menu-item a {
+  color: inherit;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.vertical-menu.collapsed-menu .ant-menu-item a {
+  gap: 0;
+  justify-content: center;
+}
+
+.vertical-menu.collapsed-menu.temp-expanded .ant-menu-item a {
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.nurse-admin-layout .header-container .logo-section .logo-text {
+  opacity: 1;
+  display: block;
+}
+
+.collapse-button:active {
+  transform: translateY(-1px);
+}
+
+.menu-collapsed .collapse-button {
+  left: 10px;
+}
+
+.vertical-menu.ant-menu-vertical .ant-menu-item-selected {
+  border-right: none;
+}
+
+.vertical-menu.ant-menu-vertical .ant-menu-item {
+  border-right: none;
+}
+
+/* Override Ant Design defaults */
+.ant-menu-horizontal {
+  border-bottom: none;
+}
+
+.ant-menu-horizontal > .ant-menu-item {
+  border-bottom: 3px solid transparent;
+}
+
+.ant-menu-horizontal > .ant-menu-item-selected {
+  border-bottom: 3px solid #1890ff;
+}
+
+.ant-menu-horizontal > .ant-menu-item:hover {
+  border-bottom: 3px solid rgba(24, 144, 255, 0.3);
+}
+
+.ant-menu-horizontal::after {
+  display: none;
 }
