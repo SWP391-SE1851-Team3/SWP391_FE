@@ -582,12 +582,6 @@ const MedicationManagement = () => {
                   <Typography.Text>{selectedRecord.rejectReason}</Typography.Text>
                 </Col>
               )}
-              {detailData?.submissionDate && (
-                <Col span={12} style={{ marginBottom: 6 }}>
-                  <Typography.Text type="secondary" strong>Ngày gửi:</Typography.Text><br />
-                  <Typography.Text>{formatDateTime(detailData.submissionDate)}</Typography.Text>
-                </Col>
-              )}
               {detailData?.medicineImage && (
                 <Col span={12} style={{ marginBottom: 6 }}>
                   <Typography.Text type="secondary" strong>Ảnh thuốc:</Typography.Text><br />

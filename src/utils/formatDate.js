@@ -61,3 +61,19 @@ export const getCurrentDateString = () => {
   const day = now.getDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+// Trả về chuỗi ngày giờ đã cộng thêm 7 tiếng (ví dụ chuyển từ UTC sang giờ Việt Nam)
+export function formatDateTimePlus14Hours(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  // Cộng thêm 14 tiếng (14*60*60*1000 ms)
+  const plus14 = new Date(date.getTime() + 14 * 60 * 60 * 1000);
+  // Format: YYYY-MM-DD HH:mm:ss
+  const yyyy = plus14.getUTCFullYear();
+  const mm = String(plus14.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(plus14.getUTCDate()).padStart(2, '0');
+  const hh = String(plus14.getUTCHours()).padStart(2, '0');
+  const min = String(plus14.getUTCMinutes()).padStart(2, '0');
+  const ss = String(plus14.getUTCSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+}

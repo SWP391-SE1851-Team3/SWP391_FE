@@ -37,7 +37,7 @@ import moment from 'moment';
 
 
 import { fetchStudentsByClass } from '../../../../api/medicalEventsAPI';
-import { isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
+import { isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace, isFirstCharUppercase } from '../../../../validations';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
@@ -107,7 +107,7 @@ const VaccinationRecords = () => {
         .catch(() => setVaccineOptions([]));
       // Lấy tên y tá và mã y tá từ localStorage và set vào form cho cả create và edit
       const createNurseName = localStorage.getItem('fullname') || '';
-      const createNurseID = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
+      const createNurseID = localStorage.getItem('userId') || '';
       const editNurseName = createNurseName;
       const editnurseID = createNurseID;
       form.setFieldsValue({ createNurseName, createNurseID, editNurseName, editnurseID });
@@ -169,7 +169,7 @@ const VaccinationRecords = () => {
     setIsEditModalOpen(true);
     // Lấy tên y tá chỉnh sửa từ localStorage
     const editNurseName = localStorage.getItem('fullname') || '';
-    const editNurseID = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
+    const editNurseID = localStorage.getItem('userId') || '';
     editForm.setFieldsValue({
       studentId: record.studentId || record.studentID,
       vaccineBatchId: record.vaccineBatchId || record.batchID,
@@ -404,8 +404,7 @@ const VaccinationRecords = () => {
               <Col key="editNurse" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Y tá chỉnh sửa:</Text><br />
                 <Text>{selectedRecord.editNurseName}</Text>
-              </Col>
-           
+              </Col>        
               <Col key="symptoms" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong><span role="img" aria-label="symptom"></span> Triệu chứng:</Text><br />
                 <Text>{selectedRecord.symptoms}</Text>
@@ -418,7 +417,14 @@ const VaccinationRecords = () => {
                 <Text type="secondary" strong><span role="img" aria-label="note"></span> Ghi chú:</Text><br />
                 <Text>{selectedRecord.notes}</Text>
               </Col>
-            
+              <Col key="observation_time" span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong>Thời gian theo dõi:</Text><br />
+                <Text>{selectedRecord.observation_time ? moment(selectedRecord.observation_time).format('YYYY-MM-DD HH:mm') : ''}</Text>
+              </Col>
+              <Col key="observation_notes" span={24} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong>Ghi chú theo dõi:</Text><br />
+                <Text>{selectedRecord.observation_notes}</Text>
+              </Col>
             </Row>
           </div>
         )}
@@ -474,6 +480,7 @@ const VaccinationRecords = () => {
                         if (value === undefined || value === '') return Promise.resolve();
                         if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                         if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                         
                         return Promise.resolve();
                       }
@@ -512,8 +519,8 @@ const VaccinationRecords = () => {
               <Row key="observation-row" gutter={16}>
                 <Col span={12}>
                   <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[
-                    { required: true, message: 'Vui lòng nhập thời gian theo dõi' },
-                    { validator: (_, value) => value === undefined || value === '' || new Date(value) > new Date() ? Promise.resolve() : Promise.reject('Thời gian theo dõi phải là tương lai!') }
+                    { required: true, message: 'Vui lòng nhập thời gian theo dõi' }
+                   
                   ]}> 
                     <DatePicker
                       showTime
@@ -532,7 +539,7 @@ const VaccinationRecords = () => {
                         if (value === undefined || value === '') return Promise.resolve();
                         if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                         if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
-                        
+                        if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                         return Promise.resolve();
                       }
                     }
@@ -553,7 +560,7 @@ const VaccinationRecords = () => {
                         if (value === undefined || value === '') return Promise.resolve();
                         if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
                         if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
-                        
+                        if (!isFirstCharUppercase(value)) return Promise.reject('Ký tự đầu tiên phải viết hoa!'); 
                         return Promise.resolve();
                       }
                     }

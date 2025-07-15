@@ -42,3 +42,17 @@ export function isValidVisionRange(value) {
   }
   return true;
 }
+
+// Kiểm tra ký tự đầu tiên là chữ cái viết hoa
+export function isFirstCharUppercase(value) {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  // Nếu ký tự đầu là chữ cái thường hoặc số, báo lỗi
+  // Chỉ cho phép ký tự đầu là chữ hoa hoặc ký tự đặc biệt (nếu muốn)
+  const firstChar = trimmed.charAt(0);
+  if (/[a-z]/.test(firstChar)) return false; // chữ thường => sai
+  if (/[A-ZÀ-Ỹ]/.test(firstChar)) return true; // chữ hoa => đúng
+  // Nếu muốn chỉ cho phép chữ cái, thì return false ở đây
+  return false;
+}

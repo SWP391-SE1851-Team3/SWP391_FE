@@ -126,7 +126,7 @@ export const updateVaccinationBatch = async (batchId, data) => {
 export const sendConsentFormByClassName = async (data) => {
   try {
     console.log('🚀 [Vaccination API] Gửi phiếu đồng ý theo className:', data);
-    const response = await apiClient.post('/Consent_forms/consent-forms/send-by-classname', data);
+    const response = await apiClient.post('/Consent_forms/send-consent', data);
     console.log('✅ [Vaccination API] Gửi phiếu đồng ý thành công:', response.data);
     return response;
   } catch (error) {
@@ -242,7 +242,6 @@ export const getStudentVaccinationRecordsFollowedByNurse = async () => {
       count: response.data.length,
       data: response.data
     });
-    
     return response;
   } catch (error) {
     console.error('❌ [Vaccination API] Lỗi khi lấy danh sách hồ sơ theo dõi sau tiêm:', {
@@ -256,5 +255,19 @@ export const getStudentVaccinationRecordsFollowedByNurse = async () => {
   }
 };
 
-
+// Cập nhật phản ứng sau tiêm cho học sinh
+export async function updateStudentFollowedByNurse(vaccinationRecordID, data) {
+  const response = await fetch(`/api/vaccination_records/updateStudentFollowedbyNurse/${vaccinationRecordID}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      // Thêm Authorization nếu cần
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Cập nhật phản ứng sau tiêm thất bại');
+  }
+  return await response.json();
+}
 

@@ -182,7 +182,7 @@ const HealthConsultation = () => {
           try {
             const values = await editForm.validateFields();
             const updatedByNurseName = localStorage.getItem('fullname') || '';
-            const updatedByNurseID = localStorage.getItem('nurseId') || '';
+            const updatedByNurseID = localStorage.getItem('userId') || '';
             await updateHealthConsultation(editingConsultation.id, {
               consultID: editingConsultation.id,
               studentID: editingConsultation.studentID,
