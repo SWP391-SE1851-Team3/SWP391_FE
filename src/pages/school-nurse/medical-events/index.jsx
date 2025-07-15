@@ -311,7 +311,7 @@ const App = () => {
           return;
         }
         // Lấy thông tin nurse từ localStorage
-        const nurseId = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
+        const nurseId = localStorage.getItem('userId') || '';
         const nurseName = localStorage.getItem('nurseName') || localStorage.getItem('fullName') || localStorage.getItem('email') || '';
         // Nếu có cập nhật bởi y tá khác, có thể lấy tương tự hoặc để trống
         const updatedByNurseId = nurseId;
@@ -402,8 +402,8 @@ const App = () => {
       try {
         console.log("Form values before update:", values); // Debug log
         // Lấy nurseId và nurseName từ localStorage
-        const nurseId = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
-        const nurseName = localStorage.getItem('nurseName') || localStorage.getItem('fullName') || localStorage.getItem('email') || '';
+        const nurseId = localStorage.getItem('userId') || '';
+        const nurseName = localStorage.getItem('fullname') || '';
         
         // Convert date string to proper format using moment
         const dateObj = values.date; // DatePicker returns a moment object
