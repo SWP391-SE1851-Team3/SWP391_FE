@@ -1,0 +1,47 @@
+.supply-management-container {
+    background: #fff;
+    padding: 32px;
+    border-radius: 10px;
+    max-width: 100%;
+    margin: 32px auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.supply-management-header {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #1890ff;
+    text-align: center;
+}
+
+.supply-search-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 8px;
+}
+
+.supply-management-form-card {
+    background: #fafafa;
+    padding: 28px 24px 12px 24px;
+    border-radius: 10px;
+    margin-top: 36px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+.form-header {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: #096dd9;
+    text-align: center;
+}
+
+.below-reorder-row {
+    background-color: #fff2f0 !important;
+    font-weight: bold;
+}
