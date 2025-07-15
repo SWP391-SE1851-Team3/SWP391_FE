@@ -98,7 +98,6 @@ const ParentHealthCheck = () => {
             ? consentRes.data
             : [];
 
-      // Lọc các form của học sinh hiện tại
       let studentConsentForms = allConsentForms.filter(form =>
         Number(form.studentID) === studentId
       );
@@ -106,7 +105,6 @@ const ParentHealthCheck = () => {
       // Xử lý các form hết hạn
       studentConsentForms = processExpiredForms(studentConsentForms);
 
-      // Lấy kết quả health check
       let healthResults = [];
       try {
         const resultsRes = await getHealthCheckResultsByStudent(studentId);
@@ -132,7 +130,6 @@ const ParentHealthCheck = () => {
       } else {
         setHasHealthConsentForm(true);
 
-        // Tìm form "Chờ phản hồi" đầu tiên và chưa hết hạn
         const pendingForm = studentConsentForms.find(form => {
           const isPending = !form.isAgreed ||
             form.isAgreed === "" ||
@@ -145,7 +142,6 @@ const ParentHealthCheck = () => {
           currentForm = pendingForm;
           hasPending = true;
         } else {
-          // Nếu không có form pending hoặc form đã hết hạn, lấy form mới nhất
           currentForm = studentConsentForms[0];
           hasPending = false;
         }
@@ -174,34 +170,38 @@ const ParentHealthCheck = () => {
   };
 
   const handleSubmit = async (values) => {
-    if (values.isAgreed === "Không đồng ý" && !values.notes?.trim()) {
-      message.warning('Vui lòng nhập lý do khi không đồng ý');
-      return;
-    }
     if (!currentConsentForm || !currentConsentForm.formID) {
       message.error('Không tìm thấy ID form đồng ý. Vui lòng thử lại!');
       return;
     }
+
     const formId = Number(currentConsentForm.formID);
     if (isNaN(formId) || formId <= 0) {
       message.error('ID form đồng ý không hợp lệ');
       return;
     }
 
-    const payload = {
-      isAgreed: values.isAgreed || "",
-      notes: (values.notes || "").trim()
-    };
-
     setSubmitting(true);
     try {
-      await updateHealthConsent(formId, payload);
+      console.log('Calling updateHealthConsent with:', {
+        formId,
+        isAgreed: values.isAgreed || "",
+        notes: (values.notes || "").trim()
+      });
+
+      const result = await updateHealthConsent(
+        formId,
+        values.isAgreed || "",
+        (values.notes || "").trim()
+      );
+
+      console.log('API response:', result);
       message.success('Gửi xác nhận thành công!');
 
       const updatedForm = {
         ...currentConsentForm,
-        isAgreed: values.isAgreed,
-        notes: values.notes || ""
+        isAgreed: result.isAgreed || values.isAgreed,
+        notes: result.notes || values.notes || ""
       };
       setCurrentConsentForm(updatedForm);
 
@@ -213,7 +213,11 @@ const ParentHealthCheck = () => {
       setHasPendingForm(false);
       form.resetFields();
     } catch (error) {
-      const errorMessage = error.message || 'Gửi xác nhận thất bại!';
+      console.error('Submit error:', error);
+      const errorMessage = error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Gửi xác nhận thất bại!';
       message.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -237,11 +241,9 @@ const ParentHealthCheck = () => {
     try {
       const date = new Date(dateTimeString);
       return date.toLocaleString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
       });
     } catch (error) {
       return "Không hợp lệ";
@@ -307,68 +309,75 @@ const ParentHealthCheck = () => {
   };
 
   const renderConsentHistory = () => {
-    const formsArr = Array.isArray(healthConsentForms) ? healthConsentForms : [];
-    const processedForms = formsArr.filter(form => {
-      const hasResponse = form.isAgreed && form.isAgreed !== "" && form.isAgreed.toLowerCase() !== "chờ phản hồi";
-      const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
-      return hasResponse || isPendingButExpired;
-    });
+  const formsArr = Array.isArray(healthConsentForms) ? healthConsentForms : [];
+  const processedForms = formsArr.filter(form => {
+    const hasResponse = form.isAgreed && form.isAgreed !== "" && form.isAgreed.toLowerCase() !== "chờ phản hồi";
+    const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
+    return hasResponse || isPendingButExpired;
+  });
 
-    if (processedForms.length === 0) {
-      return null;
+  if (processedForms.length === 0) {
+    return null;
+  }
+
+  return processedForms.map((form, index) => {
+    let displayStatus = form.isAgreed;
+    let statusClass = "status-warning";
+    let displayNotes = form.notes;
+
+    const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
+
+    if (isPendingButExpired) {
+      displayStatus = "Từ chối";
+      statusClass = "status-error";
+      displayNotes = displayNotes || "Từ chối do quá hạn phản hồi";
+    } else if (form.isAgreed === "Không đồng ý") {
+      displayStatus = "Từ chối";
+      statusClass = "status-error"; 
+    } else if (form.isAgreed === "Đồng ý") {
+      displayStatus = "Đồng ý";
+      statusClass = "status-success"; 
+    } else {
+      displayStatus = form.isAgreed || "Chưa rõ";
+      statusClass = "status-warning";
     }
 
-    return processedForms.map((form, index) => {
-      let displayStatus = form.isAgreed;
-      let statusClass = "status-success";
-      let displayNotes = form.notes;
+    console.log('Form isAgreed:', form.isAgreed);
+    console.log('Final displayStatus:', displayStatus);
+    console.log('Final statusClass:', statusClass);
 
-      const isPendingButExpired = (!form.isAgreed || form.isAgreed === "" || form.isAgreed.toLowerCase() === "chờ phản hồi") && isFormExpired(form.expire_date);
-
-      if (isPendingButExpired) {
-        displayStatus = "Từ chối";
-        statusClass = "status-error";
-        displayNotes = displayNotes || "Từ chối do quá hạn phản hồi";
-      } else if (form.isAgreed === "Không đồng ý") {
-        displayStatus = "Từ chối";
-        statusClass = "status-error";
-      } else if (form.isAgreed === "Đồng ý") {
-        displayStatus = "Đồng ý";
-        statusClass = "status-success";
-      }
-
-      return (
-        <li key={index} className="history-card">
-          <span className={`status-badge ${statusClass}`}>
-            {displayStatus}
+    return (
+      <li key={index} className="history-card">
+        <span className={`status-badge ${statusClass}`}>
+          {displayStatus}
+        </span>
+        {isPendingButExpired && (
+          <span className="expired-badge" style={{ marginLeft: '10px', backgroundColor: '#ff4d4f', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
+            Quá hạn
           </span>
-          {isPendingButExpired && (
-            <span className="expired-badge" style={{ marginLeft: '10px', backgroundColor: '#ff4d4f', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
-              Quá hạn
-            </span>
-          )}
+        )}
+        <div className="history-card-row">
+          <span className="history-label">Học sinh:</span> {form.studentName}
+          <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {form.className}
+        </div>
+        <div className="history-card-row">
+          <span className="history-label">Chương trình:</span> {form.healthScheduleName}
+        </div>
+        <div className="history-card-row">
+          <span className="history-label">Ngày gửi:</span> {formatDateTime(form.send_date)}
+        </div>
+        <div className="history-card-row">
+          <span className="history-label">Hạn phản hồi:</span> {formatDateTime(form.expire_date)}
+        </div>
+        {displayNotes && (
           <div className="history-card-row">
-            <span className="history-label">Học sinh:</span> {form.studentName}
-            <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {form.className}
+            <span className="history-label">Ghi chú:</span> {displayNotes}
           </div>
-          <div className="history-card-row">
-            <span className="history-label">Chương trình:</span> {form.healthScheduleName}
-          </div>
-          <div className="history-card-row">
-            <span className="history-label">Ngày gửi:</span> {formatDateTime(form.send_date)}
-          </div>
-          <div className="history-card-row">
-            <span className="history-label">Hạn phản hồi:</span> {formatDateTime(form.expire_date)}
-          </div>
-          {displayNotes && (
-            <div className="history-card-row">
-              <span className="history-label">Ghi chú:</span> {displayNotes}
-            </div>
-          )}
-        </li>
-      );
-    });
-  };
+        )}
+      </li>
+    );
+  });
+};
 
   const renderDetailModal = () => (
     <Modal

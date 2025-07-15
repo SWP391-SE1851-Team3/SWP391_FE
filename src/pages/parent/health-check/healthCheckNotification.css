@@ -54,18 +54,6 @@
   word-break: break-word;
 }
 
-/* Gạch chân nhỏ chỉ dưới chữ, không bị đè bởi border-bottom
-.page-header .custom-underline {
-  display: block;
-  margin: 12px auto 0 auto;
-  width: 80px;
-  height: 3px;
-  background: linear-gradient(90deg, #1890ff, #40a9ff);
-  border-radius: 1.5px;
-  z-index: 3;
-  position: relative;
-} */
-
 /* Responsive */
 @media (max-width: 768px) {
   .page-header h2 {
@@ -149,4 +137,78 @@
   .submit-btn {
     max-width: 100%;
   }
+}
+
+.info-row1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px !important; /* Khoảng cách giữa 2 cột */
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 60px;
+}
+
+.status-success {
+  background-color: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.status-error {
+  background-color: #fff2f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+.status-warning {
+  background-color: #fffbe6;
+  color: #faad14;
+  border: 1px solid #ffe58f;
+}
+
+/* History cards */
+.history-card {
+  background-color: #f8f9fa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 60px;
+}
+
+.status-success {
+  background-color: #f6ffed !important;
+  color: #52c41a !important;
+  border: 1px solid #b7eb8f !important;
+}
+
+.status-error {
+  background-color: #fff2f0 !important;
+  color: #ff4d4f !important;
+  border: 1px solid #ffccc7 !important;
+}
+
+.status-warning {
+  background-color: #fffbe6 !important;
+  color: #ff4d4f !important;
+  border: 1px solid #ffccc7 !important;
 }
