@@ -42,6 +42,8 @@ import {
   getEventNames,
   getMedicalSupplies
 } from '/src/api/medicalEventsAPI.js';
+import { isPositiveNumber, isStringLengthInRange, hasNoSpecialCharacters } from '../../../validations';
+import { isFever, isHypothermia, isTachycardia, isBradycardia } from '../../../validations';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -70,6 +72,8 @@ const App = () => {
   const [eventTypeList, setEventTypeList] = useState([]);
   const [selectedEventType, setSelectedEventType] = useState(null);
   const [selectedSupplies, setSelectedSupplies] = useState([]);
+  const [temperatureWarning, setTemperatureWarning] = useState('');
+  const [heartRateWarning, setHeartRateWarning] = useState('');
 
   //Dự liệu mẫu cho sự kiện y tế
   const [events, setEvents] = useState([]);
@@ -1037,17 +1041,54 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="temperature"
-                  label="Nhiệt độ"
+                  label={<span>Nhiệt độ () {temperatureWarning && <span style={{color:'red', marginLeft:8}}>{temperatureWarning}</span>}</span>}
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập nhiệt độ' },
+                    { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        const num = Number(value);
+                        if (!isPositiveNumber(num)) return Promise.reject('Nhiệt độ phải là số dương!');
+                        if (isFever(num)) setTemperatureWarning('Sốt');
+                        else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
+                        else setTemperatureWarning('');
+                      return Promise.resolve();
+                      }
+                    }
+                    
+                  ]}
                 >
-                  <Input placeholder="Nhập nhiệt độ" />
+                  <Input placeholder="Nhập nhiệt độ" onChange={e => {
+                    const num = Number(e.target.value);
+                    if (isFever(num)) setTemperatureWarning('Sốt');
+                    else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
+                    else setTemperatureWarning('');
+                  }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="heartRate"
-                  label="Nhịp tim"
+                  label={<span>Nhịp tim {heartRateWarning && <span style={{color:'red', marginLeft:8}}>{heartRateWarning}</span>}</span>}
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập nhịp tim' },
+                    { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        const num = Number(value);
+                        if (!isPositiveNumber(num)) return Promise.reject('Nhịp tim phải là số dương!');
+                        if (isTachycardia(num)) setHeartRateWarning('Nhịp nhanh');
+                        else if (isBradycardia(num)) setHeartRateWarning('Nhịp chậm');
+                        else setHeartRateWarning('');
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
-                  <Input placeholder="Nhập nhịp tim" />
+                  <Input placeholder="Nhập nhịp tim" onChange={e => {
+                    const num = Number(e.target.value);
+                    if (isTachycardia(num)) setHeartRateWarning('Nhịp nhanh');
+                    else if (isBradycardia(num)) setHeartRateWarning('Nhịp chậm');
+                    else setHeartRateWarning('');
+                  }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -1099,6 +1140,16 @@ const App = () => {
             <Form.Item
               name="usageMethod"
               label="Phương pháp xử lý"
+              rules={[
+                { 
+                  validator: (_, value) => {
+                    if (value === undefined || value === '') return Promise.resolve();
+                    if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Phương pháp xử lý không quá 255 ký tự!');
+                    if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                    return Promise.resolve();
+                  }
+                }
+              ]}
             >
               <Input placeholder="Nhập phương pháp xử lý" />
             </Form.Item>
@@ -1443,17 +1494,53 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="temperature"
-                  label="Nhiệt độ"
+                  label={<span>Nhiệt độ {temperatureWarning && <span style={{color:'red', marginLeft:8}}>{temperatureWarning}</span>}</span>}
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập nhiệt độ' },
+                    { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        const num = Number(value);
+                        if (!isPositiveNumber(num)) return Promise.reject('Nhiệt độ phải là số dương!');
+                        if (isFever(num)) setTemperatureWarning('Sốt');
+                        else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
+                        else setTemperatureWarning('');
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
-                  <Input placeholder="Nhập nhiệt độ" />
+                  <Input placeholder="Nhập nhiệt độ" onChange={e => {
+                    const num = Number(e.target.value);
+                    if (isFever(num)) setTemperatureWarning('Sốt');
+                    else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
+                    else setTemperatureWarning('');
+                  }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="heartRate"
-                  label="Nhịp tim"
+                  label={<span>Nhịp tim {heartRateWarning && <span style={{color:'red', marginLeft:8}}>{heartRateWarning}</span>}</span>}
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập nhịp tim' },
+                    { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        const num = Number(value);
+                        if (!isPositiveNumber(num)) return Promise.reject('Nhịp tim phải là số dương!');
+                        if (isTachycardia(num)) setHeartRateWarning('Nhịp nhanh');
+                        else if (isBradycardia(num)) setHeartRateWarning('Nhịp chậm');
+                        else setHeartRateWarning('');
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
-                  <Input placeholder="Nhập nhịp tim" />
+                  <Input placeholder="Nhập nhịp tim" onChange={e => {
+                    const num = Number(e.target.value);
+                    if (isTachycardia(num)) setHeartRateWarning('Nhịp nhanh');
+                    else if (isBradycardia(num)) setHeartRateWarning('Nhịp chậm');
+                    else setHeartRateWarning('');
+                  }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -1505,6 +1592,16 @@ const App = () => {
                 <Form.Item
                   name="usageMethod"
                   label="Phương pháp xử lý"
+                  rules={[
+                    { 
+                      validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Phương pháp xử lý không quá 255 ký tự!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
                   <Input placeholder="Nhập phương pháp xử lý" />
                 </Form.Item>
@@ -1516,6 +1613,16 @@ const App = () => {
                 <Form.Item
                   name="description"
                   label="Ghi chú"
+                  rules={[
+                    { 
+                      validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Ghi chú không quá 255 ký tự!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
                   <Input.TextArea rows={3} placeholder="Nhập ghi chú" />
                 </Form.Item>
@@ -1527,6 +1634,16 @@ const App = () => {
                 <Form.Item
                   name="result"
                   label="Kết quả xử lý"
+                  rules={[
+                    { 
+                      validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Kết quả không quá 255 ký tự!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                 >
                   <Input.TextArea rows={3} placeholder="Nhập kết quả xử lý" />
                 </Form.Item>

@@ -1,12 +1,11 @@
 import axios from 'axios';
 import { message } from 'antd';
 
-const API_BASE = 'http://localhost:8080/api/medical-events';
-const API_BASE1 = `http://localhost:8080/getAll`
+
 
 // Create axios instance with authentication
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: 'http://localhost:8080',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -30,7 +29,7 @@ apiClient.interceptors.request.use(
 export const createEmergencyEvent = async (eventData) => {
   try {
     console.log("📦 Sending to /emergency:", eventData);
-    const response = await apiClient.post('/medical-events/emergency', eventData);
+    const response = await apiClient.post('/api/medical-events/emergency', eventData);
     return response.data;
   } catch (error) {
     console.error("❌ Error from /emergency:", error.response?.data || error.message);
@@ -42,7 +41,7 @@ export const createEmergencyEvent = async (eventData) => {
 export const updateMedicalEvent = async (eventId, eventTypeId, eventData) => {
   try {
     const response = await apiClient.put(
-      `/medical-events/${eventId}?eventTypeId=${eventTypeId}`,
+      `/api/medical-events/${eventId}?eventTypeId=${eventTypeId}`,
       eventData
     );
     return response.data;
@@ -64,7 +63,7 @@ export const getAllMedicalEvents = async () => {
 // Lấy danh sách học sinh theo lớp
 export const fetchStudentsByClass = async (className) => {
   try {
-    const response = await apiClient.get(`/medical-events/${className}`);
+    const response = await apiClient.get(`/api/medical-events/${className}`);
     console.log('Kết quả fetchStudentsByClass:', response.data);
     return response.data;
   } catch (error) {
@@ -77,7 +76,7 @@ export const fetchStudentsByClass = async (className) => {
 export const getEventDetailsByEndpoint = async (eventId, setLoading) => {
   try {
     setLoading?.(true);
-    const res = await apiClient.get(`/medical-events/viewDetails/${eventId}`, {
+    const res = await apiClient.get(`/api/medical-events/viewDetails/${eventId}`, {
       params: { eventId }
     });
     return res.data;
@@ -93,7 +92,7 @@ export const getEventDetailsByEndpoint = async (eventId, setLoading) => {
 // Get all event names
 export const getEventNames = async () => {
   try {
-    const response = await apiClient.get('/medical-events/getAllEventTypeName');
+    const response = await apiClient.get('/api/medical-events/getAllEventTypeName');
     // Transform the response to match the expected structure
     const formattedData = response.data.map(item => ({
       eventTypeId: item.eventTypeId || 0,
@@ -109,7 +108,7 @@ export const getEventNames = async () => {
 //Lấy vật tư y tế 
 export const getMedicalSupplies = async () => {
   try{
-    const response = await apiClient.get('/medical-supplies');
+    const response = await apiClient.get('/api/medical-supplies');
     console.log('Kết quả getMedicalSupplies:', response.data);
     return response.data;
   }catch (error) {
