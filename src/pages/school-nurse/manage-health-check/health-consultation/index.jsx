@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { PlusOutlined, SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Select, Modal, Form, Typography, Row, Col, Tag, Space, message, Statistic, Badge, Alert, Checkbox } from 'antd';
+import { Button, Card, Input, Select, Modal, Form, Typography, Row, Col, Tag, Space, message, Statistic, Badge, Alert, Checkbox, DatePicker } from 'antd';
 import './health-consultation.css';
 import { getAllHealthConsultations, updateHealthConsultation } from '../../../../api/healthCheckAPI';
 import { formatDateTime } from '../../../../utils/formatDate';
+import {isOnlyWhitespace, hasNoSpecialCharacters } from '../../../../validations';
+import moment from 'moment';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -138,7 +140,7 @@ const HealthConsultation = () => {
                 studentName: consultation.studentName,
                 status: consultation.status,
                 reason: consultation.reason,
-                scheduledDate: consultation.consultDate ? consultation.consultDate.split('T')[0] : '',
+                scheduledDate: consultation.consultDate ? moment(consultation.consultDate) : null,
                 update_at: consultation.update_at ? consultation.update_at.split('T')[0] : '',
                 updatedByNurseName: consultation.updatedByNurseName,
                 location: consultation.location || ''
@@ -228,7 +230,7 @@ const HealthConsultation = () => {
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form layout="vertical" form={editForm}>
             <Row gutter={16}>
-              <Col span={12}><Form.Item name="studentName" label="Học sinh" rules={[{ required: true, message: 'Vui lòng nhập tên học sinh' }]}><Input /></Form.Item></Col>
+              <Col span={12}><Form.Item name="studentName" label="Học sinh" ><Input disabled /></Form.Item></Col>
               <Col span={12}><Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}> 
                 <Select>
                   <Option value="Đã hoàn thành">Đã hoàn thành</Option>
@@ -236,10 +238,42 @@ const HealthConsultation = () => {
                   <Option value="Chờ lên lịch">Chờ lên lịch</Option>
                 </Select>
               </Form.Item></Col>
-              <Col span={12}><Form.Item name="scheduledDate" label="Ngày tư vấn" rules={[{ required: true, message: 'Vui lòng chọn ngày tư vấn' }]}><Input type="date" /></Form.Item></Col>
-              <Col span={12}><Form.Item name="update_at" label="Ngày cập nhật"><Input disabled /></Form.Item></Col>
-              <Col span={12}><Form.Item name="location" label="Địa điểm" rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}><Input /></Form.Item></Col>
-              <Col span={24}><Form.Item name="reason" label="Lý do tư vấn" rules={[{ required: true, message: 'Vui lòng nhập lý do tư vấn' }]}><Input.TextArea autoSize /></Form.Item></Col>
+              <Col span={12}><Form.Item name="scheduledDate" label="Ngày tư vấn" rules={[{ required: true, message: 'Vui lòng chọn ngày tư vấn' }]} >
+                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabledDate={current => current && current < moment().startOf('day')} />
+              </Form.Item></Col>
+              <Col span={12}><Form.Item name="location" label="Địa điểm" rules={[
+                { required: true, message: 'Vui lòng nhập địa điểm' },
+                {
+                  validator: (_, value) => {
+                    if (value === undefined || value === '') return Promise.resolve();
+                    if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                    if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                    return Promise.resolve();
+                  }
+                }
+              ]}><Input /></Form.Item></Col>
+              <Col span={12}><Form.Item name="update_at" label="Ngày cập nhật" style={{display : 'none'}}><Input disabled /></Form.Item></Col>
+             
+              <Col span={24}>
+              <Form.Item
+  name="reason"
+  label="Lý do tư vấn"
+  validateTrigger={['onChange', 'onBlur']}
+  rules={[
+    { required: true, message: 'Vui lòng nhập lý do tư vấn' },
+    {
+      validator: (_, value) => {
+        if (value === undefined || value === '') return Promise.resolve();
+        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+        return Promise.resolve();
+      }
+    }
+  ]}
+>
+  <Input.TextArea autoSize />
+</Form.Item>
+              </Col>
             </Row>
           </Form>
         </div>

@@ -5,8 +5,11 @@ import './health-check-record.css';
 const { Title, Text } = Typography;
 const { Option } = Select;
 import {getAllHealthCheckResults, updateHealthCheckResult} from '../../../../api/healthCheckAPI';
-import {fetchStudentsByClass} from '../../../../api/medicalEventsAPI';
+
 import { getCurrentDateString } from '../../../../utils/formatDate';
+import { isPositiveNumber,isNumeric, isFever,isHypothermia,hasNoSpecialCharacters,isOnlyNumbers,isOnlyWhitespace } from '../../../../validations';
+
+import { isValidVisionFormat, isValidVisionRange } from '../../../../validations/stringValidations';
 const HealthCheckRecord = () => {
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,6 +22,8 @@ const HealthCheckRecord = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [updateForm] = Form.useForm();
+  const [temperatureWarning, setTemperatureWarning] = useState('');
+  const [heartRateWarning, setHeartRateWarning] = useState('');
 
   const checkTypes = ['Khám tổng quát', 'Khám mắt', 'Khám răng'];
 
@@ -270,7 +275,7 @@ const HealthCheckRecord = () => {
            
                 </Col>
             </Row>
-            <div style={{margin: '18px 0 10px 0'}}><Text strong style={{fontSize:16, color:'#52c41a'}}>- Chỉ số đo lường:</Text></div>
+            <div style={{margin: '18px 0 10px 0'}}><span style={{fontSize:16, color:'#69CD32', fontWeight: 700}}>- Chỉ số đo lường:</span></div>
             <Row gutter={[24, 16]}>
               <Col span={8}><Text strong>Chiều cao (cm):</Text><br /><Text>{selectedRecord.height}</Text></Col>
               <Col span={8}><Text strong>Cân nặng (kg):</Text><br /><Text>{selectedRecord.weight}</Text></Col>
@@ -281,7 +286,7 @@ const HealthCheckRecord = () => {
               <Col span={8}><Text strong>Thính lực:</Text><br /><Text>{selectedRecord.hearing}</Text></Col>
               <Col span={8}><Text strong>Răng miệng:</Text><br /><Text>{selectedRecord.dentalCheck}</Text></Col>
             </Row>
-            <div style={{margin: '18px 0 10px 0'}}><Text strong style={{fontSize:16, color:'#faad14'}}>- Kết luận & Thông tin khác:</Text></div>
+            <div style={{margin: '18px 0 10px 0'}}><span style={{fontSize:16, color:'#69CD32', fontWeight: 700}}>- Kết luận & Thông tin khác:</span></div>
             <Row gutter={[24, 16]}>
               <Col span={12}><Text strong>Kết luận chung:</Text><br /><Text>{selectedRecord.overallResult}</Text></Col>
               <Col span={12}><Text strong>Trạng thái:</Text><br /><Text>{selectedRecord.status}</Text></Col>
@@ -307,21 +312,152 @@ const HealthCheckRecord = () => {
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form layout="vertical" form={updateForm} onValuesChange={handleAutoBMI}>
             <Row gutter={16}>
-              <Col span={8}><Form.Item name="height" label="Chiều cao (cm)" rules={[{ required: true, message: 'Vui lòng nhập chiều cao' }]}><Input type="number" step="0.01" /></Form.Item></Col>
-              <Col span={8}><Form.Item name="weight" label="Cân nặng (kg)" rules={[{ required: true, message: 'Vui lòng nhập cân nặng' }]}><Input type="number" step="0.01" /></Form.Item></Col>
+              <Col span={8}><Form.Item name="height" label="Chiều cao (cm)"  rules={[
+                { required: true, message: 'Vui lòng nhập chiều cao' },
+                { validator: (_, value) => {
+                    if (value === undefined || value === '') return Promise.resolve();
+                    const num = Number(value);
+                    if (!isPositiveNumber(num)) return Promise.reject('Không được nhập số âm!');
+                    
+                    return Promise.resolve();
+                  }
+                }
+              ]}>
+                <Input type="number" step="0.01" /></Form.Item>
+                </Col>
+              <Col span={8}><Form.Item name="weight" label="Cân nặng (kg)"rules={[
+                { required: true, message: 'Vui lòng nhập cân nặng' },
+                { validator: (_, value) => {
+                    if (value === undefined || value === '') return Promise.resolve();
+                    const num = Number(value);
+                    if (!isPositiveNumber(num)) return Promise.reject('Không được nhập số âm!');
+                    return Promise.resolve();
+                  }
+                }
+              ]}>
+                <Input type="number" step="0.01" />
+                </Form.Item></Col>
               <Col span={8}><Form.Item name="bmi" label="BMI" rules={[{ required: true, message: 'Vui lòng nhập BMI' }]}><Input type="number" step="0.01" /></Form.Item></Col>
             </Row>
             <Row gutter={16}>
-              <Col span={8}><Form.Item name="visionLeft" label="Thị lực trái" rules={[{ required: true, message: 'Vui lòng nhập thị lực trái' }]}><Input /></Form.Item></Col>
-              <Col span={8}><Form.Item name="visionRight" label="Thị lực phải" rules={[{ required: true, message: 'Vui lòng nhập thị lực phải' }]}><Input /></Form.Item></Col>
-              <Col span={8}><Form.Item name="hearing" label="Thính lực" rules={[{ required: true, message: 'Vui lòng nhập thính lực' }]}><Input /></Form.Item></Col>
+              <Col span={8}><Form.Item name="visionLeft" label="Thị lực trái (x/10)" rules={[
+  { required: true, message: 'Vui lòng nhập thị lực trái' },
+  { validator: (_, value) => {
+      if (value === undefined || value === '') return Promise.resolve();
+      if (isOnlyWhitespace(value)) return Promise.reject('Không được có khoảng trắng!');
+      if (!isValidVisionFormat(value)) return Promise.reject('Chỉ được nhập số thực hoặc dạng x/10, không chữ!');
+      if (!isValidVisionRange(value)) return Promise.reject('Giá trị tối đa là 10/10, tối thiểu 1/1!');
+      return Promise.resolve();
+    }
+  }
+]}><Input /></Form.Item></Col>
+              <Col span={8}><Form.Item name="visionRight" label="Thị lực phải (x/10)" rules={[
+  { required: true, message: 'Vui lòng nhập thị lực trái' },
+  { validator: (_, value) => {
+      if (value === undefined || value === '') return Promise.resolve();
+      if (isOnlyWhitespace(value)) return Promise.reject('Không được có khoảng trắng!');
+      if (!isValidVisionFormat(value)) return Promise.reject('Chỉ được nhập số dạng x/10!');
+      if (!isValidVisionRange(value)) return Promise.reject('Giá trị tối đa là 10/10, tối thiểu 1/1!');
+      return Promise.resolve();
+    }
+  }
+]}><Input /></Form.Item></Col>
+              <Col span={8}><Form.Item name="hearing" label="Thính lực (x/10)" rules={[
+  { required: true, message: 'Vui lòng nhập thị thính lực' },
+  { validator: (_, value) => {
+      if (value === undefined || value === '') return Promise.resolve();
+      if (isOnlyWhitespace(value)) return Promise.reject('Không được có khoảng trắng!');
+      if (!isValidVisionFormat(value)) return Promise.reject('Chỉ được nhập số dạng x/10!');
+      if (!isValidVisionRange(value)) return Promise.reject('Giá trị tối đa là 10/10, tối thiểu 1/1!');
+      return Promise.resolve();
+    }
+  }
+]}><Input /></Form.Item></Col>
             </Row>
             <Row gutter={16}>
-              <Col span={12}><Form.Item name="dentalCheck" label="Răng miệng" rules={[{ required: true, message: 'Vui lòng nhập răng miệng' }]}><Input /></Form.Item></Col>
-              <Col span={12}><Form.Item name="temperature" label="Nhiệt độ (°C)" rules={[{ required: true, message: 'Vui lòng nhập nhiệt độ' }]}><Input /></Form.Item></Col>
+              <Col span={12}>
+                <Form.Item name="dentalCheck" label="Răng miệng" rules={[
+              { required: true, message: 'Vui lòng nhập tình trạng' },
+              
+               { validator: (_, value) => {
+                  if (value === undefined || value === '') return Promise.resolve();
+                  if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  
+                  return Promise.resolve();
+                }
+              }
+            ]}
+          ><Input /></Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="temperature"
+                  label={<span>Nhiệt độ (°C) {temperatureWarning && updateForm.getFieldValue('temperature') ? <span style={{color:'red', marginLeft:8}}>{temperatureWarning}</span> : null}</span>}
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập nhiệt độ' },
+                    { validator: (_, value) => {
+                        if (value === undefined || value === '') {
+                          setTemperatureWarning('');
+                          return Promise.resolve();
+                        }
+                        const num = Number(value);
+                        if (isNaN(num)) {
+                          setTemperatureWarning('');
+                          return Promise.reject('Nhiệt độ phải là số!');
+                        }
+                        if (!isPositiveNumber(num)) {
+                          setTemperatureWarning('');
+                          return Promise.reject('Nhiệt độ phải là số dương!');
+                        }
+                        if (isFever(num)) setTemperatureWarning('Sốt');
+                        else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
+                        else setTemperatureWarning('');
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
+                  <Input 
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '' || val === undefined) {
+                        setTemperatureWarning('');
+                        return;
+                      }
+                      const num = Number(val);
+                      if (isNaN(num) || !isPositiveNumber(num)) {
+                        setTemperatureWarning('');
+                        return;
+                      }
+                      if (isFever(num)) setTemperatureWarning('Sốt');
+                      else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
+                      else setTemperatureWarning('');
+                    }}
+                    onBlur={e => {
+                      const val = e.target.value;
+                      if (val === '' || val === undefined) {
+                        setTemperatureWarning('');
+                      }
+                    }}
+                  />
+                </Form.Item>
+              </Col>
             </Row>
             <Row gutter={16}>
-              <Col span={24}><Form.Item name="overallResult" label="Kết luận chung" rules={[{ required: true, message: 'Vui lòng nhập kết luận chung' }]}><Input /></Form.Item></Col>
+              <Col span={24}><Form.Item name="overallResult" label="Kết luận chung"   rules={[
+              { required: true, message: 'Vui lòng nhập kết luận chung' },
+              
+               { validator: (_, value) => {
+                  if (value === undefined || value === '') return Promise.resolve();
+                  if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                  
+                  return Promise.resolve();
+                }
+              }
+            ]}
+          ><Input /></Form.Item></Col>
             </Row>
             <Row gutter={16}>
               <Col span={12}>

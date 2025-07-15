@@ -27,6 +27,8 @@ import './health-check-batch.css';
 import moment from 'moment';
 import { formatDateTime } from '../../../../utils/formatDate';
 import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck, createHealthConsentForMultipleClasses } from '../../../../api/healthCheckAPI';
+import { isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
+import {  isUpdateDateAfterOrEqualCreateDate } from '../../../../validations';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -128,8 +130,9 @@ const HealthCheckBatchManager = () => {
   const handleCreateBatch = async () => {
     try {
       const values = await form.validateFields();
-      // Chuẩn bị dữ liệu đúng format API
       const now = new Date().toISOString();
+     
+      // Chuẩn bị dữ liệu đúng format API
       const nurseName = localStorage.getItem('fullname') || 'Y tá';
       const nurseID = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
       const data = {
@@ -194,17 +197,22 @@ const HealthCheckBatchManager = () => {
   const handleUpdateBatch = async () => {
     try {
       const values = await editForm.validateFields();
-      const now = new Date().toISOString();
+      const nowUpdate = new Date().toISOString();
+      const createdAt = selectedBatch.create_at;
+      if (!isUpdateDateAfterOrEqualCreateDate(nowUpdate, createdAt)) {
+        message.error('Ngày cập nhật phải lớn hơn hoặc bằng ngày tạo!');
+        return;
+      }
       const nurseName = localStorage.getItem('fullname') || 'Y tá';
       const nurseID = Number(localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || 1);
       const data = {
         health_ScheduleID: selectedBatch.id,
-        schedule_Date: values.scheduledDate ? values.scheduledDate.toISOString() : now,
+        schedule_Date: values.scheduledDate ? values.scheduledDate.toISOString() : nowUpdate,
         name: values.batchName,
         location: values.location,
         notes: values.notes,
         status: values.status,
-        update_at: now,
+        update_at: nowUpdate,
         updatedByNurseID: nurseID,
         updatedByNurseName: nurseName,
       };
@@ -357,7 +365,7 @@ const HealthCheckBatchManager = () => {
               </div>
 
               <div className="health-check-batch-card-info">
-                <Space><CalendarOutlined /><Text>Ngày khám: {batch.scheduledDate ? new Date(batch.scheduledDate).toLocaleDateString('vi-VN') : '-'}</Text></Space>
+                <Space><CalendarOutlined /><Text>Ngày khám: {batch.scheduledDate ? formatDateTime(batch.scheduledDate, 'DD/MM/YYYY') : '-'}</Text></Space>
                 <Space><EnvironmentOutlined /><Text>Địa điểm: {batch.location}</Text></Space>
               </div>
 
@@ -366,7 +374,7 @@ const HealthCheckBatchManager = () => {
                   <Text strong>Y tá chỉnh sửa:</Text> <Text>{batch.updatedByNurseName || '-'}</Text>
                 </Space>
                 <Space>
-                  <Text strong>Ngày tạo:</Text> <Text>{batch.create_at ? (() => { const d = new Date(batch.create_at); const vn = new Date(d.getTime() + 7*60*60*1000); return vn.toLocaleString('vi-VN'); })() : '-'}</Text>
+                  <Text strong>Ngày tạo:</Text> <Text>{batch.create_at ? formatDateTime(batch.create_at) : '-'}</Text>
                 </Space>
               </div>
 
@@ -376,7 +384,7 @@ const HealthCheckBatchManager = () => {
                     <Text type="secondary">Ghi chú:</Text> <Text>{batch.notes || '-'}</Text>
                   </span>
                   <span>
-                    <Text strong>Cập nhật:</Text> <Text>{batch.update_at ? (() => { const d = new Date(batch.update_at); const vn = new Date(d.getTime() + 7*60*60*1000); return vn.toLocaleString('vi-VN'); })() : '-'}</Text>
+                    <Text strong>Cập nhật:</Text> <Text>{batch.update_at ? formatDateTime(batch.update_at) : '-'}</Text>
                   </span>
                 </div>
               )}
@@ -414,7 +422,20 @@ const HealthCheckBatchManager = () => {
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form form={form} layout="vertical">
-            <Form.Item name="batchName" label="Tên đợt khám" rules={[{ required: true, message: 'Vui lòng nhập tên đợt khám' }]}> 
+            <Form.Item name="batchName" label="Tên đợt khám"    
+            rules={[
+                    { required: true, message: 'Vui lòng nhập tên đợt' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
               <Input />
             </Form.Item>
             <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
@@ -423,13 +444,40 @@ const HealthCheckBatchManager = () => {
                 disabledDate={current => current && current < new Date().setHours(0,0,0,0)}
               />
             </Form.Item>
-            <Form.Item name="location" label="Địa điểm" rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}>
+            <Form.Item name="location" label="Địa điểm" rules={[
+                    { required: true, message: 'Vui lòng nhập địa điểm' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
               <Input />
             </Form.Item>
-            <Form.Item name="notes" label="Ghi chú">
+            <Form.Item
+              name="notes"
+              label="Ghi chú"
+              rules={[
+                { required: true, message: 'Vui lòng nhập ghi chú' },
+                
+                 { validator: (_, value) => {
+                    if (value === undefined || value === '') return Promise.resolve();
+                    if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                    if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                    
+                    return Promise.resolve();
+                  }
+                }
+              ]}
+            >
               <TextArea />
             </Form.Item>
-            <Form.Item name="status" label="Trạng thái" initialValue="Đã lên lịch">
+            <Form.Item name="status" label="Trạng thái" initialValue="Đã lên lịch" style={{ display: 'none' }}>
               <Select disabled>
                 <Option value="Đã lên lịch">Đã lên lịch</Option>
                 <Option value="Đã xác nhận">Đã xác nhận</Option>
@@ -450,7 +498,19 @@ const HealthCheckBatchManager = () => {
       >
         <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
           <Form form={editForm} layout="vertical">
-            <Form.Item name="batchName" label="Tên đợt khám" rules={[{ required: true, message: 'Vui lòng nhập tên đợt khám' }]}> 
+            <Form.Item name="batchName" label="Tên đợt khám" rules={[
+                    { required: true, message: 'Vui lòng nhập tên đợt' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
               <Input />
             </Form.Item>
             <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
@@ -459,13 +519,37 @@ const HealthCheckBatchManager = () => {
                 disabledDate={current => current && current < new Date().setHours(0,0,0,0)}
               />
             </Form.Item>
-            <Form.Item name="location" label="Địa điểm">
+            <Form.Item name="location" label="Địa điểm" rules={[
+                    { required: true, message: 'Vui lòng nhập địa điểm' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
               <Input />
             </Form.Item>
-            <Form.Item name="notes" label="Ghi chú">
+            <Form.Item name="notes" label="Ghi chú"rules={[
+                    { required: true, message: 'Vui lòng nhập ghi chú' },
+                    
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
               <TextArea />
             </Form.Item>
-            <Form.Item name="status" label="Trạng thái">
+            <Form.Item name="status" label="Trạng thái"style={ { display: 'none' }}>
               <Select disabled>
                 <Option value="Đã lên lịch">Đã lên lịch</Option>
                 <Option value="Đã xác nhận">Đã xác nhận</Option>
@@ -513,7 +597,17 @@ const HealthCheckBatchManager = () => {
                 <Option value="Từ chối">Từ chối</Option>
               </Select>
             </Form.Item>
-            <Form.Item name="notes" label="Ghi chú">
+            <Form.Item name="notes" label="Ghi chú"rules={[
+                     { validator: (_, value) => {
+                        if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
+                >
               <Input.TextArea />
             </Form.Item>
           </Form>
