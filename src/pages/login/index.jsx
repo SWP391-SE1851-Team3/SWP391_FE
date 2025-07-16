@@ -3,7 +3,7 @@ import './login.css';
 import { Form, Input, Button, Checkbox, Typography, message, Select } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate} from 'react-router-dom';
 import { loginByRole } from '../../api/auth';
 
 const { Title, Paragraph } = Typography;
@@ -12,7 +12,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const location = useLocation();
+  
 
   const onFinish = async (values) => {
     setLoading(true);

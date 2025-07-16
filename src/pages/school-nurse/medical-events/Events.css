@@ -328,11 +328,11 @@
 }
 
 .ant-input {
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
 .ant-select .ant-select-selector {
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
 .ant-card {
