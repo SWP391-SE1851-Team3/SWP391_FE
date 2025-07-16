@@ -61,21 +61,6 @@ const VaccinationScheduleManager = () => {
   const [selectedBatchForConsent, setSelectedBatchForConsent] = useState(null);
   const [consentDateRange, setConsentDateRange] = useState([null, null]);
 
-  // Function to get vaccine name by ID
-  const getVaccineNameById = async (vaccineTypeID) => {
-    try {
-      const res = await getVaccineTypeByName('');
-      if (Array.isArray(res.data)) {
-        const vaccine = res.data.find(v => v.id === vaccineTypeID);
-        return vaccine ? vaccine.name : 'Không xác định';
-      }
-      return 'Không xác định';
-    } catch (error) {
-      console.error('❌ [Vaccination Schedule] Lỗi khi lấy tên vaccine:', error);
-      return 'Không xác định';
-    }
-  };
-
   const fetchSchedules = async () => {
     try {
       setLoading(true);
@@ -241,24 +226,6 @@ const VaccinationScheduleManager = () => {
     }
   };
 
-  const handleSendConsents = (scheduleId) => {
-    setSchedules(schedules.map(schedule => 
-      schedule.batchID === scheduleId 
-        ? { ...schedule, consentsSent: true }
-        : schedule
-    ));
-    message.success('Phiếu đồng ý đã được gửi đến tất cả phụ huynh');
-  };
-
-  const handleConfirmSchedule = (scheduleId) => {
-    setSchedules(schedules.map(schedule => 
-      schedule.batchID === scheduleId 
-        ? { ...schedule, status: 'Đã xác nhận' }
-        : schedule
-    ));
-    message.success('Lịch tiêm đã được xác nhận');
-  };
-
   // Handle edit schedule
   const handleEdit = async (schedule) => {
     setSelectedSchedule(schedule);
@@ -362,24 +329,6 @@ const VaccinationScheduleManager = () => {
     setIsEditModalOpen(false);
     setSelectedSchedule(null);
     editForm.resetFields();
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Chờ xác nhận': return 'warning';
-      case 'Đã xác nhận': return 'success';
-      case 'Đã từ chối': return 'error';
-      default: return 'default';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'Chờ xác nhận': return 'Chờ xác nhận';
-      case 'Đã xác nhận': return 'Đã xác nhận';
-      case 'Đã từ chối': return 'Đã từ chối';
-      default: return status;
-    }
   };
 
   // Unique vaccine names for filter dropdown

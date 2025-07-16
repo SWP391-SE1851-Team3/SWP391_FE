@@ -55,6 +55,10 @@ const HealthCheckConsent = () => {
     rejected: consents.filter(c => c.isAgreed === 'Từ chối').length
   };
 
+  const handleResendConsent = () => {
+    message.info('Chức năng gửi lại chưa được triển khai!');
+  };
+
   return (
     <div className="health-check-consent-container">
       <div className="health-check-consent-header">
@@ -135,7 +139,7 @@ const HealthCheckConsent = () => {
               {consent.isAgreed === 'Chờ phản hồi' && (
                 <Button 
                   icon={<SendOutlined />}
-                  onClick={() => handleResendConsent(consent.id)}
+                  onClick={() => handleResendConsent()}
                 >
                   Gửi lại
                 </Button>

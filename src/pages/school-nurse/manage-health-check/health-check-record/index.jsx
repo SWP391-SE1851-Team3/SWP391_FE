@@ -7,25 +7,19 @@ const { Option } = Select;
 import {getAllHealthCheckResults, updateHealthCheckResult} from '../../../../api/healthCheckAPI';
 
 import { getCurrentDateString, formatDateTime } from '../../../../utils/formatDate';
-import { isPositiveNumber,isNumeric, isFever,isHypothermia,hasNoSpecialCharacters,isOnlyNumbers,isOnlyWhitespace } from '../../../../validations';
+import { isPositiveNumber, isFever, isHypothermia, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
 
 import { isValidVisionFormat, isValidVisionRange } from '../../../../validations/stringValidations';
 const HealthCheckRecord = () => {
   const [records, setRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [students, setStudents] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [updateForm] = Form.useForm();
   const [temperatureWarning, setTemperatureWarning] = useState('');
-  const [heartRateWarning, setHeartRateWarning] = useState('');
-
-  const checkTypes = ['Khám tổng quát', 'Khám mắt', 'Khám răng'];
 
   useEffect(() => {
     const fetchRecords = async () => {
@@ -74,9 +68,8 @@ const HealthCheckRecord = () => {
     const matchesSearch = record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          record.checkType.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesClass = classFilter === 'all' || record.className === classFilter;
-    const matchesType = typeFilter === 'all' || record.checkType === typeFilter;
     const matchesStatus = statusFilter === 'all' || record.status === statusFilter;
-    return matchesSearch && matchesClass && matchesType && matchesStatus;
+    return matchesSearch && matchesClass && matchesStatus;
   });
 
   const stats = {
@@ -169,9 +162,6 @@ const HealthCheckRecord = () => {
       }
     }
   };
-
-  // Thêm hàm kiểm tra giá trị rỗng hoặc 0
-  const isEmpty = v => v === null || v === undefined || v === '' || v === 0;
 
   return (
     <div className='health-check-records-container'>

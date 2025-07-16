@@ -55,7 +55,7 @@ const getMenuByRole = (role) => {
 const HeaderLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [tempExpanded, setTempExpanded] = useState(false);
   

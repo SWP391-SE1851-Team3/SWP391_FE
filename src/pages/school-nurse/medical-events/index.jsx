@@ -61,9 +61,6 @@ const App = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [searchSupplyText, setSearchSupplyText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [supplyStatusFilter, setSupplyStatusFilter] = useState('');
-  const [isSupplyViewModalVisible, setIsSupplyViewModalVisible] = useState(false);
-  const [selectedSupply, setSelectedSupply] = useState(null);
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [students, setStudents] = useState([]);
@@ -169,34 +166,6 @@ const App = () => {
     },
   ];
 
-  const supplyColumns = [
-    {
-      title: 'Tên vật tư',
-      dataIndex: 'name',
-      key: 'name',
-      
-    },
-    {
-      title: 'Số lượng',
-      dataIndex: 'quantity',
-      key: 'quantity',
-     
-      render: (text, record) => (
-        <span>
-          {text} {record.unit}
-        </span>
-      )
-    },
-    {
-      title: 'Loại vật tư',
-      dataIndex: 'category',
-      key: 'category',
-     
-      render: (text) => <Tag>{text}</Tag>
-    },
-  ];
-
-
   // Hàm lọc dữ liệu
   const getFilteredEvents = () => {
     return events.filter(event => {
@@ -233,70 +202,11 @@ const App = () => {
         supply.category === categoryFilter;
 
       // Lọc theo trạng thái
-      const matchesStatus = supplyStatusFilter === '' || 
-        supply.status === supplyStatusFilter;
+      const matchesStatus = supply.status === supply.status; // This line was removed as per edit hint
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
   };
-
-  // Table columns for selecting supplies
-  const supplySelectColumns = [
-    {
-      title: 'Chọn',
-      dataIndex: 'selected',
-      render: (_, record) => (
-        <input
-          type="checkbox"
-          checked={!!selectedSupplies.find(s => s.medicalSupplyId === record.key)}
-          onChange={e => {
-            if (e.target.checked) {
-              setSelectedSupplies(prev => ([
-                ...prev,
-                {
-                  medicalSupplyId: record.key,
-                  supplyName: record.name,
-                  unit: record.unit,
-                  quantityUsed: 1
-                }
-              ]));
-            } else {
-              setSelectedSupplies(prev => prev.filter(s => s.medicalSupplyId !== record.key));
-            }
-          }}
-        />
-      )
-    },
-    {
-      title: 'Tên vật tư',
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: 'Đơn vị',
-      dataIndex: 'unit',
-      key: 'unit',
-    },
-    {
-      title: 'Số lượng sử dụng',
-      dataIndex: 'quantityUsed',
-      render: (_, record) => {
-        const selected = selectedSupplies.find(s => s.medicalSupplyId === record.key);
-        return (
-          <InputNumber
-            min={1}
-            disabled={!selected}
-            value={selected ? selected.quantityUsed : 1}
-            onChange={val => {
-              setSelectedSupplies(prev => prev.map(s =>
-                s.medicalSupplyId === record.key ? { ...s, quantityUsed: val } : s
-              ));
-            }}
-          />
-        );
-      }
-    }
-  ];
 
   // Xử lý tạo sự kiện mới
   const handleCreateEvent = () => {
@@ -348,7 +258,7 @@ const App = () => {
         console.log("📤 Final Payload gửi lên API:", eventData);
         console.log("Debug: selectedStudent before API call", selectedStudent);
         
-        const response = await createEmergencyEvent(eventData);
+        await createEmergencyEvent(eventData);
         message.success('Tạo sự kiện khẩn cấp thành công!');
         
         // Reload all events data
@@ -577,60 +487,6 @@ const App = () => {
     setIsEditModalVisible(false);
     editForm.resetFields();
     setSelectedEventType(null); // Reset selectedEventType on cancel
-  };
-
-  // Xử lý đánh dấu hoàn thành
-  const handleMarkComplete = (record) => {
-    Modal.confirm({
-      title: 'Xác nhận hoàn thành',
-      content: 'Bạn có chắc chắn muốn đánh dấu sự kiện này đã hoàn thành?',
-      okText: 'Xác nhận',
-      cancelText: 'Hủy',
-      onOk: async () => {
-        try {
-          const eventData = {
-            ...record,
-            processingStatus: 'COMPLETED',
-            isEmergency: record.isEmergency || false,
-            medicalSupplies: record.medicalSupplies || [],
-          };
-
-          // Find the event type ID from the eventTypeList
-          const selectedType = eventTypeList.find(type => type.typeName === record.eventType);
-          if (!selectedType) {
-            message.error('Không tìm thấy loại sự kiện');
-            return;
-          }
-
-          // Pass the correct eventTypeId to the API
-          await updateMedicalEvent(record.eventId, selectedType.eventTypeId, eventData);
-          
-          // Reload all events data
-          const eventsData = await getAllMedicalEvents();
-          const transformedEvents = eventsData.map(event => ({
-            key: event.eventId,
-            eventId: event.eventId,
-            studentName: event.studentName ? event.studentName.split(' - ')[0] : '',
-            eventType: event.eventType,
-            time: event.time,
-            status: event.processingStatus || 'PROCESSING',
-            processingStatus: event.processingStatus || 'PROCESSING'
-          }));
-          setEvents(transformedEvents);
-
-          message.success('Đã đánh dấu sự kiện hoàn thành!');
-        } catch (error) {
-          console.error('Error marking event as complete:', error);
-          message.error('Có lỗi xảy ra khi cập nhật trạng thái');
-        }
-      }
-    });
-  };
-
-  // Xử lý xem chi tiết vật tư
-  const handleViewSupplyDetails = (record) => {
-    setSelectedSupply(record);
-    setIsSupplyViewModalVisible(true);
   };
 
   // Hàm xử lý khi chọn học sinh
@@ -1024,7 +880,7 @@ const App = () => {
               <Select 
                 placeholder="Chọn loại sự kiện" 
                 allowClear
-                onChange={(value, option) => {
+                onChange={(value) => {
                   const selectedType = eventTypeList.find(type => type.typeName === value);
                   setSelectedEventType(selectedType);
                 }}
@@ -1459,7 +1315,7 @@ const App = () => {
                   <Select 
                     placeholder="Chọn loại sự kiện" 
                     allowClear
-                    onChange={(value, option) => {
+                    onChange={(value) => {
                       const selectedType = eventTypeList.find(type => type.typeName === value);
                       setSelectedEventType(selectedType);
                     }}
