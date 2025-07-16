@@ -25,7 +25,7 @@ import {
   Alert
 } from 'antd';
 import './post-vaccination.css';
-import {getStudentVaccinationRecordsFollowedByNurse, getVaccinationRecordDetail, updateStudentFollowedByNurse} from '../../../../api/vaccinationAPI';
+import {getStudentVaccinationRecordsFollowedByNurse, getVaccinationRecordDetail} from '../../../../api/vaccinationAPI';
 import { formatDateTime } from '../../../../utils/formatDate';  
 const { Title, Text } = Typography;
 const { TextArea } = Input;

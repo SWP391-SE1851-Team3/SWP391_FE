@@ -3,7 +3,6 @@ import { PlusOutlined, SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-
 import { Button, Card, Input, Select, Modal, Form, Typography, Row, Col, Tag, Space, message, Statistic, Badge, Alert, Checkbox, DatePicker } from 'antd';
 import './health-consultation.css';
 import { getAllHealthConsultations, updateHealthConsultation } from '../../../../api/healthCheckAPI';
-import { formatDateTime } from '../../../../utils/formatDate';
 import {isOnlyWhitespace, hasNoSpecialCharacters } from '../../../../validations';
 import moment from 'moment';
 const { Title, Text } = Typography;
@@ -11,8 +10,6 @@ const { Option } = Select;
 
 const HealthConsultation = () => {
   const [consultations, setConsultations] = useState([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [form] = Form.useForm();
   const [editForm] = Form.useForm();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');

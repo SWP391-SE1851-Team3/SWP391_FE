@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Table,
   Input,
@@ -12,7 +12,6 @@ import {
   Row,
   Col,
   Pagination,
-  Avatar,
   Modal,
   Form,
   message
@@ -23,7 +22,6 @@ import {
   CheckOutlined,
   CloseOutlined,
   CalendarOutlined,
-  UserOutlined,
   CheckCircleTwoTone,
   CloseCircleTwoTone,
   ClockCircleTwoTone
@@ -32,6 +30,7 @@ import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissi
 import { formatDateTime } from '../../../utils/formatDate';
 import './Medication.css';
 import { hasNoSpecialCharacters } from '../../../validations';
+
 const { Title } = Typography;
 const { Option } = Select;
 
@@ -53,10 +52,6 @@ const MedicationManagement = () => {
   const [timelineData, setTimelineData] = useState([]);
   const [detailData, setDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
-
-  useEffect(() => {
-    fetchMedicationSubmissions();
-  }, []);
 
   const mapStatusToFE = (status) => {
     switch (status) {
@@ -88,7 +83,7 @@ const MedicationManagement = () => {
     }
   };
 
-  const fetchMedicationSubmissions = async () => {
+  const fetchMedicationSubmissions = useCallback(async () => {
     try {
       setLoading(true);
       const submissions = await getMedicationSubmissions();
@@ -99,7 +94,7 @@ const MedicationManagement = () => {
         className: submission.className || '',
         medication: submission.medicationDetails.map(m => m.medicineName).join(', '),
         status: mapStatusToFE(submission.status),
-                  time: formatDateTime(submission.submissionDate),
+        time: formatDateTime(submission.submissionDate),
         actions: mapStatusToFE(submission.status) === 'pending' ? ['view', 'confirm', 'cancel'] : ['view'],
         rejectReason: '',
         medicationDetails: submission.medicationDetails
@@ -121,8 +116,8 @@ const MedicationManagement = () => {
           const subDateStr = subDate.toISOString().split('T')[0];
           return subDateStr === todayStr;
         })
-        .map((submission, idx) => ({
-          id: idx + 1,
+        .map((submission, index) => ({
+          id: index + 1,
           time: new Date(submission.submissionDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
           student: submission.studentName,
           medication: submission.medicationDetails.map(m => `${m.medicineName} - ${m.dosage || ''} ${m.timeToUse ? `(${m.timeToUse})` : ''}`).join(', '),
@@ -143,7 +138,11 @@ const MedicationManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchMedicationSubmissions();
+  }, [fetchMedicationSubmissions]);
 
   // Filtered data for the table
   const getFilteredData = () => {
@@ -192,30 +191,6 @@ const MedicationManagement = () => {
       default:
         return <Tag>{status}</Tag>;
     }
-  };
-
-  const getActionButtons = (record) => {
-    return (
-      <Space>
-        <Button icon={<EyeOutlined />} size="small" onClick={() => handleViewDetails(record)} />
-        {record.actions.includes('confirm') && (
-          <Button
-            icon={<CheckOutlined  />}
-            size="small"
-            type="primary"
-            onClick={() => handleUpdateStatus(record.id, 'confirmed')}
-          />
-        )}
-        {record.actions.includes('cancel') && (
-          <Button
-            icon={<CloseOutlined />}
-            size="small"
-            danger
-            onClick={() => handleUpdateStatus(record.id, 'expired')}
-          />
-        )}
-      </Space>
-    );
   };
 
   const columns = [
@@ -378,6 +353,78 @@ const MedicationManagement = () => {
     }
   };
 
+  // Tạo timeline items từ timelineData
+  const timelineItems = timelineData.map((item) => {
+    let cardClass = 'timeline-card ';
+    if (item.status === 'completed') cardClass += 'completed';
+    else if (item.status === 'uncompleted') cardClass += 'uncompleted';
+    else cardClass += 'pending';
+
+    let statusText = '';
+    if (item.status === 'completed') statusText = 'Đã hoàn thành';
+    else if (item.status === 'uncompleted') statusText = 'Chưa hoàn thành';
+    else if (item.status === 'confirmed') statusText = 'Đã nhận thuốc';
+    else if (item.status === 'expired') statusText = 'Từ chối thuốc';
+    else statusText = 'Chờ nhận thuốc';
+
+    // Tìm trạng thái ở danh sách (data) theo id
+    const listRecord = data.find(d => d.id === item.id);
+    const listStatus = listRecord ? listRecord.status : null;
+    // Chỉ cho phép cập nhật trạng thái nếu trạng thái ở danh sách là 'confirmed'
+    const allowUpdate = listStatus === 'confirmed';
+
+    return {
+      key: item.id,
+      color: item.color,
+      children: (
+        <div className={cardClass}>
+          <div className="timeline-header">
+            <span className="timeline-student">Phát thuốc cho {item.student}</span>
+            <span className="timeline-status">
+              {item.status === 'completed' && <CheckCircleTwoTone twoToneColor="#52c41a" style={{marginRight: 4}} />}
+              {item.status === 'uncompleted' && <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{marginRight: 4}} />}
+              {item.status === 'pending' && <ClockCircleTwoTone twoToneColor="#faad14" style={{marginRight: 4}} />}
+              {item.status === 'confirmed' && <CheckCircleTwoTone twoToneColor="#1890ff" style={{marginRight: 4}} />}
+              {item.status === 'expired' && <CloseCircleTwoTone twoToneColor="#d4380d" style={{marginRight: 4}} />}
+              {statusText}
+            </span>
+            <div className="timeline-actions">
+              {allowUpdate && <>
+                <Button
+                  size="small"
+                  icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}
+                  onClick={() => handleUpdateStatus(item.id, 'completed')}
+                  type="primary"
+                ></Button>
+                <Button
+                  size="small"
+                  icon={<CloseCircleTwoTone twoToneColor="#ff4d4f" />}
+                  onClick={() => handleUpdateStatus(item.id, 'uncompleted')}
+                  danger
+                ></Button>
+              </>}
+              {(item.status === 'completed' || item.status === 'uncompleted') && (
+                <Button
+                  size="small"
+                  icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
+                  onClick={() => handleUpdateStatus(item.id, 'pending')}
+                ></Button>
+              )}
+              <Button
+                size="small"
+                icon={<EyeOutlined />}
+                onClick={() => handleViewDetails(item)}
+              ></Button>
+            </div>
+          </div>
+          <div className="timeline-body">
+            <div className="timeline-medication">{item.medication}</div>
+          </div>
+        </div>
+      )
+    };
+  });
+
   return (
     <div className="medical-management-app">
       <div className="app-header">
@@ -466,79 +513,12 @@ const MedicationManagement = () => {
                 <span>{today}</span>
               </Space>
             </div>
-            
           </div>
         </div>
-        <Timeline className="medication-timeline">
-          {timelineData.map((item, idx) => {
-            let cardClass = 'timeline-card ';
-            if (item.status === 'completed') cardClass += 'completed';
-            else if (item.status === 'uncompleted') cardClass += 'uncompleted';
-            else cardClass += 'pending';
-
-            let statusText = '';
-            if (item.status === 'completed') statusText = 'Đã hoàn thành';
-            else if (item.status === 'uncompleted') statusText = 'Chưa hoàn thành';
-            else if (item.status === 'confirmed') statusText = 'Đã nhận thuốc';
-            else if (item.status === 'expired') statusText = 'Từ chối thuốc';
-            else statusText = 'Chờ nhận thuốc';
-
-            // Tìm trạng thái ở danh sách (data) theo id
-            const listRecord = data.find(d => d.id === item.id);
-            const listStatus = listRecord ? listRecord.status : null;
-            // Chỉ cho phép cập nhật trạng thái nếu trạng thái ở danh sách là 'confirmed'
-            const allowUpdate = listStatus === 'confirmed';
-
-            return (
-             
-                <div className={cardClass}>
-                  <div className="timeline-header">
-                    <span className="timeline-student">Phát thuốc cho {item.student}</span>
-                    <span className="timeline-status">
-                      {item.status === 'completed' && <CheckCircleTwoTone twoToneColor="#52c41a" style={{marginRight: 4}} />}
-                      {item.status === 'uncompleted' && <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{marginRight: 4}} />}
-                      {item.status === 'pending' && <ClockCircleTwoTone twoToneColor="#faad14" style={{marginRight: 4}} />}
-                      {item.status === 'confirmed' && <CheckCircleTwoTone twoToneColor="#1890ff" style={{marginRight: 4}} />}
-                      {item.status === 'expired' && <CloseCircleTwoTone twoToneColor="#d4380d" style={{marginRight: 4}} />}
-                      {statusText}
-                    </span>
-                    <div className="timeline-actions">
-                      {allowUpdate && <>
-                        <Button
-                          size="small"
-                          icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}
-                          onClick={() => handleUpdateStatus(item.id, 'completed')}
-                          type="primary"
-                        ></Button>
-                        <Button
-                          size="small"
-                          icon={<CloseCircleTwoTone twoToneColor="#ff4d4f" />}
-                          onClick={() => handleUpdateStatus(item.id, 'uncompleted')}
-                          danger
-                        ></Button>
-                      </>}
-                      {(item.status === 'completed' || item.status === 'uncompleted') && (
-                        <Button
-                          size="small"
-                          icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
-                          onClick={() => handleUpdateStatus(item.id, 'pending')}
-                        ></Button>
-                      )}
-                      <Button
-                        size="small"
-                        icon={<EyeOutlined />}
-                        onClick={() => handleViewDetails(item)}
-                      ></Button>
-                    </div>
-                  </div>
-                  <div className="timeline-body">
-                    <div className="timeline-medication">{item.medication}</div>
-                  </div>
-                </div>
-             
-            );
-          })}
-        </Timeline>
+        <Timeline 
+          className="medication-timeline"
+          items={timelineItems}
+        />
       </Card>
 
       <Modal
@@ -639,8 +619,7 @@ const MedicationManagement = () => {
               label={<span style={{ fontWeight: 600, color: '#ff4d4f' }}>Lý do từ chối</span>}
               rules={[
                 { required: true, message: 'Vui lòng nhập lý do từ chối' },
-                
-                 { validator: (_, value) => {
+                { validator: (_, value) => {
                     if (value === undefined || value === '') return Promise.resolve();
                     if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
                     return Promise.resolve();
@@ -671,8 +650,7 @@ const MedicationManagement = () => {
             label="Lý do từ chối"
             rules={[
               { required: true, message: 'Vui lòng nhập lý do từ chối' },
-              
-               { validator: (_, value) => {
+              { validator: (_, value) => {
                   if (value === undefined || value === '') return Promise.resolve();
                   if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
                   return Promise.resolve();

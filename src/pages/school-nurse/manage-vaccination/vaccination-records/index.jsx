@@ -32,27 +32,22 @@ import {
   getVaccineTypeByName,
   updateVaccinationRecord 
 } from '../../../../api/vaccinationAPI';
-import { formatDateTime, getCurrentDateString } from '../../../../utils/formatDate';
+import { getCurrentDateString } from '../../../../utils/formatDate';
 import moment from 'moment';
+import {hasNoSpecialCharacters, isOnlyWhitespace, isFirstCharUppercase } from '../../../../validations';
 
 
-import { fetchStudentsByClass } from '../../../../api/medicalEventsAPI';
-import { isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace, isFirstCharUppercase } from '../../../../validations';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
 const VaccinationRecords = () => {
-  const [form] = Form.useForm();
   const [records, setRecords] = useState([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [vaccineOptions, setVaccineOptions] = useState([]);
-  const [studentOptions, setStudentOptions] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm] = Form.useForm();
   const [editingRecord, setEditingRecord] = useState(null);
@@ -95,24 +90,26 @@ const VaccinationRecords = () => {
   }, []);
 
   useEffect(() => {
-    if (isCreateModalOpen) {
+    if (isEditModalOpen) {
       getVaccineTypeByName('')
         .then(res => {
           if (Array.isArray(res.data)) {
-            setVaccineOptions(res.data);
+            // setVaccineOptions(res.data); // This line was removed as per the edit hint
           } else {
-            setVaccineOptions([]);
+            // setVaccineOptions([]); // This line was removed as per the edit hint
           }
         })
-        .catch(() => setVaccineOptions([]));
+        .catch(() => {
+          // setVaccineOptions([]); // This line was removed as per the edit hint
+        });
       // Lấy tên y tá và mã y tá từ localStorage và set vào form cho cả create và edit
       const createNurseName = localStorage.getItem('fullname') || '';
       const createNurseID = localStorage.getItem('userId') || '';
       const editNurseName = createNurseName;
       const editnurseID = createNurseID;
-      form.setFieldsValue({ createNurseName, createNurseID, editNurseName, editnurseID });
+      editForm.setFieldsValue({ createNurseName, createNurseID, editNurseName, editnurseID });
     }
-  }, [isCreateModalOpen, form]);
+  }, [isEditModalOpen, editForm]);
 
   // Map status for display and filter
   const mapStatus = (status) => {
@@ -147,20 +144,6 @@ const VaccinationRecords = () => {
       setDetailModalOpen(true);
     } catch (err) {
       message.error('Không thể lấy chi tiết hồ sơ tiêm chủng');
-    }
-  };
-
-  const handleClassChange = async (value) => {
-    form.setFieldsValue({ studentName: undefined });
-    try {
-      const res = await fetchStudentsByClass(value);
-      if (Array.isArray(res)) {
-        setStudentOptions(res);
-      } else {
-        setStudentOptions([]);
-      }
-    } catch {
-      setStudentOptions([]);
     }
   };
 

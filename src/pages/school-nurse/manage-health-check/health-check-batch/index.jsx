@@ -27,7 +27,7 @@ import './health-check-batch.css';
 import moment from 'moment';
 import { formatDateTime } from '../../../../utils/formatDate';
 import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck, createHealthConsentForMultipleClasses } from '../../../../api/healthCheckAPI';
-import { isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
+import { hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -44,7 +44,6 @@ const HealthCheckBatchManager = () => {
   const [filteredBatches, setFilteredBatches] = useState([]);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [loadingOptions, setLoadingOptions] = useState(false);
 
   // State for edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -64,7 +63,6 @@ const HealthCheckBatchManager = () => {
       setLoading(true);
       try {
         const data = await getHealthCheckSchedules();
-        const nurseName = localStorage.getItem('fullname') || 'Y tá';
         // Map dữ liệu API về đúng format UI nếu cần, fallback tên y tá nếu null
         const mapped = data.map(item => ({
           id: item.health_ScheduleID,
@@ -197,7 +195,6 @@ const HealthCheckBatchManager = () => {
     try {
       const values = await editForm.validateFields();
       const nowUpdate = new Date().toISOString();
-      const createdAt = selectedBatch.create_at;
     
       const nurseName = localStorage.getItem('fullname') || 'Y tá';
       const nurseID = Number(localStorage.getItem('userId') || "");
