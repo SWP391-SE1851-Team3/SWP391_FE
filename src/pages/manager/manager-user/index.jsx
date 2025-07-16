@@ -9,12 +9,17 @@ import {
     Col,
     message,
     Switch,
+    Upload,
+    Card,
+    Divider,
 } from "antd";
+import { UploadOutlined, FileExcelOutlined } from "@ant-design/icons";
 import {
     fetchUsersByRole,
     createUser,
     updateUser,
     deleteUser,
+    importStudentsFromExcel,
 } from "../../../api/manager_user";
 import "./managerUser.css";
 
@@ -39,6 +44,7 @@ const UserManagement = () => {
     const [roleId, setRoleId] = useState(1);
     const [loading, setLoading] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [uploadLoading, setUploadLoading] = useState(false);
     const [form] = Form.useForm();
     const formRef = useRef(null);
 
@@ -119,10 +125,53 @@ const UserManagement = () => {
         }
     };
 
+    // Xử lý upload file Excel
+    const handleExcelUpload = async (file) => {
+        setUploadLoading(true);
+        try {
+            const result = await importStudentsFromExcel(file);
+            message.success("Import file Excel thành công!");
+            reloadUsers(); // Reload lại danh sách users
+            return false; // Ngăn không cho upload file lên server
+        } catch (error) {
+            message.error("Import file Excel thất bại!");
+            return false;
+        } finally {
+            setUploadLoading(false);
+        }
+    };
+
+    // Validate file trước khi upload
+    const beforeUpload = (file) => {
+        const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                       file.type === 'application/vnd.ms-excel';
+        if (!isExcel) {
+            message.error('Chỉ có thể tải lên file Excel (.xlsx, .xls)!');
+            return false;
+        }
+        const isLt10M = file.size / 1024 / 1024 < 10;
+        if (!isLt10M) {
+            message.error('File phải nhỏ hơn 10MB!');
+            return false;
+        }
+        return true;
+    };
+
+    const uploadProps = {
+        name: 'file',
+        multiple: false,
+        accept: '.xlsx,.xls',
+        beforeUpload,
+        customRequest: ({ file }) => {
+            handleExcelUpload(file);
+        },
+        showUploadList: false,
+    };
+
     const columns = [
         { title: "ID", dataIndex: "id", width: 60 },
         { title: "Tên đăng nhập", dataIndex: "userName" },
-        { title: "Mật khẩu", dataIndex: "password" },
+        // { title: "Mật khẩu", dataIndex: "password" },
         { title: "Họ tên", dataIndex: "fullName" },
         { title: "Email", dataIndex: "email" },
         { title: "SĐT", dataIndex: "phone" },
@@ -287,6 +336,40 @@ const UserManagement = () => {
                     </Form.Item>
                 </Form>
             </div>
+
+            {/* Phần Import Excel - Đặt ở cuối cùng */}
+            <Divider style={{ margin: "40px 0" }} />
+            
+            <Card 
+                title={
+                    <span>
+                        <FileExcelOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                        Import danh sách học sinh từ Excel
+                    </span>
+                }
+                style={{ marginBottom: 20 }}
+                size="small"
+            >
+                <Row gutter={16} align="middle">
+                    <Col>
+                        <Upload {...uploadProps}>
+                            <Button 
+                                icon={<UploadOutlined />} 
+                                loading={uploadLoading}
+                                type="primary"
+                                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                            >
+                                {uploadLoading ? 'Đang xử lý...' : 'Chọn file Excel'}
+                            </Button>
+                        </Upload>
+                    </Col>
+                    <Col>
+                        <span style={{ color: '#666', fontSize: '14px' }}>
+                            Hỗ trợ file .xlsx, .xls (tối đa 10MB)
+                        </span>
+                    </Col>
+                </Row>
+            </Card>
         </div>
     );
 };

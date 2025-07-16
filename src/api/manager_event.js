@@ -1,32 +1,81 @@
 import axios from 'axios';
-const BASE_URL_Vaccine = "http://localhost:8080/api/vaccinebatches";
-const BASE_URL_HealthCheck = "http://localhost:8080/api/health-check-schedule";
+
+const BASE_URL_Vaccine = 'http://localhost:8080/api/vaccinebatches';
+const BASE_URL_HealthCheck = 'http://localhost:8080/api/health-check-schedule';
+
+// Create axios instance with authentication
+const apiClient = axios.create({
+  baseURL: 'http://localhost:8080/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to include token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Lấy danh sách các lô vaccine
-export async function getVaccineBatches() {
-  const res = await axios.get(BASE_URL_Vaccine);
-  return res.data;
-}
+export const getVaccineBatches = async () => {
+  try {
+    const response = await apiClient.get('/vaccinebatches');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching vaccine batches:', error);
+    throw error;
+  }
+};
 
 // Cập nhật trạng thái form
-export async function updateConsentFormStatus(id, status) {
-  const url = `${BASE_URL_Vaccine}/admin/consent-forms/${id}/status`;
-  const res = await axios.put(url, { status });
-  return res.data;
-}
+export const updateConsentFormStatus = async (id, status) => {
+  try {
+    const response = await apiClient.put(`/vaccinebatches/admin/consent-forms/${id}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating consent form status:', error);
+    throw error;
+  }
+};
 
-export async function getVaccineTypeById(id) {
-  const res = await axios.get(`http://localhost:8080/api/vaccine_types/${id}`);
-  return res.data;
-}
+// Lấy thông tin loại vaccine theo ID
+export const getVaccineTypeById = async (id) => {
+  try {
+    const response = await apiClient.get(`/vaccine_types/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching vaccine type by ID:', error);
+    throw error;
+  }
+};
 
-export async function getAllHealthCheck() {
-  const res = await axios.get(BASE_URL_HealthCheck);
-  return res.data;
-}
+// Lấy danh sách tất cả lịch khám sức khỏe
+export const getAllHealthCheck = async () => {
+  try {
+    const response = await apiClient.get('/health-check-schedule');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all health check schedules:', error);
+    throw error;
+  }
+};
 
-export async function updateHealthCheckStatus(id, status) {
-  const url = `${BASE_URL_HealthCheck}/${id}/status`;
-  const res = await axios.put(url, { status });
-  return res.data;
-}
+// Cập nhật trạng thái khám sức khỏe
+export const updateHealthCheckStatus = async (id, status) => {
+  try {
+    const response = await apiClient.put(`/health-check-schedule/${id}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating health check status:', error);
+    throw error;
+  }
+};
