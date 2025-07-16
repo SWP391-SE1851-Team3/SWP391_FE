@@ -33,34 +33,44 @@ function ManagerPage() {
         return {};
     };
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const params = getDateParams();
-            const response = await getFullReport(params);
-            const data = response.data || {};
-            setSystemStats(data.systemStats || {});
-            setMedicationStats(data.medicationStats || {});
-            setMedicalEventStats(data.medicalEventStats || {});
-            setVaccinationStats(data.vaccinationStats || {});
-            setHealthCheckStats(data.healthCheckStats || {});
-            notification.success({
-                message: 'Thành công',
-                description: 'Dữ liệu đã được cập nhật mới nhất.',
-                placement: 'topRight',
-                duration: 2
-            });
-        } catch (error) {
-            console.error("Error fetching dashboard data:", error);
-            notification.error({
-                message: 'Lỗi tải dữ liệu',
-                description: 'Không thể tải dữ liệu dashboard. Vui lòng thử lại.',
-                placement: 'topRight'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+const fetchData = async () => {
+    setLoading(true);
+    try {
+        const params = getDateParams();
+        console.log('Sending params:', params); // Debug
+        
+        const response = await getFullReport(params);
+        console.log('API Response:', response); // Debug để xem cấu trúc
+        
+        // Vì API trả về trực tiếp object chứa các stats, không cần .data
+        const data = response || {};
+        
+        console.log('Setting systemStats:', data.systemStats); // Debug
+        console.log('Setting medicationStats:', data.medicationStats); // Debug
+        
+        setSystemStats(data.systemStats || {});
+        setMedicationStats(data.medicationStats || {});
+        setMedicalEventStats(data.medicalEventStats || {});
+        setVaccinationStats(data.vaccinationStats || {});
+        setHealthCheckStats(data.healthCheckStats || {});
+        
+        notification.success({
+            message: 'Thành công',
+            description: 'Dữ liệu đã được cập nhật mới nhất.',
+            placement: 'topRight',
+            duration: 2
+        });
+    } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        notification.error({
+            message: 'Lỗi tải dữ liệu',
+            description: 'Không thể tải dữ liệu dashboard. Vui lòng thử lại.',
+            placement: 'topRight'
+        });
+    } finally {
+        setLoading(false);
+    }
+};
 
     useEffect(() => {
         fetchData();
