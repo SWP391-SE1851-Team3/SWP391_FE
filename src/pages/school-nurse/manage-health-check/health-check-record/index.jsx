@@ -179,11 +179,11 @@ const HealthCheckRecord = () => {
       {/* Filters */}
     
       <div className="health-check-records-filters">
-        <Input.Search
+        <Input
           placeholder="Tìm kiếm học sinh, loại khám..."
+          prefix={<SearchOutlined />}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          onSearch={value => setSearchTerm(value)}
           style={{ width: 300 }}
           allowClear
         />

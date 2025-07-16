@@ -6,7 +6,8 @@ import {
   TeamOutlined, 
   EditOutlined, 
   DeleteOutlined, 
-  SendOutlined 
+  SendOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { 
   Button, 
@@ -446,11 +447,11 @@ const VaccinationScheduleManager = () => {
       </div>
 
       <div className="vaccination-schedule-filters">
-        <Input.Search
+        <Input
           placeholder="Tìm kiếm đợt tiêm..."
+          prefix={<SearchOutlined />}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          onSearch={value => setSearchTerm(value)}
           style={{ width: 300 }}
           allowClear
         />

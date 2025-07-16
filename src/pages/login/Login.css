@@ -1,230 +1,320 @@
 .login-container {
-    display: flex;
-    min-height: 100vh;
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(46, 125, 50, 0.8)),
-        url("src/assets/logo.jpg") center/cover no-repeat;
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(46, 125, 50, 0.8)),
+      url("src/assets/logo.jpg") center/cover no-repeat;
 }
 
+/* ==================== SIDEBAR ==================== */
 .login-sidebar {
-    width: 45%;
-    background-color: rgba(46, 125, 50, 0.95); /* Tăng độ đậm của background */
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    color: white;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); /* Thêm đổ bóng */
-
+  width: 45%;
+  background-color: rgba(46, 125, 50, 0.95);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
 }
+
 .login-sidebar img {
   border-radius: 50%;
-  height: 120px; /* Tăng kích thước logo */
-  width: 120px;
+  height: 80px;
+  width: 80px;
   display: block; 
-  margin: 0 auto; 
-  margin-bottom: 25px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Thêm đổ bóng cho logo */
-  border: 4px solid rgba(255, 255, 255, 0.8); /* Thêm viền trắng */
-  transition: transform 0.3s ease; /* Hiệu ứng hover */
-  /* Thêm opacity ban đầu là 0 để tạo hiệu ứng fade in */
+  margin: 0 auto 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  transition: transform 0.3s ease;
   opacity: 0;
-  /* Thời gian animation nhanh hơn các phần tử khác */
   animation: slideUp 0.5s ease forwards;
-  /* Logo sẽ xuất hiện đầu tiên */
-  animation-delay: 0s;
 }
 
 .login-sidebar img:hover {
-    transform: scale(1.05); /* Hiệu ứng phóng to khi hover */
+  transform: scale(1.05);
 }
 
 .login-sidebar h1 {
   text-align: center;
-  font-size: 28px; /* Tăng kích thước chữ */
-  font-weight: 700; /* Làm đậm chữ */
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Thêm đổ bóng cho chữ */
-  margin-bottom: 25px;
-  color: white;
+  font-size: 22px;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  margin-bottom: 15px;
 }
 
 .login-sidebar p {
   text-align: center;
-  font-size: 1.1rem;
-  line-height: 1.8;
-  color: white;
+  font-size: 0.95rem;
+  line-height: 1.5;
   max-width: 90%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto 15px;
   opacity: 0.9;
 }
 
 .features-list {
-    list-style: none;
-    padding: 0;
-    margin: 2px auto;
-    max-width: 90%;
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 90%;
 }
 
 .features-list li {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-    font-size: 1rem;
-    padding: 4px 5px;
-    transition: transform 0.3s ease, background 0.3s ease;
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  padding: 2px 5px;
+  transition: transform 0.3s ease, background 0.3s ease;
 }
 
 .features-list li:hover {
-    transform: translateX(10px); /* Hiệu ứng di chuyển khi hover */
-    background: rgba(255, 255, 255, 0.2);
+  transform: translateX(10px);
+  background: rgba(255, 255, 255, 0.2);
 }
 
+/* ==================== FORM CONTAINER - ULTRA COMPACT ==================== */
 .login-form-container {
-    width: 55%;
-    background-color: white;
-    padding: 1px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    /* Thêm các thuộc tính sau để căn giữa */
-    margin: auto;
-    height: 100vh; /* Chiều cao 100% viewport */
+  width: 55%;
+  background-color: white;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
 .logo-container {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Thêm justify-content */
-    margin-bottom: 40px;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px; /* Giảm từ 30px xuống 15px */
+  width: 100%;
 }
 
 .logo-container img {
-    width: 60px;
-    height: 60px;
-    margin-right: 15px;
+  width: 40px; /* Giảm từ 50px xuống 40px */
+  height: 40px;
+  margin-right: 8px; /* Giảm từ 12px xuống 8px */
+  border-radius: 50%;
 }
 
 .logo-container span {
-    font-size: 24px;
-    font-weight: 700;
-    color: #2e7d32;
-}
-
-.login-form {
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-
-.input-with-icon {
-    display: flex;
-    align-items: center;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 1px 16px 0px 14px;
-    width: fit-content;
-    position: relative;
-}
-
-.input-with-icon .icon {
-    margin-right: 8px;
-}
-
-.input-with-icon input {
-    width: 100%;
-    padding: 7px 145px 7px 9px;
-    border: none;
-    outline: none;
-    font-size: 16px;
-    transition: 0.3s;
-}
-
-.input-with-icon:focus-within {
-    border-color: #2e7d32;
-    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
-}
-
-.input-with-icon .material-icons {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.password-toggle {
-  position: absolute;
-  right: 1px;
-  top: 60%;
-  transform: translateY(-50%);
-  cursor: pointer;
-}
-
-.password-toggle:hover {
+  font-size: 18px; /* Giảm từ 20px xuống 18px */
+  font-weight: 700;
   color: #2e7d32;
 }
 
-.remember-forgot {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+.login-form {
+  width: 100%;
+  max-width: 350px; /* Giảm từ 380px xuống 350px */
+  margin: 0 auto;
+  padding: 8px; /* Giảm từ 15px xuống 8px */
 }
 
+/* ==================== ULTRA COMPACT ANT DESIGN ==================== */
+.login-form .ant-form {
+  width: 100%;
+}
 
+.login-form .ant-form-item {
+  width: 100%;
+  margin-bottom: 8px !important; /* Giảm mạnh từ 16px xuống 8px */
+}
+
+.login-form .ant-form-item-label {
+  padding-bottom: 2px !important; /* Giảm từ 4px xuống 2px */
+  margin-bottom: 0 !important;
+}
+
+.login-form .ant-form-item-label > label {
+  font-weight: 600;
+  font-size: 13px !important; /* Giảm từ 14px xuống 13px */
+  color: #333;
+  margin-bottom: 2px !important;
+  line-height: 1.2 !important;
+}
+
+/* Ultra Compact Input */
+.login-form .ant-input,
+.login-form .ant-input-affix-wrapper,
+.login-form .ant-select .ant-select-selector {
+  width: 100% !important;
+  height: 36px !important; /* Giảm từ 40px xuống 36px */
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 4px !important;
+  font-size: 13px !important; /* Giảm từ 14px xuống 13px */
+  transition: all 0.3s !important;
+  box-sizing: border-box !important;
+}
+
+.login-form .ant-input-affix-wrapper {
+  padding: 0 8px !important; /* Giảm từ 10px xuống 8px */
+  display: flex !important;
+  align-items: center !important;
+}
+
+.login-form .ant-input-affix-wrapper input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 4px !important; /* Giảm từ 6px xuống 4px */
+  flex: 1 !important;
+  height: auto !important;
+  font-size: 13px !important;
+}
+
+/* Focus & Hover States */
+.login-form .ant-input:focus,
+.login-form .ant-input-affix-wrapper:focus,
+.login-form .ant-input-focused,
+.login-form .ant-input-affix-wrapper-focused,
+.login-form .ant-select-focused .ant-select-selector {
+  border-color: #2e7d32 !important;
+  box-shadow: 0 0 0 1px rgba(46, 125, 50, 0.15) !important; /* Giảm shadow */
+}
+
+.login-form .ant-input:hover,
+.login-form .ant-input-affix-wrapper:hover,
+.login-form .ant-select:hover .ant-select-selector {
+  border-color: #2e7d32 !important;
+}
+
+/* Select Ultra Compact */
+.login-form .ant-select .ant-select-selector {
+  padding: 0 8px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.login-form .ant-select .ant-select-selection-item,
+.login-form .ant-select .ant-select-selection-placeholder {
+  line-height: 36px !important;
+  font-size: 13px !important;
+  padding: 0 !important;
+}
+
+/* Ultra Compact Icons */
+.login-form .ant-input-prefix {
+  color: #8c8c8c;
+  margin-right: 4px !important; /* Giảm từ 6px xuống 4px */
+  font-size: 12px !important; /* Giảm size icon */
+}
+
+.login-form .ant-input-password-icon {
+  color: #8c8c8c !important;
+  transition: color 0.3s !important;
+  font-size: 12px !important;
+}
+
+.login-form .ant-input-password-icon:hover {
+  color: #2e7d32 !important;
+}
+
+/* Ultra Compact Checkbox */
+.login-form .ant-checkbox-wrapper {
+  font-size: 12px !important; /* Giảm từ 13px xuống 12px */
+  line-height: 1.3;
+}
+
+.login-form .ant-checkbox {
+  margin-right: 4px; /* Giảm margin */
+}
+
+.login-form .ant-checkbox .ant-checkbox-inner {
+  width: 14px !important; /* Giảm size checkbox */
+  height: 14px !important;
+}
+
+.login-form .ant-checkbox-checked .ant-checkbox-inner,
+.login-form .ant-checkbox:hover .ant-checkbox-inner {
+  background-color: #2e7d32;
+  border-color: #2e7d32;
+}
+
+/* Ultra Compact Button */
+.login-btn {
+  width: 100% !important;
+  height: 36px !important; /* Giảm từ 40px xuống 36px */
+  background-color: #2e7d32 !important;
+  border-color: #2e7d32 !important;
+  border-radius: 4px !important;
+  font-size: 14px !important; /* Giữ font-size button lớn hơn một chút */
+  font-weight: 500 !important;
+  transition: all 0.3s !important;
+  margin-top: 4px !important; /* Giảm mạnh từ 8px xuống 4px */
+}
+
+.login-btn:hover,
+.login-btn:focus {
+  background-color: #1b5e20 !important;
+  border-color: #1b5e20 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.2) !important;
+}
+
+/* Ultra Compact Forgot Password */
 .forgot-password {
-    color: #2e7d32;
-    text-decoration: none;
-    font-size: 14px;
+  color: #2e7d32 !important;
+  text-decoration: none !important;
+  font-size: 12px !important; /* Giảm từ 13px xuống 12px */
+  line-height: 1.2;
 }
 
 .forgot-password:hover {
-    text-decoration: underline;
+  color: #1b5e20 !important;
+  text-decoration: underline !important;
 }
 
-.login-btn {
-    width: 100%;
-    padding: 15px;
-    background-color: #2e7d32;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.3s;
-    margin-bottom: 20px;
+/* Error States Ultra Compact */
+.login-form .ant-form-item-has-error .ant-input,
+.login-form .ant-form-item-has-error .ant-input-affix-wrapper,
+.login-form .ant-form-item-has-error .ant-select .ant-select-selector {
+  border-color: #ff4d4f !important;
+  box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.15) !important;
 }
 
-.login-btn:hover {
-    background-color: #1b5e20;
+.login-form .ant-form-item-explain-error {
+  font-size: 11px !important; /* Giảm error message */
+  margin-top: 1px !important;
+  line-height: 1.2;
 }
 
+/* Ultra Compact Remember & Forgot Container */
+.login-form .ant-form-item:has(.ant-checkbox-wrapper) {
+  margin-bottom: 6px !important; /* Giảm mạnh */
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.login-form .ant-form-item:has(.ant-checkbox-wrapper) .ant-form-item-control {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Tối ưu spacing giữa checkbox và forgot password */
+.login-form .ant-form-item-control-input-content {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* ==================== ANIMATIONS ==================== */
 .slide-up {
   opacity: 0;
-  transform: translateY(20px);
-  animation: slideUp 0.5s ease forwards;
+  transform: translateY(10px); /* Giảm animation distance */
+  animation: slideUp 0.3s ease forwards; /* Giảm animation time */
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -232,68 +322,170 @@
   }
 }
 
-/* Delay classes for staggered animation */
-.delay-1 {
-  animation-delay: 0.2s;
-}
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
 
-.delay-2 {
-  animation-delay: 0.4s;
-}
-
-.delay-3 {
-  animation-delay: 0.6s;
-}
-
-.delay-4 {
-  animation-delay: 0.8s;
-}
-
-.delay-5 {
-  animation-delay: 1s;
-}
-
-.delay-6 {
-  animation-delay: 1.2s;
-}
-
-/* Căn chỉnh label và input cho form login */
-.ant-form-item-label > label {
-  font-weight: 600;
-  font-size: 15px;
-  color: #333;
-}
-
-.ant-input-affix-wrapper {
-  height: 42px;
-  align-items: center;
-}
-
-.ant-input-affix-wrapper input {
-  font-size: 15px;
-}
-
+/* ==================== RESPONSIVE ==================== */
 @media (max-width: 900px) {
-    .login-container {
-        flex-direction: column;
-    }
+  .login-container {
+    flex-direction: column;
+  }
 
-    .login-sidebar,
-    .login-form-container {
-        width: 100%;
-        padding: 30px 20px;
-    }
+  .login-sidebar,
+  .login-form-container {
+    width: 100%;
+    padding: 15px 10px; /* Giảm padding */
+  }
 
-    .login-sidebar {
-        order: 2;
-        text-align: center;
-    }
+  .login-sidebar {
+    order: 2;
+    text-align: center;
+  }
 
-    .features-list li {
-        justify-content: center;
-    }
+  .login-form-container {
+    order: 1;
+    height: auto;
+    min-height: 100vh;
+  }
 
-    .login-form-container {
-        order: 1;
-    }
+  .login-form {
+    max-width: 100%;
+    padding: 5px; /* Giảm padding mobile */
+  }
+
+  .logo-container {
+    margin-bottom: 12px; /* Giảm margin mobile */
+  }
+
+  .logo-container span {
+    font-size: 16px;
+  }
+
+  .features-list li {
+    justify-content: center;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+  }
+
+  /* Mobile Ultra Compact */
+  .login-form .ant-input,
+  .login-form .ant-input-affix-wrapper,
+  .login-form .ant-select .ant-select-selector {
+    height: 38px !important; /* Slightly taller for mobile touch */
+    font-size: 14px !important; /* Prevent zoom on iOS */
+  }
+
+  .login-form .ant-form-item {
+    margin-bottom: 6px !important; /* Extra compact cho mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .login-form-container {
+    padding: 10px 8px;
+  }
+  
+  .login-form {
+    padding: 3px;
+  }
+  
+  .logo-container {
+    margin-bottom: 8px;
+  }
+  
+  .logo-container span {
+    font-size: 14px;
+  }
+
+  .logo-container img {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+/* ==================== UTILITY ==================== */
+.login-form * {
+  box-sizing: border-box;
+}
+
+.login-form .ant-form-item-control-input-content > * {
+  width: 100% !important;
+}
+
+/* Remove default margins */
+.login-form .ant-form-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Ensure tight spacing */
+.login-form .ant-form-item-control {
+  line-height: 1.2;
+}
+
+/* ẨN VIỀN XANH FOCUS CỦA ANT DESIGN INPUT */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  box-shadow: none !important;
+  border-color: #d9d9d9 !important;
+  outline: none !important;
+}
+
+/* Đảm bảo Input Ant Design chỉ có 1 đường viền ngoài, không double border */
+.ant-input-affix-wrapper,
+.ant-input-search {
+  border: 1px solid #d9d9d9 !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  margin: 5px;
+  padding: 0 10px !important; /* Giảm padding để không bị double border */
+}
+
+/* Xóa border của .ant-input khi nằm trong affix-wrapper hoặc search để tránh double border */
+.ant-input-affix-wrapper .ant-input,
+.ant-input-search .ant-input {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Khi focus chỉ viền ngoài đổi màu */
+.ant-input-affix-wrapper-focused,
+.ant-input-search-focused {
+  border-color: #1677ff !important;
+  box-shadow: 0 0 0 2px rgba(22,119,255,0.2) !important;
+}
+
+/* Đảm bảo input group cũng không double border */
+.ant-input-group .ant-input {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.ant-input-group {
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+} 
+
+/* Đảm bảo icon trong input căn giữa */
+.ant-input-prefix,
+.ant-input-suffix {
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Riêng search input (có icon) */
+.ant-input-search .ant-input,
+.ant-input-search .ant-input-affix-wrapper {
+  height: 40px !important;
+  min-height: 40px;
+  line-height: 40px !important;
+  border-radius: 8px;
 }

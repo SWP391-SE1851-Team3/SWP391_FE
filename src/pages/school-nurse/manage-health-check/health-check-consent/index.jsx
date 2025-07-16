@@ -73,11 +73,11 @@ const HealthCheckConsent = () => {
         <Col span={6}><Card><Statistic title="Đã từ chối" value={stats.rejected} valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
       </Row>
       <div className="health-check-consent-filters">
-        <Input.Search
+        <Input
           placeholder="Tìm kiếm học sinh, phụ huynh..."
+          prefix={<SearchOutlined />}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          onSearch={value => setSearchTerm(value)}
           style={{ width: 300 }}
           allowClear
         />

@@ -16,22 +16,27 @@ const MedicineHistory = ({ parentId }) => {
   // Debug log
   console.log('parentId in MedicineHistory:', parentId);
   console.log('history:', history);
+useEffect(() => {
+  if (!parentId) {
+    setHistory([]);
+    return;
+  }
 
-  useEffect(() => {
-    if (!parentId) {
+  setHistoryLoading(true);
+  getMedicationSubmissionsByParentId(parentId)
+    .then(res => {
+      console.log('Full API response:', res); // Debug log
+      // Thay đổi này - response trực tiếp là array
+      const rawHistory = res || []; // Thay vì res.data
+      console.log('Processed history:', rawHistory);
+      setHistory(rawHistory);
+    })
+    .catch((error) => {
+      console.error('API Error:', error);
       setHistory([]);
-      return;
-    }
-
-    setHistoryLoading(true);
-    getMedicationSubmissionsByParentId(parentId)
-      .then(res => {
-        const rawHistory = res.data || [];
-        setHistory(rawHistory);
-      })
-      .catch(() => setHistory([]))
-      .finally(() => setHistoryLoading(false));
-  }, [parentId]);
+    })
+    .finally(() => setHistoryLoading(false));
+}, [parentId]);
 
   const handleViewDetail = (idx) => {
     setDetailModal({
@@ -58,15 +63,7 @@ const MedicineHistory = ({ parentId }) => {
         </div>
       ) : (
         <>
-          {/* Test đơn giản để check dữ liệu */}
-          {history.length > 0 && (
-            <div>
-              <b>Test render:</b>
-              {history.map((item, idx) => (
-                <div key={idx}>{item.studentName}</div>
-              ))}
-            </div>
-          )}
+
           {/* Code cũ giữ nguyên */}
           {history.map((item, idx) => (
             <div

@@ -81,11 +81,11 @@ const HealthConsultation = () => {
       </Row>
      
       <div className="health-consultation-filters">
-        <Input.Search
+        <Input
           placeholder="Tìm kiếm học sinh, lý do tư vấn..."
+          prefix={<SearchOutlined />}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          onSearch={value => setSearchTerm(value)}
           style={{ width: 300 }}
           allowClear
         />
