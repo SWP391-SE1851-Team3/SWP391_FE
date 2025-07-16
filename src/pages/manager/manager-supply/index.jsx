@@ -99,9 +99,10 @@ const SupplyManagement = () => {
 
     const handleEdit = (record) => {
         setEditingSupply(record);
+
         form.setFieldsValue({
             supplyName: record.supplyName,
-            categoryId: String(record.categoryId || ""),
+            categoryId: String(record.categoryID || record.categoryId),
             unit: record.unit,
             quantityAvailable: record.quantityAvailable,
             reorderLevel: record.reorderLevel,
@@ -114,9 +115,9 @@ const SupplyManagement = () => {
         }, 100);
     };
 
-    const handleDelete = async (medicalSupplyID) => {
+    const handleDelete = async (supplyId) => {
         try {
-            await deleteMedicalSupply(medicalSupplyID);
+            await deleteMedicalSupply(supplyId);
             message.success("Xóa thành công!");
             reloadSupplies();
         } catch {
@@ -138,7 +139,7 @@ const SupplyManagement = () => {
 
         try {
             if (editingSupply) {
-                await updateMedicalSupply(editingSupply.medicalSupplyID, payload);
+                await updateMedicalSupply(editingSupply.supplyId, payload);
                 message.success("Cập nhật thành công!");
             } else {
                 await createMedicalSupply(payload);
@@ -196,7 +197,7 @@ const SupplyManagement = () => {
                     </Button>
                     <Popconfirm
                         title="Bạn chắc chắn muốn xóa?"
-                        onConfirm={() => handleDelete(record.medicalSupplyID)}
+                        onConfirm={() => handleDelete(record.supplyId)}
                         okText="Xóa"
                         cancelText="Hủy"
                         size="middle"
@@ -255,7 +256,7 @@ const SupplyManagement = () => {
             <Table
                 dataSource={supplies}
                 columns={columns}
-                rowKey={(r) => r.medicalSupplyID || r.id || r.supplyName}
+                rowKey={(r) => r.supplyId}
                 loading={loading}
                 pagination={false}
                 style={{ marginTop: 20 }}

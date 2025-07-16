@@ -42,9 +42,9 @@ export const viewConsentForm = async (studentId) => {
   }
 };
 
-export const submitConsentForm = async (formData) => {
+export const submitConsentForm = async (formData, id) => {
   try {
-    const response = await apiClient.post('/Consent_forms/consent-forms/parent-confirm', formData);
+    const response = await apiClient.put(`/api/Consent_forms/Consent_forms/parent-response/${id}`, formData);
     console.log('Submitted Consent Form:', response.data);
     return response.data;
   } catch (error) {
