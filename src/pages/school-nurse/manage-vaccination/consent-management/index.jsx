@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   SendOutlined, 
-  EyeOutlined
+  EyeOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { 
   Button, 
@@ -195,10 +196,11 @@ const ConsentManagement = () => {
 
       {/* Filters */}
       <div className="consent-management-filters">
-        <Input.Search
+        <Input
           placeholder="Tìm kiếm học sinh, phụ huynh..."
+          prefix={<SearchOutlined />}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           style={{ width: 300 }}
           allowClear
         />

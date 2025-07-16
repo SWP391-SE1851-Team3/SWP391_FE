@@ -7,7 +7,8 @@ import {
   EditOutlined, 
   DeleteOutlined, 
   SendOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import { 
   Button, 
@@ -350,11 +351,11 @@ const HealthCheckBatchManager = () => {
       </div>
 
       <div className="health-check-batch-filters">
-        <Input.Search
+        <Input
           placeholder="Tìm kiếm đợt khám..."
+          prefix={<SearchOutlined />}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          onSearch={value => setSearchTerm(value)}
           style={{ width: 300 }}
           allowClear
         />
