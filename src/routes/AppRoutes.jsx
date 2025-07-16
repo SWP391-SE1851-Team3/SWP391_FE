@@ -33,7 +33,7 @@ const AppRoutes = () => {
         {/* Protected routes */}
         <Route path="parent" element={
           <PrivateRoute allowedRoles={[1]}>
-            <ParentPage />
+            <Home/>
           </PrivateRoute>
         } />
 

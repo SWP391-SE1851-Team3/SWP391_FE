@@ -36,10 +36,11 @@ const ROLE_MENUS = {
     { key: 'manage-health-check', label: 'Kiểm tra y tế', path: '/manage-health-check', icon: <HeartOutlined /> },
   ],
   3: [
-    { key: 'home', label: 'Trang chủ', path: '/', icon: <HomeOutlined /> },
-    { key: 'user-management', label: 'Quản lý người dùng', path: '/users', icon: <TeamOutlined /> },
-    { key: 'school-management', label: 'Quản lý trường học', path: '/schools', icon: <UserOutlined /> },
-    { key: 'system-settings', label: 'Cài đặt hệ thống', path: '/settings', icon: <SettingOutlined /> },
+    { key: 'home', label: 'Trang chủ', path: '/' },
+    { key: 'user-management', label: 'Quản Lý Người Dùng', path: '/manager-users' },
+    { key: 'supplies-management', label: 'Quản Lý Vật Tư', path: '/manager-supply' },
+    { key: 'manage-dashboard', label: 'Biểu Đồ Báo Cáo', path: '/manager-dashboard' },
+    { key: 'manager-event', label: 'Quản Lý Sự Kiện', path: '/manager-event' },
   ]
 };
 

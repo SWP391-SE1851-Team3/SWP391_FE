@@ -200,7 +200,7 @@ function VaccineApprovalPage() {
                     <div>Ngày tạo: {batch.created_at ? new Date(batch.created_at).toLocaleDateString() : "Không rõ"}</div>
                     <div>Ngày tiêm dự kiến: {batch.scheduled_date ? new Date(batch.scheduled_date).toLocaleDateString() : "Không rõ"}</div>
                     <div>Địa điểm: {batch.location || "Không rõ"}</div>
-                    <div>Số lượng: {(batch.quantity_received || 0) + " liều vắc xin"}</div>
+                    {/* <div>Số lượng: {(batch.quantity_received || 0) + " liều vắc xin"}</div> */}
                     <div>Ghi chú: {batch.notes || "Không có"}</div>
                     <div style={{ marginTop: 12 }}>
                       <Button
@@ -246,7 +246,7 @@ function VaccineApprovalPage() {
                     <div>Ngày tạo: {batch.created_at ? new Date(batch.created_at).toLocaleDateString() : "Không rõ"}</div>
                     <div>Ngày tiêm dự kiến: {batch.scheduled_date ? new Date(batch.scheduled_date).toLocaleDateString() : "Không rõ"}</div>
                     <div>Địa điểm: {batch.location || "Không rõ"}</div>
-                    <div>Số lượng: {(batch.quantity_received || 0) + " liều vắc xin"}</div>
+                    {/* <div>Số lượng: {(batch.quantity_received || 0) + " liều vắc xin"}</div> */}
                     <div>Ghi chú: {batch.notes || "Không có"}</div>
                   </div>
                 ))

@@ -20,9 +20,8 @@ const Login = () => {
       // Convert role number to string for API
       const roleMap = {
         1: 'PARENT',
-        // 2: 'NURSE', 
-        // 3: 'ADMIN'
-        2: 'NURSE'
+        2: 'NURSE', 
+        3: 'ADMIN'
       };
       
       const response = await loginByRole(
@@ -71,10 +70,10 @@ const Login = () => {
           navigate('/school-nurse');
           window.location.reload();
           break;
-        // case 3:
-        //   navigate('/manager');
-        //   window.location.reload();
-        //   break;
+        case 3:
+          navigate('/manager');
+          window.location.reload();
+          break;
         default:
           message.warning('Vai trò không hợp lệ!');
           break;
@@ -142,7 +141,7 @@ const Login = () => {
               <Select placeholder="Chọn vai trò">
                 <Select.Option value={1}>Phụ huynh</Select.Option>
                 <Select.Option value={2}>Nhân viên y tế</Select.Option>
-                {/* <Select.Option value={3}>Quản lý</Select.Option> */}
+                <Select.Option value={3}>Quản lý</Select.Option>
               </Select>
             </Form.Item>
 
