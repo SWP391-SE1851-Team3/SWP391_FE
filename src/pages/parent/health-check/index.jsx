@@ -379,63 +379,76 @@ const ParentHealthCheck = () => {
   });
 };
 
-  const renderDetailModal = () => (
-    <Modal
-      title="Chi tiết kết quả kiểm tra sức khỏe"
-      open={showDetailModal}
-      onCancel={() => setShowDetailModal(false)}
-      footer={[
-        <Button key="close" onClick={() => setShowDetailModal(false)}>
-          Đóng
-        </Button>
-      ]}
-      width={600}
-    >
-      {selectedResult && (
-        <div className="result-detail">
-          <div className="detail-row">
-            <strong>Học sinh:</strong> {selectedResult.fullName}
-          </div>
-          <div className="detail-row">
-            <strong>Lớp:</strong> {selectedResult.className}
-          </div>
-          <div className="detail-row">
-            <strong>Chiều cao:</strong> {selectedResult.height || "N/A"} cm
-          </div>
-          <div className="detail-row">
-            <strong>Cân nặng:</strong> {selectedResult.weight || "N/A"} kg
-          </div>
-          <div className="detail-row">
-            <strong>BMI:</strong> {selectedResult.bmi || "N/A"}
-          </div>
-          <div className="detail-row">
-            <strong>Nhiệt độ:</strong> {selectedResult.temperature || "N/A"}°C
-          </div>
-          <div className="detail-row">
-            <strong>Thị lực trái:</strong> {selectedResult.visionLeft || "N/A"}
-          </div>
-          <div className="detail-row">
-            <strong>Thị lực phải:</strong> {selectedResult.visionRight || "N/A"}
-          </div>
-          <div className="detail-row">
-            <strong>Thính giác:</strong> {selectedResult.hearing || "N/A"}
-          </div>
-          <div className="detail-row">
-            <strong>Răng miệng:</strong> {selectedResult.dentalCheck || "N/A"}
-          </div>
-          <div className="detail-row">
-            <strong>Kết quả tổng thể:</strong> {selectedResult.overallResult || "N/A"}
-          </div>
-          <div className="detail-row">
-            <strong>Ngày tạo:</strong> {formatDateTime(selectedResult.create_at)}
-          </div>
-          <div className="detail-row">
-            <strong>Y tá:</strong> {selectedResult.createdByNurseName || "N/A"}
-          </div>
+const renderDetailModal = () => (
+  <Modal
+    title="Chi tiết kết quả kiểm tra sức khỏe"
+    open={showDetailModal}
+    onCancel={() => setShowDetailModal(false)}
+    footer={[
+      <Button key="close" type="primary" onClick={() => setShowDetailModal(false)}>
+        Đóng
+      </Button>
+    ]}
+    width={600}
+  >
+    {selectedResult && (
+      <div className="result-detail">
+        <div className="detail-row">
+          <strong>Học sinh:</strong> 
+          <span>{selectedResult.fullName}</span>
         </div>
-      )}
-    </Modal>
-  );
+        <div className="detail-row">
+          <strong>Lớp:</strong> 
+          <span>{selectedResult.className}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Chiều cao:</strong> 
+          <span>{selectedResult.height || "N/A"} {selectedResult.height ? "cm" : ""}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Cân nặng:</strong> 
+          <span>{selectedResult.weight || "N/A"} {selectedResult.weight ? "kg" : ""}</span>
+        </div>
+        <div className="detail-row">
+          <strong>BMI:</strong> 
+          <span>{selectedResult.bmi || "N/A"}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Nhiệt độ:</strong> 
+          <span>{selectedResult.temperature || "N/A"}{selectedResult.temperature ? "°C" : ""}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Thị lực trái:</strong> 
+          <span>{selectedResult.visionLeft || "N/A"}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Thị lực phải:</strong> 
+          <span>{selectedResult.visionRight || "N/A"}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Thính giác:</strong> 
+          <span>{selectedResult.hearing || "N/A"}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Răng miệng:</strong> 
+          <span>{selectedResult.dentalCheck || "N/A"}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Kết quả tổng thể:</strong> 
+          <span>{selectedResult.overallResult || "N/A"}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Ngày tạo:</strong> 
+          <span>{formatDateTime(selectedResult.create_at)}</span>
+        </div>
+        <div className="detail-row">
+          <strong>Y tá:</strong> 
+          <span>{selectedResult.createdByNurseName || "N/A"}</span>
+        </div>
+      </div>
+    )}
+  </Modal>
+);
 
   return (
     <div className="health-check-container">

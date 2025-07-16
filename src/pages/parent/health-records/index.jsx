@@ -81,7 +81,7 @@ const StudentHealthRecord = () => {
   // Xử lý lưu hồ sơ mới
   const handleSave = async (values) => {
     setLoading(true);
-    try {
+try {
       await createStudentHealthProfile({
         studentId: selectedStudentId,
         ...values
@@ -170,7 +170,7 @@ const StudentHealthRecord = () => {
                   <Input placeholder="Ví dụ: 6/10" />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+<Col span={12}>
                 <Form.Item name="visionRight" label="Phải" rules={[{ required: true, message: 'Nhập thị lực mắt phải' }]}>
                   <Input placeholder="Ví dụ: 7/10" />
                 </Form.Item>

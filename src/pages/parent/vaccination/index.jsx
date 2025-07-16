@@ -139,26 +139,34 @@ const ParentVaccineConfirmation = () => {
       return;
     }
 
-  const payload = {
-    isAgree: values.isAgree || "",
-    reason: values.isAgree === "Không đồng ý" ? (values.reason || "").trim() : '',
-    hasAllergy: (values.hasAllergy || "").trim()
-  };
+    // Sửa đổi logic xử lý reason
+    let reasonValue = "";
+    if (values.isAgree === "Không đồng ý") {
+      reasonValue = values.reason?.trim() || "none";
+    } else {
+      reasonValue = "none";
+    }
+
+    const payload = {
+      isAgree: values.isAgree || "",
+      reason: reasonValue,
+      hasAllergy: (values.hasAllergy || "").trim() || "none"
+    };
 
     setSubmitting(true);
     try {
-    await submitConsentForm(payload, formId);
-    message.success('Gửi xác nhận thành công!');
+      await submitConsentForm(payload, formId);
+      message.success('Gửi xác nhận thành công!');
 
-    setConsentForm({
-      ...consentForm,
-      isAgree: values.isAgree,
-      reason: values.reason || "",
-      hasAllergy: values.hasAllergy || ""
-    });
+      setConsentForm({
+        ...consentForm,
+        isAgree: values.isAgree,
+        reason: values.reason || "",
+        hasAllergy: values.hasAllergy || ""
+      });
 
-    setHasPendingForm(false);
-    form.resetFields();
+      setHasPendingForm(false);
+      form.resetFields();
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Gửi xác nhận thất bại!';
       message.error(errorMessage);
