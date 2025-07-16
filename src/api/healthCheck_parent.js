@@ -44,12 +44,17 @@ export const getHealthConsentByFormId = async (formId) => {
 
 export const updateHealthConsent = async (formId, isAgreed, notes = '') => {
   try {
-    const response = await apiClient.put(`/health-consent/${formId}`, null, {
-      params: {
-        isAgreed: isAgreed,
-        notes: notes
+    const requestBody = {
+      isAgreed: isAgreed,
+      notes: notes
+    };
+    
+    const response = await apiClient.put(`/health-consent/${formId}`, requestBody, {
+      headers: {
+        'Content-Type': 'application/json'
       }
     });
+    
     console.log('Updated Health Consent:', response.data);
     return response.data;
   } catch (error) {

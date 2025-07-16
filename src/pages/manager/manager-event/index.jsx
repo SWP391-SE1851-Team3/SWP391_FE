@@ -94,7 +94,7 @@ function VaccineApprovalPage() {
   const handleApproveVaccine = async (batchId) => {
     setProcessingVaccineId(batchId);
     try {
-      await updateConsentFormStatus(batchId, "Đồng Ý");
+      await updateConsentFormStatus(batchId, "Đã xác nhận");
       message.success("Xác nhận thành công!");
       const data = await getVaccineBatches();
       // Sort the updated data by created_at
