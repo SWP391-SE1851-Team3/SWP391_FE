@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './login.css';
 import { Form, Input, Button, Checkbox, Typography, message, Select } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
@@ -12,7 +12,29 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  
+ 
+
+  useEffect(() => {
+    // Nếu đã đăng nhập, điều hướng về trang phù hợp với vai trò
+    const token = localStorage.getItem('token');
+    const role = Number(localStorage.getItem('role'));
+    if (token) {
+      switch (role) {
+        case 1:
+          navigate('/parent', { replace: true });
+          break;
+        case 2:
+          navigate('/school-nurse', { replace: true });
+          break;
+        case 3:
+          navigate('/manager', { replace: true });
+          break;
+        default:
+          navigate('/', { replace: true });
+          break;
+      }
+    }
+  }, [navigate]);
 
   const onFinish = async (values) => {
     setLoading(true);
@@ -31,8 +53,6 @@ const Login = () => {
       );
       const data = response?.data;
 
-      console.log('🔍 Login response data:', data); // Debug log
-
       if (!data || !data.token) {
         message.error('Đăng nhập thất bại!');
         return;
@@ -46,33 +66,26 @@ const Login = () => {
         roles
       } = data;
 
-
-      // Điều hướng theo vai trò
       const userRole = values.role; // Use the original role number for navigation
 
-      // Lưu thông tin người dùng vào localStorage
-      localStorage.setItem('email', responseEmail || values.email); // Use response email or form email
+      localStorage.setItem('email', responseEmail || values.email); 
       localStorage.setItem('fullname', fullName || '');
       localStorage.setItem('userId', id || '');
       localStorage.setItem('token', token || '');
       localStorage.setItem('roles', JSON.stringify(roles || []));
-      localStorage.setItem('role', userRole); // Add role for compatibility with ProtectedRoute
-
+      localStorage.setItem('role', userRole); 
 
       message.success('Đăng nhập thành công!');
 
       switch (userRole) {
         case 1:
-          navigate('/parent');
-          window.location.reload();
+          navigate('/parent', { replace: true });
           break;
         case 2:
-          navigate('/school-nurse');
-          window.location.reload();
+          navigate('/school-nurse', { replace: true });
           break;
         case 3:
-          navigate('/manager');
-          window.location.reload();
+          navigate('/manager', { replace: true });
           break;
         default:
           message.warning('Vai trò không hợp lệ!');
