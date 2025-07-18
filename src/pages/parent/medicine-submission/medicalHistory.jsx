@@ -16,27 +16,27 @@ const MedicineHistory = ({ parentId }) => {
   // Debug log
   console.log('parentId in MedicineHistory:', parentId);
   console.log('history:', history);
-useEffect(() => {
-  if (!parentId) {
-    setHistory([]);
-    return;
-  }
-
-  setHistoryLoading(true);
-  getMedicationSubmissionsByParentId(parentId)
-    .then(res => {
-      console.log('Full API response:', res); // Debug log
-      // Thay đổi này - response trực tiếp là array
-      const rawHistory = res || []; // Thay vì res.data
-      console.log('Processed history:', rawHistory);
-      setHistory(rawHistory);
-    })
-    .catch((error) => {
-      console.error('API Error:', error);
+  useEffect(() => {
+    if (!parentId) {
       setHistory([]);
-    })
-    .finally(() => setHistoryLoading(false));
-}, [parentId]);
+      return;
+    }
+
+    setHistoryLoading(true);
+    getMedicationSubmissionsByParentId(parentId)
+      .then(res => {
+        console.log('Full API response:', res); // Debug log
+        // Thay đổi này - response trực tiếp là array
+        const rawHistory = res || []; // Thay vì res.data
+        console.log('Processed history:', rawHistory);
+        setHistory(rawHistory);
+      })
+      .catch((error) => {
+        console.error('API Error:', error);
+        setHistory([]);
+      })
+      .finally(() => setHistoryLoading(false));
+  }, [parentId]);
 
   const handleViewDetail = (idx) => {
     setDetailModal({
@@ -64,7 +64,6 @@ useEffect(() => {
       ) : (
         <>
 
-          {/* Code cũ giữ nguyên */}
           {history.map((item, idx) => (
             <div
               key={idx}
@@ -95,12 +94,11 @@ useEffect(() => {
                 </a>
               </div>
               <span
+                className={`status-badge ${item.status?.toLowerCase() || 'pending'}`}
                 style={{
                   position: 'absolute',
                   right: 32,
                   top: 32,
-                  background: '#FFCB05',
-                  color: '#fff',
                   borderRadius: 18,
                   padding: '6px 20px',
                   fontWeight: 600,

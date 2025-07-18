@@ -214,52 +214,50 @@
 }
 
 /* Modal styling */
-.ant-modal .ant-modal-content {
+.custom-health-modal .ant-modal .ant-modal-content {
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.ant-modal .ant-modal-header {
+.custom-health-modal .ant-modal .ant-modal-header {
   background: #1890ff;
   border-radius: 8px 8px 0 0;
   padding: 16px 24px;
   border-bottom: none;
 }
 
-.ant-modal .ant-modal-title {
+.custom-health-modal .ant-modal .ant-modal-title {
   color: white;
   font-size: 16px;
   font-weight: 600;
 }
 
-.ant-modal .ant-modal-close {
+.custom-health-modal .ant-modal .ant-modal-close {
   color: white;
   font-size: 16px;
 }
 
-.ant-modal .ant-modal-close:hover {
+.custom-health-modal .ant-modal .ant-modal-close:hover {
   color: rgba(255, 255, 255, 0.8);
 }
 
-.ant-modal .ant-modal-body {
+.custom-health-modal .ant-modal .ant-modal-body {
   padding: 20px;
 }
 
-/* Result detail container */
 .result-detail {
   background: white;
 }
 
-/* Detail row styling */
 .detail-row {
   display: flex;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
 }
-
+/* 
 .detail-row:last-child {
   border-bottom: none;
-}
+} */
 
 .detail-row:hover {
   background-color: #f6f8ff;
@@ -299,13 +297,13 @@
 }
 
 /* Footer styling */
-.ant-modal .ant-modal-footer {
+.custom-health-modal .ant-modal .ant-modal-footer {
   padding: 16px 24px;
   border-top: 1px solid #f0f0f0;
   text-align: center;
 }
 
-.ant-modal .ant-modal-footer .ant-btn {
+.custom-health-modal .ant-modal .ant-modal-footer .ant-btn {
   background: #1890ff;
   border-color: #1890ff;
   color: white;
@@ -315,7 +313,7 @@
   font-weight: 500;
 }
 
-.ant-modal .ant-modal-footer .ant-btn:hover {
+.custom-health-modal .ant-modal .ant-modal-footer .ant-btn:hover {
   background: #40a9ff;
   border-color: #40a9ff;
 }
@@ -339,7 +337,7 @@
 }
 
 /* Simple animation */
-.ant-modal-content {
+.custom-health-modal .ant-modal-content {
   animation: fadeIn 0.3s ease;
 }
 

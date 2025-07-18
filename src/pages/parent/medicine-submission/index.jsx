@@ -166,7 +166,12 @@ const MedicineForm = () => {
                             {...restField}
                             name={[name, 'medicineName']}
                             label="Tên thuốc"
-                            rules={[{ required: true, message: 'Vui lòng nhập tên thuốc' }]}
+                            rules={[
+                              {required: true,
+                                pattern: /^[a-zA-Z0-9À-ỹ][a-zA-Z0-9À-ỹ\s]*$/,
+                                message: 'Tên thuốc không được bắt đầu bằng khoảng trắng hoặc chứa ký tự đặc biệt'
+                              }
+                            ]}
                           >
                             <Input placeholder="Ví dụ: Paracetamol" />
                           </Form.Item>
@@ -177,7 +182,13 @@ const MedicineForm = () => {
                             {...restField}
                             name={[name, 'dosage']}
                             label="Liều lượng"
-                            rules={[{ required: true, message: 'Vui lòng nhập liều lượng' }]}
+                            rules={[
+                              { required: true, message: 'Vui lòng nhập liều lượng' },
+                              {
+                                pattern: /^[a-zA-Z0-9À-ỹ\\/][a-zA-Z0-9À-ỹ\s\\/]*$/,
+                                message: 'Liều lượng không được bắt đầu bằng khoảng trắng hoặc chứa ký tự đặc biệt'
+                              }
+                            ]}
                           >
                             <Input placeholder="Ví dụ: 1 viên/ngày" />
                           </Form.Item>
@@ -214,6 +225,12 @@ const MedicineForm = () => {
                         {...restField}
                         name={[name, 'note']}
                         label="Ghi chú"
+                        rules={[
+                          {
+                            pattern: /^[a-zA-Z0-9À-ỹ][a-zA-Z0-9À-ỹ\s]*$/,
+                            message: 'Ghi chú không được bắt đầu bằng khoảng trắng hoặc chứa ký tự đặc biệt'
+                          }
+                        ]}
                       >
                         <TextArea rows={2} placeholder="Ghi chú đặc biệt..." />
                       </Form.Item>

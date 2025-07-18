@@ -81,7 +81,7 @@ const StudentHealthRecord = () => {
   // Xử lý lưu hồ sơ mới
   const handleSave = async (values) => {
     setLoading(true);
-try {
+    try {
       await createStudentHealthProfile({
         studentId: selectedStudentId,
         ...values
@@ -155,30 +155,81 @@ try {
             <Input disabled={hasProfile} />
           </Form.Item>
 
-          <Form.Item label="Dị ứng" name="allergyDetails" rules={[{ required: true, message: 'Vui lòng nhập thông tin dị ứng!' }]}>
+          <Form.Item label="Dị ứng" name="allergyDetails" rules={[
+            { required: true, message: 'Vui lòng nhập thông tin dị ứng!' },
+            {
+              pattern: /^[a-zA-ZÀ-ỹ0-9\s]+$/,
+              message: 'Không được chứa ký tự đặc biệt!'
+            },
+            {
+              validator: (_, value) => {
+                if (value && value.startsWith(' ')) {
+                  return Promise.reject('Không bắt đầu bằng dấu cách!');
+                }
+                return Promise.resolve();
+              }
+            }]}
+          >
             <Input placeholder="Ví dụ: Dị ứng đậu phộng" />
           </Form.Item>
 
-          <Form.Item label="Tiền sử điều trị" name="treatmentHistory">
-            <TextArea rows={3} placeholder="Ví dụ: Từng điều trị viêm phổi năm 2023" />
+          <Form.Item label="Tiền sử điều trị" name="treatmentHistory"
+            rules={[
+              { required: true, message: 'Vui lòng nhập tiền sử điều trị!' },
+              {
+                pattern: /^[a-zA-ZÀ-ỹ0-9\s]+$/,
+                message: 'Không được chứa ký tự đặc biệt!'
+              },
+              {
+                validator: (_, value) => {
+                  if (value && value.startsWith(' ')) {
+                    return Promise.reject('Không bắt đầu bằng dấu cách!');
+                  }
+                  return Promise.resolve();
+                }}]}>
+            <Input rows={3} placeholder="Ví dụ: Từng điều trị viêm phổi năm 2023" />
           </Form.Item>
 
           <Form.Item label="Thị lực">
             <Row gutter={16}>
               <Col span={12}>
-                <Form.Item name="visionLeft" label="Trái" rules={[{ required: true, message: 'Nhập thị lực mắt trái' }]}>
+                <Form.Item name="visionLeft" label="Trái" rules={[
+                  { required: true, message: 'Nhập thị lực mắt trái' },
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.reject();
+                      const regex = /^\d+\/\d+$/;
+                      if (!regex.test(value)) return Promise.reject('Định dạng phải là x/10, ví dụ 6/10');
+                      const [x, y] = value.split('/').map(Number);
+                      if (x <= 0 || y != 10) return Promise.reject('Giá trị phải lớn hơn 0');
+                      return Promise.resolve();
+                    }
+                  }
+                ]}>
                   <Input placeholder="Ví dụ: 6/10" />
                 </Form.Item>
               </Col>
-<Col span={12}>
-                <Form.Item name="visionRight" label="Phải" rules={[{ required: true, message: 'Nhập thị lực mắt phải' }]}>
+              <Col span={12}>
+                <Form.Item name="visionRight" label="Phải" rules={[
+                  { required: true, message: 'Nhập thị lực mắt phải' },
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.reject();
+                      const regex = /^\d+\/\d+$/;
+                      if (!regex.test(value)) return Promise.reject('Định dạng phải là x/10, ví dụ 6/10');
+                      const [x, y] = value.split('/').map(Number);
+                      if (x <= 0 || y != 10) return Promise.reject('Giá trị phải lớn hơn 0');
+                      return Promise.resolve();
+                    }
+                  }
+                ]}>
                   <Input placeholder="Ví dụ: 7/10" />
                 </Form.Item>
               </Col>
             </Row>
           </Form.Item>
 
-          <Form.Item label="Thính lực" name="hearingScore">
+          <Form.Item label="Thính lực" name="hearingScore" rules={[{ required: true, message: 'Vui lòng chọn mức thính lực!' }]}>
             <Select placeholder="Chọn mức độ">
               <Option value="normal">Bình thường</Option>
               <Option value="mild">Giảm nhẹ</Option>
@@ -187,23 +238,51 @@ try {
             </Select>
           </Form.Item>
 
-          <Form.Item label="Thông tin tiêm chủng" name="vaccines">
+          <Form.Item label="Lịch sử tiêm chủng" name="vaccines" rules={[
+            { required: true, message: 'Vui lòng nhập lịch sử tiêm chủng!' },
+            {
+              pattern: /^[^\s!@#$%^&*()_+={}[\]|\\:;"'<>,.?/~`]+.*$/,
+              message: 'Không bắt đầu bằng dấu cách hoặc chứa ký tự đặc biệt!'
+            }
+          ]}>
             <TextArea rows={3} placeholder="Ví dụ: Đã tiêm vaccine sởi 2024" />
           </Form.Item>
 
-          <Form.Item label="Chiều cao (cm)" name="height">
+          <Form.Item label="Chiều cao (cm)" name="height" rules={[
+            { required: true, message: 'Vui lòng nhập chiều cao!' },
+            {
+              type: 'number',
+              min: 0.1,
+              message: 'Chiều cao phải lớn hơn 0!'
+            }]}>
             <InputNumber min={0} step={0.1} style={{ width: '100%' }} />
           </Form.Item>
 
-          <Form.Item label="Cân nặng (kg)" name="weight">
+          <Form.Item label="Cân nặng (kg)" name="weight" rules={[
+            { required: true, message: 'Vui lòng nhập cân nặng!' },
+            {
+              type: 'number',
+              min: 0.1,
+              message: 'Cân nặng phải lớn hơn 0!'
+            }]}>
             <InputNumber min={0} step={0.1} style={{ width: '100%' }} />
           </Form.Item>
 
-          <Form.Item label="Bệnh mãn tính" name="chronicDiseases">
+          <Form.Item label="Bệnh mãn tính" name="chronicDiseases" rules={[
+            { required: true, message: 'Vui lòng nhập thông tin bệnh mãn tính!' },
+            {
+              pattern: /^[^\s!@#$%^&*()_+={}[\]|\\:;"'<>,.?/~`]+.*$/,
+              message: 'Không bắt đầu bằng dấu cách hoặc chứa ký tự đặc biệt!'
+            }]}>
             <Input placeholder="Ví dụ: Hen suyễn" />
           </Form.Item>
 
-          <Form.Item label="Ghi chú từ phụ huynh" name="noteOfParent">
+          <Form.Item label="Ghi chú từ phụ huynh" name="noteOfParent" rules={[
+            { required: true, message: 'Vui lòng nhập ghi chú!' },
+            {
+              pattern: /^[^\s!@#$%^&*()_+={}[\]|\\:;"'<>,.?/~`]+.*$/,
+              message: 'Không bắt đầu bằng dấu cách hoặc chứa ký tự đặc biệt!'
+            }]}>
             <TextArea rows={2} placeholder="Ví dụ: Cần theo dõi thêm về hô hấp" />
           </Form.Item>
 
