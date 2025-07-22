@@ -26,7 +26,8 @@ const ROLE_MENUS = {
     { key: 'health-records', label: 'Hồ sơ sức khỏe', path: '/health-records' },
     { key: 'medications', label: 'Gửi thuốc', path: '/medications' },
     { key: 'health-check', label: 'Kiểm tra sức khỏe', path: '/health-check' },
-    { key: 'vaccination', label: 'Tiêm chủng', path: '/vaccination' },
+    //{ key: 'vaccination', label: 'Tiêm chủng', path: '/vaccination' },
+    { key: 'medical-accident', label: 'Sự Kiện', path: '/medical-accident' },
   ],
   2: [
     { key: 'home', label: 'Trang chủ', path: '/', icon: <HomeOutlined /> },

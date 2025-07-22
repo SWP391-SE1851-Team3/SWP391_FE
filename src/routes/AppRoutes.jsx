@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Login from '../pages/login';
-import Home from '../pages/home/HomePage'; // hoặc import Home from '../pages/home/Home';
+import Home from '../pages/home/HomePage'; 
 import MainLayout from '../layout/MainLayout';
 import PrivateRoute from './ProtectedRoute';
 import StudentHealthRecord from '../pages/parent/health-records';
@@ -14,6 +14,7 @@ import ManagerSupplies from '../pages/manager/manager-supply';
 import MedicineForm from '../pages/parent/medicine-submission';
 import HealthCheckNotification from '../pages/parent/health-check';
 import ParentVaccineConfirmation from '../pages/parent/vaccination';
+import MedicalAccidentParent from '../pages/parent/medical_accident';
 import MedicalEvents from '../pages/school-nurse/medical-events';
 import NursePage from '../pages/school-nurse';
 import ManageMedication from '../pages/school-nurse/manage-medication';
@@ -94,6 +95,12 @@ const AppRoutes = () => {
             <ParentVaccineConfirmation />
           </PrivateRoute>
         } />
+        <Route path="medical-accident" element={
+          <PrivateRoute allowedRoles={[1]}>
+            <MedicalAccidentParent />
+          </PrivateRoute>
+        } />
+
         <Route path="school-nurse" element={
           <PrivateRoute allowedRoles={[2]}>
             <NursePage />

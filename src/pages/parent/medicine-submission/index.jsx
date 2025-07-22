@@ -9,7 +9,9 @@ import {
   message,
   Spin,
   Row,
-  Col
+  Col,
+  DatePicker,
+  Checkbox
 } from 'antd';
 import {
   UploadOutlined,
@@ -23,9 +25,11 @@ import {
 } from '../../../api/medicalSubmission';
 import MedicineHistory from './medicalHistory';
 import './medicineForm.css';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { TextArea } = Input;
+const { RangePicker } = DatePicker;
 
 const MedicineForm = () => {
   const [students, setStudents] = useState([]);
@@ -65,8 +69,10 @@ const MedicineForm = () => {
       const medicationDetails = values.medicines.map(item => ({
         medicineName: item.medicineName,
         dosage: item.dosage,
-        timeToUse: item.time,
-        note: item.note || ""
+        timeToUse: item.time ? item.time.join(', ') : '',
+        note: item.note || "",
+        startDate: item.dateRange ? item.dateRange[0].format('YYYY-MM-DD') : '',
+        endDate: item.dateRange ? item.dateRange[1].format('YYYY-MM-DD') : ''
       }));
 
       const submissionDate = new Date().toISOString();
@@ -104,6 +110,14 @@ const MedicineForm = () => {
       message.error("Có lỗi xảy ra khi gửi đơn thuốc!");
     }
   };
+
+  // Tùy chọn thời gian uống thuốc
+  const timeOptions = [
+    { label: 'Sáng', value: 'sang' },
+    { label: 'Trưa', value: 'trua' },
+    { label: 'Chiều', value: 'chieu' },
+    { label: 'Tối', value: 'toi' }
+  ];
 
   return (
     <div className="medicine-form-container">
@@ -161,7 +175,7 @@ const MedicineForm = () => {
                       }}
                     >
                       <Row gutter={16}>
-                        <Col span={8}>
+                        <Col span={12}>
                           <Form.Item
                             {...restField}
                             name={[name, 'medicineName']}
@@ -177,7 +191,7 @@ const MedicineForm = () => {
                           </Form.Item>
                         </Col>
 
-                        <Col span={8}>
+                        <Col span={11}>
                           <Form.Item
                             {...restField}
                             name={[name, 'dosage']}
@@ -194,22 +208,6 @@ const MedicineForm = () => {
                           </Form.Item>
                         </Col>
 
-                        <Col span={7}>
-                          <Form.Item
-                            {...restField}
-                            name={[name, 'time']}
-                            label="Thời gian"
-                            rules={[{ required: true, message: 'Chọn thời gian uống' }]}
-                          >
-                            <Select placeholder="Chọn thời gian">
-                              <Option value="sang">Sáng</Option>
-                              <Option value="trua">Trưa</Option>
-                              <Option value="chieu">Chiều</Option>
-                              <Option value="toi">Tối</Option>
-                            </Select>
-                          </Form.Item>
-                        </Col>
-
                         <Col span={1}>
                           <Button
                             danger
@@ -218,6 +216,38 @@ const MedicineForm = () => {
                             style={{ marginTop: 32 }}
                             icon={<MinusCircleOutlined />}
                           />
+                        </Col>
+                      </Row>
+
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'time']}
+                            label="Thời gian uống thuốc (có thể chọn nhiều)"
+                            rules={[{ required: true, message: 'Chọn ít nhất một thời gian uống' }]}
+                          >
+                            <Checkbox.Group options={timeOptions} />
+                          </Form.Item>
+                        </Col>
+
+                        <Col span={12}>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'dateRange']}
+                            label="Thời gian sử dụng"
+                            rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu và kết thúc' }]}
+                          >
+                            <RangePicker
+                              style={{ width: '100%' }}
+                              placeholder={['Ngày bắt đầu', 'Ngày kết thúc']}
+                              format="DD/MM/YYYY"
+                              disabledDate={(current) => {
+                                // Không cho chọn ngày trong quá khứ
+                                return current && current < dayjs().startOf('day');
+                              }}
+                            />
+                          </Form.Item>
                         </Col>
                       </Row>
 
@@ -253,7 +283,7 @@ const MedicineForm = () => {
 
             <Form.Item
               name="medicineImage"
-              label="Ảnh thuốc (chỉ nhận PNG, chỉ upload 1 lần)"
+              label="Ảnh thuốc (chỉ nhận PNG)"
               valuePropName="fileList"
               getValueFromEvent={e => (Array.isArray(e) ? e : e && e.fileList)}
             >
