@@ -14,7 +14,11 @@ import {
   Pagination,
   Modal,
   Form,
-  message
+  message,
+  Calendar,
+  Badge,
+  Empty,
+  Tabs
 } from 'antd';
 import {
   SearchOutlined,
@@ -24,15 +28,21 @@ import {
   CalendarOutlined,
   CheckCircleTwoTone,
   CloseCircleTwoTone,
-  ClockCircleTwoTone
+  ClockCircleTwoTone,
+  FileTextOutlined
 } from '@ant-design/icons';
 import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails } from '../../../api/medicalSubmissionNurse';
 import { formatDateTime } from '../../../utils/formatDate';
 import './Medication.css';
 import { hasNoSpecialCharacters } from '../../../validations';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+
+dayjs.locale('vi');
 
 const { Title } = Typography;
 const { Option } = Select;
+const { TabPane } = Tabs;
 
 const MedicationManagement = () => {
   const [currentPage1, setCurrentPage1] = useState(1);
@@ -49,9 +59,14 @@ const MedicationManagement = () => {
   const [timelineRejectingId, setTimelineRejectingId] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [timelineData, setTimelineData] = useState([]);
   const [detailData, setDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [selectedDateData, setSelectedDateData] = useState([]);
+  const [activeTab, setActiveTab] = useState('all');
+  const [currentCardPage, setCurrentCardPage] = useState(1);
+  const cardsPerPage = 3;
+  const tablePageSize = 5;
 
   const mapStatusToFE = (status) => {
     switch (status) {
@@ -95,50 +110,42 @@ const MedicationManagement = () => {
         medication: submission.medicationDetails.map(m => m.medicineName).join(', '),
         status: mapStatusToFE(submission.status),
         time: formatDateTime(submission.submissionDate),
+        submissionDate: submission.submissionDate,
         actions: mapStatusToFE(submission.status) === 'pending' ? ['view', 'confirm', 'cancel'] : ['view'],
         rejectReason: '',
-        medicationDetails: submission.medicationDetails
+        medicationDetails: submission.medicationDetails,
+        parentName: submission.parentName || '', // Added for new UI
+        dosage: submission.dosage || '', // Added for new UI
+        timeToUse: submission.timeToUse || '', // Added for new UI
+        note: submission.note || '', // Added for new UI
+        medicineImage: submission.medicineImage || '' // Added for new UI
       }));
+      
       // Sắp xếp theo ngày và giờ giảm dần (mới nhất lên đầu)
       formattedData.sort((a, b) => {
-        const dateA = new Date(submissions[a.id - 1].submissionDate);
-        const dateB = new Date(submissions[b.id - 1].submissionDate);
+        const dateA = new Date(a.submissionDate);
+        const dateB = new Date(b.submissionDate);
         return dateB - dateA;
       });
+      
       setData(formattedData);
-
-      // Lọc chỉ lấy các thuốc phát trong ngày hôm nay cho timelineData
-      const todayDate = new Date();
-      const todayStr = todayDate.toISOString().split('T')[0];
-      const todayTimeline = submissions
-        .filter(submission => {
-          const subDate = new Date(submission.submissionDate);
-          const subDateStr = subDate.toISOString().split('T')[0];
-          return subDateStr === todayStr;
-        })
-        .map((submission, index) => ({
-          id: index + 1,
-          time: new Date(submission.submissionDate).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-          student: submission.studentName,
-          medication: submission.medicationDetails.map(m => `${m.medicineName} - ${m.dosage || ''} ${m.timeToUse ? `(${m.timeToUse})` : ''}`).join(', '),
-          status: mapStatusToFE(submission.status),
-          color: 'orange',
-          rejectReason: submission.rejectReason || ''
-        }));
-      // Sắp xếp lại timelineData theo ngày và giờ giảm dần
-      todayTimeline.sort((a, b) => {
-        const dateA = new Date(submissions[a.id - 1].submissionDate);
-        const dateB = new Date(submissions[b.id - 1].submissionDate);
-        return dateB - dateA;
-      });
-      setTimelineData(todayTimeline);
+      updateSelectedDateData(formattedData, selectedDate);
     } catch (error) {
       message.error('Failed to fetch medication submissions');
       console.error('Error fetching submissions:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedDate]);
+
+  const updateSelectedDateData = (allData, date) => {
+    const selectedDateStr = date.format('YYYY-MM-DD');
+    const filteredData = allData.filter(item => {
+      const itemDate = dayjs(item.submissionDate).format('YYYY-MM-DD');
+      return itemDate === selectedDateStr;
+    });
+    setSelectedDateData(filteredData);
+  };
 
   useEffect(() => {
     fetchMedicationSubmissions();
@@ -169,21 +176,14 @@ const MedicationManagement = () => {
 
   const displayedData = getFilteredData();
 
-  const today = new Date().toLocaleDateString('vi-VN', {
-    weekday: 'long',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-
   const getStatusTag = (status) => {
     switch (status) {
       case 'pending':
-        return <Tag color="orange">Chờ nhận thuốc</Tag>;
+        return <Tag color="orange">Chờ duyệt</Tag>;
       case 'confirmed':
-        return <Tag color="green">Đã nhận thuốc</Tag>;
+        return <Tag color="green">Đã duyệt</Tag>;
       case 'expired':
-        return <Tag color="red">Từ chối thuốc</Tag>;
+        return <Tag color="red">Từ chối</Tag>;
       case 'completed':
         return <Tag color="blue">Đã phát thuốc</Tag>;
       case 'uncompleted':
@@ -191,6 +191,17 @@ const MedicationManagement = () => {
       default:
         return <Tag>{status}</Tag>;
     }
+  };
+
+  const getStatusCount = (status) => {
+    return selectedDateData.filter(item => item.status === status).length;
+  };
+
+  const getTabData = () => {
+    if (activeTab === 'all') return selectedDateData;
+    if (activeTab === 'pending') return selectedDateData.filter(item => item.status === 'pending');
+    if (activeTab === 'confirmed') return selectedDateData.filter(item => item.status === 'confirmed');
+    return selectedDateData;
   };
 
   const columns = [
@@ -353,77 +364,45 @@ const MedicationManagement = () => {
     }
   };
 
-  // Tạo timeline items từ timelineData
-  const timelineItems = timelineData.map((item) => {
-    let cardClass = 'timeline-card ';
-    if (item.status === 'completed') cardClass += 'completed';
-    else if (item.status === 'uncompleted') cardClass += 'uncompleted';
-    else cardClass += 'pending';
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    updateSelectedDateData(data, date);
+  };
 
-    let statusText = '';
-    if (item.status === 'completed') statusText = 'Đã hoàn thành';
-    else if (item.status === 'uncompleted') statusText = 'Chưa hoàn thành';
-    else if (item.status === 'confirmed') statusText = 'Đã nhận thuốc';
-    else if (item.status === 'expired') statusText = 'Từ chối thuốc';
-    else statusText = 'Chờ nhận thuốc';
-
-    // Tìm trạng thái ở danh sách (data) theo id
-    const listRecord = data.find(d => d.id === item.id);
-    const listStatus = listRecord ? listRecord.status : null;
-    // Chỉ cho phép cập nhật trạng thái nếu trạng thái ở danh sách là 'confirmed'
-    const allowUpdate = listStatus === 'confirmed';
-
-    return {
-      key: item.id,
-      color: item.color,
-      children: (
-        <div className={cardClass}>
-          <div className="timeline-header">
-            <span className="timeline-student">Phát thuốc cho {item.student}</span>
-            <span className="timeline-status">
-              {item.status === 'completed' && <CheckCircleTwoTone twoToneColor="#52c41a" style={{marginRight: 4}} />}
-              {item.status === 'uncompleted' && <CloseCircleTwoTone twoToneColor="#ff4d4f" style={{marginRight: 4}} />}
-              {item.status === 'pending' && <ClockCircleTwoTone twoToneColor="#faad14" style={{marginRight: 4}} />}
-              {item.status === 'confirmed' && <CheckCircleTwoTone twoToneColor="#1890ff" style={{marginRight: 4}} />}
-              {item.status === 'expired' && <CloseCircleTwoTone twoToneColor="#d4380d" style={{marginRight: 4}} />}
-              {statusText}
-            </span>
-            <div className="timeline-actions">
-              {allowUpdate && <>
-                <Button
-                  size="small"
-                  icon={<CheckCircleTwoTone twoToneColor="#52c41a" />}
-                  onClick={() => handleUpdateStatus(item.id, 'completed')}
-                  type="primary"
-                ></Button>
-                <Button
-                  size="small"
-                  icon={<CloseCircleTwoTone twoToneColor="#ff4d4f" />}
-                  onClick={() => handleUpdateStatus(item.id, 'uncompleted')}
-                  danger
-                ></Button>
-              </>}
-              {(item.status === 'completed' || item.status === 'uncompleted') && (
-                <Button
-                  size="small"
-                  icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
-                  onClick={() => handleUpdateStatus(item.id, 'pending')}
-                ></Button>
-              )}
-              <Button
-                size="small"
-                icon={<EyeOutlined />}
-                onClick={() => handleViewDetails(item)}
-              ></Button>
-            </div>
-          </div>
-          <div className="timeline-body">
-            <div className="timeline-medication">{item.medication}</div>
-          </div>
+  const dateCellRender = (value) => {
+    const dateStr = value.format('YYYY-MM-DD');
+    const dayData = data.filter(item => {
+      const itemDate = dayjs(item.submissionDate).format('YYYY-MM-DD');
+      return itemDate === dateStr;
+    });
+    
+    if (dayData.length > 0) {
+      return (
+        <div className="calendar-cell">
+          <Badge count={dayData.length} size="small" />
         </div>
-      )
-    };
-  });
+      );
+    }
+    return null;
+  };
+
+  // Reset trang về 1 khi đổi tab
+  useEffect(() => { setCurrentCardPage(1); }, [activeTab, selectedDate]);
+
+  // Custom header cho Calendar
+  const calendarHeaderRender = ({ value, onChange }) => {
+    const current = value.clone();
+    return (
+      <div className="calendar-custom-header">
+        <div className="calendar-header-left">
+          <button className="calendar-nav-btn" onClick={() => onChange(current.clone().subtract(1, 'month'))}>{'<'}</button>
+          <span className="calendar-header-label">{current.format('MMMM YYYY')}</span>
+          <button className="calendar-nav-btn" onClick={() => onChange(current.clone().add(1, 'month'))}>{'>'}</button>
+        </div>
+        <button className="calendar-today-btn" onClick={() => onChange(dayjs())}>Hôm nay</button>
+      </div>
+    );
+  };
 
   return (
     <div className="medical-management-app">
@@ -431,9 +410,129 @@ const MedicationManagement = () => {
         <Title level={2} className="app-title">Quản lý Phiếu Gửi Thuốc</Title>
       </div>
 
+      <div className="layout-container">
+        {/* Left Column - Calendar */}
+        <div className="calendar-section">
+          <Card 
+            className="calendar-card"
+            title={
+              <div className="calendar-header">
+                <CalendarOutlined className="calendar-icon" />
+                <span className="calendar-title">Chọn ngày</span>
+              </div>
+            }
+            variant="outlined"
+            styles={{ body: { padding: 24 } }}
+          >
+            <Calendar
+              fullscreen={false}
+              value={selectedDate}
+              onSelect={handleDateSelect}
+              dateCellRender={dateCellRender}
+              className="custom-calendar"
+              headerRender={calendarHeaderRender}
+            />
+          </Card>
+        </div>
+
+        {/* Right Column - Medication List */}
+        <div className="medication-section">
+          <Card 
+            className="medication-list-card"
+            title={
+              <div className="medication-header">
+                <div className="header-title">
+                  Đơn thuốc ngày {selectedDate.format('DD/MM/YYYY')}
+                </div>
+                <div className="header-subtitle">
+                  Tổng: {selectedDateData.length} đơn
+                </div>
+              </div>
+            }
+          >
+            {/* Tabs for filtering */}
+            <div className="medication-tabs" style={{ marginBottom: 16 }}>
+              <Button type={activeTab === 'all' ? 'primary' : 'default'} onClick={() => setActiveTab('all')} style={{ marginRight: 8 }}>Tất cả ({selectedDateData.length})</Button>
+              <Button type={activeTab === 'pending' ? 'primary' : 'default'} onClick={() => setActiveTab('pending')} style={{ marginRight: 8 }}>Chờ duyệt ({getStatusCount('pending')})</Button>
+              <Button type={activeTab === 'confirmed' ? 'primary' : 'default'} onClick={() => setActiveTab('confirmed')}>Đã duyệt ({getStatusCount('confirmed')})</Button>
+            </div>
+            {/* Card list */}
+            {getTabData().length === 0 ? (
+              <Empty
+                image={<FileTextOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
+                description={
+                  <div className="empty-description">
+                    <div className="empty-title">Không có đơn thuốc</div>
+                    <div className="empty-subtitle">Không có đơn thuốc nào cần xử lý trong ngày này</div>
+                  </div>
+                }
+              />
+            ) : (
+              <>
+                <div className="medication-batch-list">
+                  {getTabData()
+                    .slice((currentCardPage - 1) * cardsPerPage, currentCardPage * cardsPerPage)
+                    .map((item) => (
+                      <div key={item.id} className="medication-batch-card">
+                        <div className="medication-batch-card-header">
+                          <div>
+                            <Typography.Title level={4} style={{ margin: 0, fontWeight: 600, color: '#0056b3' }}>{item.medication}</Typography.Title>
+                            <Typography.Text type="secondary">Phụ huynh: {item.parentName || ''}</Typography.Text>
+                          </div>
+                          {getStatusTag(item.status)}
+                        </div>
+                        <div className="medication-batch-card-info">
+                          <Space><Typography.Text strong>Lớp:</Typography.Text> <Typography.Text>{item.className}</Typography.Text></Space>
+                          <Space><Typography.Text strong>Liều lượng:</Typography.Text> <Typography.Text>{item.dosage || '-'}</Typography.Text></Space>
+                          <Space><Typography.Text strong>Thời gian uống:</Typography.Text> <Typography.Text>{item.timeToUse || '-'}</Typography.Text></Space>
+                        </div>
+                        <div className="medication-batch-card-info" style={{ marginTop: 8 }}>
+                          <Space><Typography.Text strong>Ghi chú:</Typography.Text> <Typography.Text>{item.note || '-'}</Typography.Text></Space>
+                          <Space><Typography.Text strong>Thời gian gửi:</Typography.Text> <Typography.Text>{item.time}</Typography.Text></Space>
+                        </div>
+                        <div className="medication-batch-actions">
+                          <Button size="small" icon={<EyeOutlined />} onClick={() => handleViewDetails(item)}>
+                            Xem chi tiết
+                          </Button>
+                          {item.status === 'pending' && (
+                            <>
+                              <Button type="primary" size="small" icon={<CheckOutlined />} onClick={() => handleUpdateStatus(item.id, 'confirmed')}>
+                                Duyệt đơn
+                              </Button>
+                              <Button danger size="small" icon={<CloseOutlined />} onClick={() => handleUpdateStatus(item.id, 'expired')}>
+                                Từ chối
+                              </Button>
+                            </>
+                          )}
+                          {item.status === 'confirmed' && (
+                            <Button type="primary" size="small" onClick={() => handleUpdateStatus(item.id, 'completed')}>
+                              Hoàn thành phát thuốc
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                  <Pagination
+                    current={currentCardPage}
+                    total={getTabData().length}
+                    pageSize={cardsPerPage}
+                    onChange={setCurrentCardPage}
+                    showSizeChanger={false}
+                  />
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
+      </div>
+
+      {/* All Medications Table */}
       <Card
         className="main-card"
-        title="Danh sách phiếu gửi thuốc"
+        title="Tất cả phiếu gửi thuốc"
+        style={{ marginTop: 24 }}
       >
         <div className="filters-section filter-section">
           <Row gutter={16} justify="center" align="middle" wrap={false}>
@@ -456,22 +555,22 @@ const MedicationManagement = () => {
                 allowClear
               >
                 <Option value="">Tất cả trạng thái</Option>
-                <Option value="pending">Chờ nhận thuốc</Option>
-                <Option value="confirmed">Đã nhận thuốc</Option>
-                <Option value="expired">Từ chối thuốc</Option>
+                <Option value="pending">Chờ duyệt</Option>
+                <Option value="confirmed">Đã duyệt</Option>
+                <Option value="expired">Từ chối</Option>
                 <Option value="completed">Đã phát thuốc</Option>
                 <Option value="uncompleted">Chưa phát thuốc</Option>
               </Select>
             </Col>
             <Col>
               <Select
-                placeholder="Tất cả trạng thái..."
+                placeholder="Tất cả lớp..."
                 value={classFilter}
                 onChange={setClassFilter}
                 style={{ minWidth: 170 }}
                 allowClear
               >
-                <Option value="">Tất cả trạng thái</Option>
+                <Option value="">Tất cả lớp</Option>
                 <Option value="Lớp 5A">Lớp 5A</Option>
                 <Option value="Lớp 4B">Lớp 4B</Option>
                 <Option value="Lớp 3C">Lớp 3C</Option>
@@ -484,7 +583,7 @@ const MedicationManagement = () => {
 
         <Table
           columns={columns}
-          dataSource={displayedData}
+          dataSource={displayedData.slice((currentPage1 - 1) * tablePageSize, currentPage1 * tablePageSize)}
           pagination={false}
           className="events-table"
           loading={loading}
@@ -494,7 +593,7 @@ const MedicationManagement = () => {
           <Pagination
             current={currentPage1}
             total={displayedData.length}
-            pageSize={10}
+            pageSize={tablePageSize}
             onChange={(page) => setCurrentPage1(page)}
             showSizeChanger={false}
             showQuickJumper={false}
@@ -502,25 +601,7 @@ const MedicationManagement = () => {
         </div>
       </Card>
 
-      {/* Lịch phát thuốc hôm nay */}
-      <Card className="supplies-card" title={null} style={{ marginBottom: 24 }}>
-        <div className="header-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div className="header-title">Lịch phát thuốc hôm nay</div>
-              <Space className="header-subtitle">
-                <CalendarOutlined />
-                <span>{today}</span>
-              </Space>
-            </div>
-          </div>
-        </div>
-        <Timeline 
-          className="medication-timeline"
-          items={timelineItems}
-        />
-      </Card>
-
+      {/* Modals remain the same */}
       <Modal
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết phiếu gửi thuốc</span>}
         open={isModalVisible}

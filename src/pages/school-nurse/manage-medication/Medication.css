@@ -12,11 +12,12 @@
 
 /* Medication Management Styles */
 .medical-management-app {
-  max-width: 100%;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 24px;
   background-color: #f0f9ff;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -35,17 +36,408 @@
   padding-bottom: 8px;
 }
 
+/* Layout Container */
+.layout-container {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.calendar-section {
+  flex: 0 0 350px;
+  min-width: 350px;
+}
+
+.medication-section {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Calendar Card cải tiến hiện đại */
+.calendar-card {
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(24, 144, 255, 0.10);
+  background: #fff;
+  border: 1.5px solid #e6f7ff;
+  padding: 0;
+  margin-bottom: 24px;
+  transition: box-shadow 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+.calendar-card .ant-card-head {
+  background:  #52c41a  !important;
+  border-radius: 16px 16px 0 0 !important;
+  padding: 20px 28px !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.10) !important;
+  border-bottom: none !important;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendar-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.calendar-icon {
+  font-size: 22px;
+  color: #fff;
+}
+
+.calendar-card .ant-card-body {
+  padding: 24px !important;
+}
+
+.calendar-card .ant-card-head-title {
+  font-size: 18px !important;
+  font-weight: bold !important;
+  color: #fff !important;
+  text-align: left !important;
+  padding: 0 !important;
+}
+
+.custom-calendar {
+  border-radius: 8px;
+  width: 100%;
+}
+
+.custom-calendar .ant-picker-calendar-header {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.custom-calendar .ant-picker-content {
+  padding: 0;
+}
+
+.custom-calendar .ant-picker-cell {
+  border-radius: 6px;
+  margin: 2px;
+}
+
+.custom-calendar .ant-picker-cell-selected .ant-picker-calendar-date {
+  background: #52c41a;
+  color: #fff;
+  border-radius: 6px;
+}
+
+.custom-calendar .ant-picker-cell-today .ant-picker-calendar-date {
+  border: 2px solid #52c41a;
+  border-radius: 6px;
+}
+
+.calendar-cell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 4px;
+}
+
+.calendar-cell .ant-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+/* Status Summary chỉnh full width, không bị gom ở giữa */
+.status-summary {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f6ffed;
+  border-radius: 8px;
+  border: 1px solid #d9f7be;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.status-item {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  border-bottom: none;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(82,196,26,0.04);
+  font-size: 16px;
+  font-weight: 500;
+  gap: 8px;
+}
+
+.status-item span {
+  margin-left: 8px;
+  flex: unset;
+  color: #666;
+  font-weight: 500;
+}
+
+.status-item .ant-badge {
+  margin-left: 8px;
+}
+
+/* Medication List Card */
+.medication-list-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  height: fit-content;
+  width: 100%;
+}
+
+.medication-list-card .ant-card-head {
+  background: #389e0d !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 16px 24px !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2) !important;
+}
+
+.medication-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.header-title {
+  font-size: 24px !important;
+  font-weight: bold;
+  color: #fff;
+  
+}
+
+.header-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Timeline Container */
+.medication-timeline-container {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 8px;
+  width: 100%;
+}
+
+.medication-timeline-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.medication-timeline-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.medication-timeline-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.medication-timeline-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Timeline Cards */
+.medication-timeline {
+  width: 100%;
+}
+
+.medication-timeline .ant-timeline-item {
+  padding-bottom: 16px;
+  width: 100%;
+}
+
+.medication-timeline .ant-timeline-item-content {
+  margin-top: -4px;
+  width: 100%;
+}
+
+.medication-timeline .timeline-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  margin-left: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  width: calc(100% - 16px);
+  box-sizing: border-box;
+}
+
+.medication-timeline .timeline-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.medication-timeline .timeline-card.pending {
+  border-left: 4px solid #faad14;
+  background: linear-gradient(90deg, #fffbe6 0%, #fff 100%);
+}
+
+.medication-timeline .timeline-card.confirmed {
+  border-left: 4px solid #52c41a;
+  background: linear-gradient(90deg, #f6ffed 0%, #fff 100%);
+}
+
+.medication-timeline .timeline-card.expired {
+  border-left: 4px solid #ff4d4f;
+  background: linear-gradient(90deg, #fff2f0 0%, #fff 100%);
+}
+
+.medication-timeline .timeline-card.completed {
+  border-left: 4px solid #1890ff;
+  background: linear-gradient(90deg, #e6f7ff 0%, #fff 100%);
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 16px;
+  width: 100%;
+}
+
+.timeline-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-student {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-class {
+  font-size: 13px;
+  color: #8c8c8c;
+}
+
+.timeline-status {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #f5f5f5;
+  color: #666;
+  text-align: center;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.timeline-card.pending .timeline-status {
+  background: #fff7e6;
+  color: #d48806;
+  border: 1px solid #ffd591;
+}
+
+.timeline-card.confirmed .timeline-status {
+  background: #f6ffed;
+  color: #389e0d;
+  border: 1px solid #b7eb8f;
+}
+
+.timeline-card.expired .timeline-status {
+  background: #fff2f0;
+  color: #cf1322;
+  border: 1px solid #ffb3b3;
+}
+
+.timeline-card.completed .timeline-status {
+  background: #e6f7ff;
+  color: #0958d9;
+  border: 1px solid #91d5ff;
+}
+
+.timeline-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.timeline-actions .ant-btn {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-body {
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+  width: 100%;
+}
+
+.timeline-medication {
+  font-size: 14px;
+  color: #595959;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.timeline-time {
+  font-size: 13px;
+  color: #8c8c8c;
+  font-weight: 500;
+}
+
+/* Empty State */
+.empty-description {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-title {
+  font-size: 16px;
+  color: #262626;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.empty-subtitle {
+  font-size: 14px;
+  color: #8c8c8c;
+}
+
 /* Card chính */
 .main-card {
   border-radius: 12px;
   margin-bottom: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 100%;
 }
 
 .main-card .ant-card-head {
   background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%) !important;
-  border-radius: 12px !important;
-  padding: 24px 24px  !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 24px 24px !important;
   color: #fff !important;
   box-shadow: 0 4px 12px rgba(82, 196, 26, 0.2) !important;
   border: 1.5px solid #389e0d !important;
@@ -70,7 +462,6 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
 }
 
@@ -85,6 +476,10 @@
 }
 
 /* Table */
+.events-table {
+  width: 100%;
+}
+
 .events-table .ant-table-thead > tr > th {
   background: #f6ffed;
   color: #389e0d;
@@ -102,184 +497,26 @@
   margin-top: 16px;
 }
 
-/* Lịch phát thuốc hôm nay */
-.header-card {
-  width: 100%;
-  max-width: 100%;
-  margin-left: 0;
-  margin-right: 0;
-  box-sizing: border-box;
-  background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%);
-  border-radius: 10px;
-  padding: 20px 24px 16px 24px;
-  margin-bottom: 18px;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.12);
-  border: 1.5px solid #389e0d;
-}
-
-.header-title {
-  font-size: 10px;
-  font-weight: bold;
-  margin-bottom: 4px;
-  color: #fff;
-}
-
-.header-subtitle {
-  font-size: 15px;
-  opacity: 0.95;
-  color: #fff;
-  margin-bottom: 0;
-}
-
-.user-info {
-  text-align: right;
-  color: #fff;
-}
-
-.ant-avatar {
-  background-color: rgba(255,255,255,0.18) !important;
-}
-
-/* Timeline thuốc */
-.medication-timeline {
-  width: 100%;
-  max-width: 100%;
-  margin-top: 0;
-}
-.medication-timeline .ant-timeline-item {
-  padding-bottom: 0;
-}
-.medication-timeline .ant-timeline-item-content {
-  margin-top: 0;
-  margin-bottom: 0;
-  padding: 0;
-}
-.medication-timeline .timeline-card {
-  background: #143a0a;
-  border-radius: 10px;
-  padding: 18px 20px 14px 20px;
-  margin-bottom: 14px;
-  color: #fff;
-  border: 1px solid #1e4d13;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.10);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.medication-timeline .timeline-card.pending {
-  background: #0a374d;
-  border-color: #bfa940;
-}
-.medication-timeline .timeline-card.processing {
-  background: #4d3c0a;
-  border-color: #bfa940;
-}
-.medication-timeline .timeline-card.completed {
-  margin-left: 10px;
-  background: #143a0a;
-  border-color: #389e0d;
-}
-.medication-timeline .timeline-card.uncompleted, .medication-timeline .timeline-card.failed {
-  background: #4d0a0a;
-  border-color: #e74c3c;
-}
-.medication-timeline .timeline-card.completed .timeline-status {
-  background: #1e4d13;
-  color: #b7eb8f;
-  border: 1px solid #389e0d;
-}
-.medication-timeline .timeline-card.uncompleted .timeline-status, .medication-timeline .timeline-card.failed .timeline-status {
-  background: #4d0a0a;
-  color: #ffb3b3;
-  border: 1px solid #e74c3c;
-}
-.medication-timeline .timeline-card .timeline-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.medication-timeline .timeline-time-badge {
-  background: #52c41a;
-  color: #fff;
-  font-weight: bold;
-  font-size: 13px;
-  border-radius: 17px;
-  padding: 6px 22px;
-  margin-right: 38px;
-  display: inline-block;
-  min-width: 100px;
-  text-align: center;
-  position: relative;
-  z-index: 2;
-  
-}
-.medication-timeline .timeline-card.pending .timeline-time-badge,
-.medication-timeline .timeline-card.processing .timeline-time-badge {
-  background: #bfa940;
-  
-}
-.medication-timeline .timeline-card .timeline-status {
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 6px;
-  padding: 2px 12px;
-  display: inline-block;
-  margin-left: 8px;
-}
-.medication-timeline .timeline-body {
-  margin-top: 2px;
-
-}
-.medication-timeline .timeline-student {
-  font-size: 17px;
-  font-weight: 600;
-  color: #fff;
-}
-.medication-timeline .timeline-medication {
-  font-size: 15px;
-  color: #b7eb8f;
-  margin-bottom: 2px;
-}
-.medication-timeline .timeline-note {
-  font-size: 13px;
-  color: #e6ffe6;
-  opacity: 0.85;
-  margin-top: 2px;
-}
-
-/* Dấu trong Timeline */
-.medication-timeline .ant-timeline-item-head {
-  background-color: #52c41a !important; /* Màu xanh */
-  color: white !important;
-  border-radius: 10px;
-  font-size: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 /* Responsive */
-@media (max-width: 900px) {
-  .stats-row {
+@media (max-width: 1200px) {
+  .layout-container {
     flex-direction: column;
-    gap: 12px;
+  }
+  
+  .calendar-section {
+    flex: none;
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .medication-section {
+    width: 100%;
   }
 }
 
 @media (max-width: 768px) {
-  .medication-management {
+  .medical-management-app {
     padding: 16px;
-  }
-  
-  .filter-section .ant-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .filter-section .ant-col {
-    width: 100%;
   }
   
   .timeline-header {
@@ -287,93 +524,49 @@
     align-items: flex-start;
     gap: 8px;
   }
+  
+  .timeline-info {
+    width: 100%;
+  }
+  
+  .timeline-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .medication-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .calendar-section {
+    min-width: auto;
+  }
 }
 
-.supplies-card {
-  width: 100%;
-  max-width: 100%;
-  margin-left: 0;
-  margin-right: 0;
-  box-sizing: border-box;
+/* Animation Effects */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.timeline-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 0 4px 0;
-  gap: 16px;
-}
-.timeline-header .timeline-student {
-  flex: 1;
-  font-size: 17px;
-  font-weight: 600;
-  color: #fff;
-  margin-right: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.timeline-header .timeline-status {
-  display: flex;
-  align-items: center;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 4px 16px;
-  margin-left: 0;
-  background: rgba(255,255,255,0.08);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  min-width: 140px;
-  justify-content: center;
-  color: #fff;
-  transition: background 0.2s;
-}
-.timeline-header .timeline-status svg {
-  margin-right: 6px;
-  font-size: 20px;
-}
-.timeline-header .timeline-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 12px;
-}
-.timeline-header button {
-  border-radius: 50%;
-  min-width: 40px;
-  min-height: 40px;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.10);
-  margin-left: 0;
-  border: none;
-  background: #fff;
-  transition: box-shadow 0.2s, background 0.2s;
+.calendar-card,
+.medication-list-card,
+.main-card {
+  animation: fadeInUp 0.6s ease-out;
+  will-change: transform, opacity;
 }
 
-.timeline-header button[danger] {
-  background: #fff;
-  color: #ff4d4f;
-  border: 1.5px solid #ff4d4f;
-}
-.timeline-header button:hover {
-  filter: none;
-  background: #e6f7ff;
-  box-shadow: 0 4px 16px rgba(22, 119, 255, 0.15);
-}
-.medication-timeline .timeline-card {
-  margin-bottom: 24px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  border-radius: 14px;
-  transition: box-shadow 0.2s;
-}
-.medication-timeline .timeline-card:hover {
-  box-shadow: 0 8px 24px rgba(82, 196, 26, 0.18);
+.timeline-card {
+  animation: fadeInUp 0.4s ease-out;
+  will-change: transform, opacity;
 }
 
 /* Modal Detail Styles */
@@ -400,100 +593,221 @@
   padding: 24px;
 }
 
-.ant-modal-body p {
-  margin-bottom: 12px;
-  font-size: 15px;
-  color: #555;
+/* Medication Batch Card Styles (theo style health-check-batch-card) */
+.medication-batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
-.ant-modal-body p:last-child {
-  margin-bottom: 0;
+.medication-batch-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  border: 1px solid #e8e8e8;
+  transition: box-shadow 0.3s ease;
 }
 
-.ant-modal-body p strong {
+.medication-batch-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.medication-batch-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.medication-batch-card-header .ant-typography {
+  margin: 0;
+}
+
+.medication-batch-card-header h4.ant-typography {
+  font-size: 20px;
   font-weight: 600;
-  color: #333;
-  display: inline-block;
-  min-width: 120px; /* Adjust as needed */
+  color: #0056b3;
 }
 
-.ant-modal-body .ant-tag {
+.medication-batch-card-header .ant-badge-status-text {
+  font-weight: 500;
+}
+
+.medication-batch-card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  color: #495057;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.medication-batch-card-info .ant-space-item {
   font-size: 14px;
-  padding: 4px 10px;
-  border-radius: 6px;
 }
 
-/* Animation Effects */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+.medication-batch-card-info .anticon {
+  color: #1890ff;
+  font-size: 16px;
+}
+
+.medication-batch-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Mở rộng vùng hiển thị danh sách đơn thuốc giống health-check-batch */
+.medication-section {
+  flex: 1;
+  min-width: 0;
+  /* Xóa width cố định nếu có */
+}
+
+.medication-batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  /* Đảm bảo chiếm toàn bộ vùng content */
+}
+
+.medication-batch-card {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  border: 1px solid #e8e8e8;
+  transition: box-shadow 0.3s ease;
+}
+
+/* Hiệu ứng hover nổi bật cho medication-batch-card giống health-check-batch-card */
+.medication-batch-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  border: 1px solid #e8e8e8;
+  transition: box-shadow 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1);
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.medication-batch-card:hover {
+  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.18), 0 1.5px 8px rgba(82, 196, 26, 0.10);
+  transform: translateY(-2px) scale(1.01);
+  border-color: #69CD32;
+  z-index: 2;
+}
+
+@media (max-width: 1200px) {
+  .medication-batch-list {
+    width: 100%;
   }
-  to {
+  .medication-batch-card {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .medication-batch-list {
+    width: 100%;
+  }
+  .medication-batch-card {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@keyframes fadeInDownMedCard {
+  0% {
+    opacity: 0;
+    transform: translateY(-32px);
+  }
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.main-card {
-  animation: fadeInUp 0.6s ease-out;
-  will-change: transform, opacity;
+.medication-batch-card {
+  animation: fadeInDownMedCard 0.6s cubic-bezier(0.4,0,0.2,1);
+  opacity: 1;
 }
 
-.supplies-card {
-  animation: fadeInUp 0.6s ease-out;
-  will-change: transform, opacity;
+/* Hiệu ứng delay cho từng card (xuất hiện lần lượt) */
+.medication-batch-list .medication-batch-card:nth-child(1) { animation-delay: 0.05s; }
+.medication-batch-list .medication-batch-card:nth-child(2) { animation-delay: 0.12s; }
+.medication-batch-list .medication-batch-card:nth-child(3) { animation-delay: 0.19s; }
+.medication-batch-list .medication-batch-card:nth-child(4) { animation-delay: 0.26s; }
+.medication-batch-list .medication-batch-card:nth-child(5) { animation-delay: 0.33s; }
+
+/* Custom Calendar Header Styles */
+.custom-calendar .calendar-custom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 0 2px 8px 2px;
 }
 
-.timeline-card {
-  animation: fadeInUp 0.4s ease-out;
-  will-change: transform, opacity;
+.calendar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* Hover Effects */
-.main-card:hover,
-.supplies-card:hover {
-  transform: translateY(-5px);
-  transition: transform 0.3s ease;
+.calendar-header-label {
+  font-size: 17px;
+  font-weight: 600;
+  color: #389e0d;
+  margin: 0 8px;
+  letter-spacing: 0.5px;
 }
 
-.timeline-card:hover {
-  transform: translateX(5px);
-  transition: transform 0.3s ease;
+.calendar-nav-btn {
+  background: #f0f5ff;
+  border: none;
+  border-radius: 6px;
+  color: #389e0d;
+  font-size: 18px;  
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.calendar-nav-btn:hover {
+  background: #bae7ff;
 }
 
-/* Button Hover Effect */
-.ant-btn:hover {
-  transform: scale(1.05);
-  transition: transform 0.3s ease;
+.calendar-today-btn {
+  background: #389e0d;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 16px;
+  margin-left: 32px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.08);
 }
-
-/* Status Animation */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-.timeline-status {
-  animation: pulse 0.5s ease-in-out;
-}
-
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #45a049 0%, #388e3c 100%);
+.calendar-today-btn:hover {
+  background: #389e0d;
 }
