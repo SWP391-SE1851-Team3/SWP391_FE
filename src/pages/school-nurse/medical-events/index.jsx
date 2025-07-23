@@ -42,16 +42,15 @@ import {
   getEventNames,
   getMedicalSupplies
 } from '/src/api/medicalEventsAPI.js';
-import { isPositiveNumber, isStringLengthInRange, hasNoSpecialCharacters } from '../../../validations';
+import { isPositiveNumber, isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../validations';
 import { isFever, isHypothermia, isTachycardia, isBradycardia } from '../../../validations';
+import { getErrorMessage } from '../../../utils/getErrorMessage';
 
 const { Title } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
 const App = () => {
-  const [currentPage2, setCurrentPage2] = useState(1);
-  const [currentPage3, setCurrentPage3] = useState(1);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [stateFilter, setStateFilter] = useState('');
@@ -65,9 +64,7 @@ const App = () => {
   const [editForm] = Form.useForm();
   const [students, setStudents] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
-  const [selectedStudent, setSelectedStudent] = useState(null);
   const [eventTypeList, setEventTypeList] = useState([]);
-  const [selectedEventType, setSelectedEventType] = useState(null);
   const [selectedSupplies, setSelectedSupplies] = useState([]);
   const [temperatureWarning, setTemperatureWarning] = useState('');
   const [heartRateWarning, setHeartRateWarning] = useState('');
@@ -88,9 +85,18 @@ const App = () => {
       title: 'Loại sự kiện',
       dataIndex: 'eventType',
       key: 'eventType',
-      render: (type) => (
-        <Tag color="red">{type}</Tag>
-      )
+      render: (eventType) => {
+        // eventType là mảng chuỗi
+        if (Array.isArray(eventType)) {
+          return eventType.map((name, idx) => (
+            <Tag color="red" key={idx} style={{ display: 'block', marginBottom: 2 }}>
+              {name}
+            </Tag>
+          ));
+        }
+        // Nếu không phải mảng, fallback về chuỗi
+        return <Tag color="red">{eventType}</Tag>;
+      }
     },
     {
       title: 'Thời gian',
@@ -100,7 +106,6 @@ const App = () => {
         if (!text) return '-';
         const date = moment(text, 'HH:mm, DD/MM/YYYY');
         if (!date.isValid()) {
-          console.error('Invalid date received from API for rendering:', text); 
           return 'Invalid date format';
         }
         return date.format('HH:mm, DD/MM/YYYY');
@@ -117,7 +122,6 @@ const App = () => {
         let text = 'Chờ xử lí';
         
         const currentStatus = status?.toUpperCase() || record.processingStatus?.toUpperCase() || 'PENDING';
-        console.log('Current status:', currentStatus); // Debug log
         
         switch (currentStatus) {
           case 'PROCESSING':
@@ -138,7 +142,6 @@ const App = () => {
             break;
         }
         
-        // Debug log
         return <Tag color={color}>{text}</Tag>;
       }
     },
@@ -201,10 +204,7 @@ const App = () => {
       const matchesCategory = categoryFilter === '' || 
         supply.category === categoryFilter;
 
-      // Lọc theo trạng thái
-      const matchesStatus = supply.status === supply.status; // This line was removed as per edit hint
-
-      return matchesSearch && matchesCategory && matchesStatus;
+      return matchesSearch && matchesCategory;
     });
   };
 
@@ -212,11 +212,11 @@ const App = () => {
   const handleCreateEvent = () => {
     form.validateFields().then(async values => {
       try {
-        if (!selectedEventType) {
+        if (!values.typeName || values.typeName.length === 0) {
           message.error('Vui lòng chọn loại sự kiện');
           return;
         }
-        if (!selectedStudent) {
+        if (!values.studentId || values.studentId.length === 0) {
           message.error('Vui lòng chọn học sinh');
           return;
         }
@@ -226,69 +226,66 @@ const App = () => {
         // Nếu có cập nhật bởi y tá khác, có thể lấy tương tự hoặc để trống
         const updatedByNurseId = nurseId;
         const updatedByNurseName = nurseName;
-        
+
         // Convert date string to proper format using moment
         const dateObj = values.date; // DatePicker returns a moment object
         const timeObj = values.time;
         const eventDateTime = dateObj.format('YYYY-MM-DD') + 'T' + timeObj.format('HH:mm:ss.SSS') + 'Z';
-        
+
+        // Map selectedSupplies to API format
+        const mappedSupplies = selectedSupplies.map(supply => ({
+          medicalSupplyId: supply.medicalSupplyId || supply.key,
+          supplyName: supply.supplyName || supply.name,
+          unit: supply.unit,
+          quantityUsed: supply.quantityUsed || 1
+        }));
+
+        // Lấy danh sách loại sự kiện
+        const selectedTypes = eventTypeList.filter(type => values.typeName.includes(type.typeName));
+        const listMedicalEventTypes = selectedTypes.map(type => ({
+          eventTypeId: type.eventTypeId,
+          typeName: type.typeName
+        }));
+
         const eventData = {
           eventId: values?.eventId,
-          studentId: selectedStudent.studentID,
-          parentID: selectedStudent.parentID || 0,
-          typeName: values?.typeName || '',
-          nurseId,
-          nurseName,
-          updatedByNurseId,
-          updatedByNurseName,
           usageMethod: values?.usageMethod || '',
           hasParentBeenInformed: values?.hasParentBeenInformed || false,
           temperature: values?.temperature || '',
           heartRate: values?.heartRate || '',
           eventDateTime: eventDateTime,
+          parentID: values.studentId.map(id => {
+            const student = students.find(s => s.studentID === id);
+            return student ? student.parentID : 0;
+          }),
+          studentId: values.studentId,
+          nurseId: parseInt(nurseId),
+          nurseName: nurseName,
+          updatedByNurseId: parseInt(updatedByNurseId),
+          updatedByNurseName: updatedByNurseName,
           note: values?.note || '',
           result: values?.result || '',
           processingStatus: 'PENDING',
-          eventTypeId: selectedEventType.eventTypeId,
-          // Thêm các trường mới theo API mới
-          medicalSupplies: selectedSupplies,
+          listMedicalEventTypes,
+          medicalSupplies: mappedSupplies,
           emergency: values?.emergency || false
         };
 
-        console.log("📤 Final Payload gửi lên API:", eventData);
-        console.log("Debug: selectedStudent before API call", selectedStudent);
-        
         await createEmergencyEvent(eventData);
         message.success('Tạo sự kiện khẩn cấp thành công!');
-        
-        // Reload all events data
-        try {
-          const eventsData = await getAllMedicalEvents();
-          const transformedEvents = eventsData.map(event => ({
-            key: event.eventId,
-            eventId: event.eventId,
-            studentName: event.studentName ? event.studentName.split(' - ')[0] : '', // Extract only the name
-            eventType: event.eventType,
-            time: event.time,
-            status: event.processingStatus || 'PROCESSING',
-            processingStatus: event.processingStatus || 'PROCESSING'
-          }));
-          setEvents(transformedEvents);
-        } catch (error) {
-          console.error('Error reloading events:', error);
-          message.error('Có lỗi xảy ra khi tải lại danh sách sự kiện');
+        // Gọi lại loadEvents để cập nhật danh sách sự kiện
+        if (typeof loadEvents === 'function') {
+          await loadEvents();
         }
-        
+
         setIsModalVisible(false);
         form.resetFields();
         setSelectedClass(null);
-        setSelectedStudent(null);
         setStudents([]);
-        setSelectedEventType(null);
         setSelectedSupplies([]);
       } catch (error) {
         console.error('Error creating emergency event:', error);
-        message.error('Có lỗi xảy ra khi tạo sự kiện khẩn cấp');
+        message.error(getErrorMessage(error));
       }
     });
   };
@@ -296,13 +293,12 @@ const App = () => {
   // Xử lý xem chi tiết
   const handleViewDetails = async (record) => {
     try {
-      const eventDetails = await getEventDetailsByEndpoint(record.eventId);
-      console.log('Event Details (for view modal):', eventDetails); // Debug log
+      const eventDetails = await getEventDetailsByEndpoint(record.eventDetailsID);
       setSelectedEvent(eventDetails);
       setIsViewModalVisible(true);
     } catch (error) {
       console.error('Error loading event details:', error);
-      message.error('Có lỗi xảy ra khi tải thông tin chi tiết sự kiện');
+      message.error(getErrorMessage(error));
     }
   };
 
@@ -310,7 +306,6 @@ const App = () => {
   const handleUpdateEvent = () => {
     editForm.validateFields().then(async values => {
       try {
-        console.log("Form values before update:", values); // Debug log
         // Lấy nurseId và nurseName từ localStorage
         const nurseId = localStorage.getItem('userId') || '';
         const nurseName = localStorage.getItem('fullname') || '';
@@ -320,8 +315,8 @@ const App = () => {
         const timeObj = values.time;
         const eventDateTime = dateObj.format('YYYY-MM-DD') + 'T' + timeObj.format('HH:mm:ss.SSS') + 'Z';
         
+        // Build eventData according to the new API structure
         const eventData = {
-          eventId: selectedEvent.eventId,
           usageMethod: values.usageMethod || '',
           isEmergency: values.isEmergency || false,
           hasParentBeenInformed: values.hasParentBeenInformed || false,
@@ -329,50 +324,76 @@ const App = () => {
           heartRate: values.heartRate || '',
           eventDateTime: eventDateTime,
           nurseId,
-          studentId: values.studentId,
+          studentId: Array.isArray(values.studentId) ? values.studentId[0] : values.studentId, // API expects a single ID
           note: values.description,
           result: values.result,
           processingStatus: values.processingStatus,
           nurseName,
-          medicalSupplies: selectedSupplies,
+          listMedicalEventTypes: (Array.isArray(values.typeName) ? values.typeName : []).map(typeName => {
+            const found = eventTypeList.find(t => t.typeName === typeName);
+            return found ? { eventTypeId: found.eventTypeId, typeName: found.typeName } : { eventTypeId: null, typeName };
+          }),
+          medicalSupplies: Array.isArray(selectedSupplies) ? selectedSupplies.map(s => ({
+            medicalSupplyId: s.medicalSupplyId,
+            supplyName: s.supplyName,
+            unit: s.unit,
+            quantityUsed: s.quantityUsed || 1
+          })) : []
         };
 
-        console.log("Event data before API call:", eventData); // Debug log
+        // Ensure eventId is present in eventData
+        let eventIdToUse = selectedEvent.eventId;
+        if (!eventIdToUse) {
+          // Try to get from editForm or events list
+          const formEventId = editForm.getFieldValue('eventId');
+          if (formEventId) {
+            eventIdToUse = formEventId;
+          } else {
+            // Try to find in events list by eventDetailsID
+            const found = events.find(e => e.eventDetailsID === selectedEvent.eventDetailsID);
+            if (found && found.eventId) {
+              eventIdToUse = found.eventId;
+            }
+          }
+        }
+        eventData.eventId = eventIdToUse;
 
-        // Find the event type ID from the eventTypeList
-        const selectedType = eventTypeList.find(type => type.typeName === values.typeName);
-        if (!selectedType) {
-          message.error('Không tìm thấy loại sự kiện');
+        // Always use the correct eventDetailsId for update
+        const eventDetailsId = selectedEvent.eventDetailsID || selectedEvent.evenDetailsId;
+        if (!eventDetailsId) {
+          message.error('Không tìm thấy eventDetailsID để cập nhật!');
           return;
         }
-
-        // Pass the correct eventTypeId to the API
-        const updatedEvent = await updateMedicalEvent(selectedEvent.eventId, selectedType.eventTypeId, eventData);
-        console.log("API Response after update:", updatedEvent); // Debug log
+        // Try eventId first, then fallback to eventDetailsID/evenDetailsId
+        let updateId = selectedEvent.eventId;
+        if (!updateId) {
+          updateId = selectedEvent.eventDetailsID || selectedEvent.evenDetailsId;
+        }
+        if (!updateId) {
+          message.error('Không tìm thấy ID để cập nhật!');
+          return;
+        }
+        await updateMedicalEvent(updateId, eventData);
         message.success('Cập nhật sự kiện y tế thành công!');
 
         // Reload all events data to reflect changes from backend
         try {
           const eventsData = await getAllMedicalEvents();
-          console.log("Raw events data from API:", eventsData); // Debug log
-          const transformedEvents = eventsData.map(event => {
-            const transformed = {
-              key: event.eventId,
-              eventId: event.eventId,
-              studentName: event.studentName ? event.studentName.split(' - ')[0] : '',
-              eventType: event.eventType,
-              time: event.time,
-              status: event.processingStatus || 'PROCESSING',
-              processingStatus: event.processingStatus || 'PROCESSING'
-            };
-            console.log("Transformed event:", transformed); // Debug log
-            return transformed;
-          });
-          console.log("Final transformed events:", transformedEvents); // Debug log
+          const transformedEvents = eventsData.map(event => ({
+            key: event.eventDetailsID,
+            eventId: event.eventId,
+            eventDetailsID: event.eventDetailsID,
+            studentName: event.studentName,
+            eventType: Array.isArray(event.eventType) ? event.eventType : [event.eventType],
+            time: event.time,
+            status: event.processingStatus || 'PROCESSING',
+            processingStatus: event.processingStatus || 'PROCESSING',
+            actions: event.actions || ''
+          }));
           setEvents(transformedEvents);
         } catch (error) {
           console.error('Error reloading events:', error);
-          message.error('Có lỗi xảy ra khi tải lại danh sách sự kiện');
+          message.error(getErrorMessage(error));
         }
 
         setIsEditModalVisible(false);
@@ -380,7 +401,7 @@ const App = () => {
         setSelectedEvent(null); // Reset selected event after successful update
       } catch (error) {
         console.error('Error updating event:', error);
-        message.error('Có lỗi xảy ra khi cập nhật sự kiện y tế');
+        message.error(getErrorMessage(error));
       }
     });
   };
@@ -388,7 +409,6 @@ const App = () => {
   // UseEffect to populate edit form when modal becomes visible and data is available
   useEffect(() => {
     if (isEditModalVisible && selectedEvent) {
-      console.log("Selected Event in useEffect:", selectedEvent); // Debug log
       const eventDateTime = moment(selectedEvent.eventDateTime);
 
       const eventTypeNameForForm = selectedEvent.eventTypeNames && selectedEvent.eventTypeNames.length > 0 
@@ -415,7 +435,6 @@ const App = () => {
         result: selectedEvent.result
       };
 
-      console.log("Setting form values:", formValues); // Debug log
       editForm.setFieldsValue(formValues);
 
       // Đồng bộ selectedSupplies nếu có listMedicalSupplies
@@ -435,10 +454,14 @@ const App = () => {
   // Xử lý chỉnh sửa
   const handleEdit = async (record) => {
     try {
-      const eventDetails = await getEventDetailsByEndpoint(record.eventId);
-      console.log('Event Details (for edit modal - FULL OBJECT):', eventDetails); // NEW DEBUG LOG
-      setSelectedEvent(eventDetails);
-      
+      const eventDetails = await getEventDetailsByEndpoint(record.eventDetailsID);
+      // Ensure both eventDetailsID and evenDetailsId are available for compatibility
+      setSelectedEvent({
+        ...eventDetails,
+        eventDetailsID: eventDetails.eventDetailsID || eventDetails.evenDetailsId,
+        evenDetailsId: eventDetails.evenDetailsId || eventDetails.eventDetailsID,
+        medicalSupplies: eventDetails.medicalSupplies || eventDetails.listMedicalSupplies || [],
+      });
       // Fetch students for the class associated with the event
       let studentsData = [];
       if (eventDetails.className) {
@@ -447,23 +470,20 @@ const App = () => {
           setStudents(studentsData); // Populate students for the dropdown
         } catch (error) {
           console.error('Error fetching students for pre-selected class in edit:', error);
-          message.error('Có lỗi xảy ra khi tải danh sách học sinh cho lớp đã chọn');
+          message.error(getErrorMessage(error));
         }
       } else {
         setStudents([]); // Clear students if no class
       }
-
       // Find the pre-selected student from the fetched list
       const preSelectedStudent = studentsData.find(s => s.studentID === eventDetails.studentId);
       if (preSelectedStudent) {
-          setSelectedStudent(preSelectedStudent);
+          // setSelectedStudent(preSelectedStudent); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
       } else {
-          setSelectedStudent(null);
+          // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
       }
-
       // Open modal - form fields will be set by useEffect
       setIsEditModalVisible(true);
-
       // Đồng bộ selectedSupplies nếu có listMedicalSupplies
       if (eventDetails.listMedicalSupplies && Array.isArray(eventDetails.listMedicalSupplies)) {
         setSelectedSupplies(eventDetails.listMedicalSupplies.map(s => ({
@@ -478,7 +498,7 @@ const App = () => {
 
     } catch (error) {
       console.error('Error loading event details:', error);
-      message.error('Có lỗi xảy ra khi tải thông tin sự kiện');
+      message.error(getErrorMessage(error));
     }
   };
 
@@ -486,34 +506,21 @@ const App = () => {
   const handleCancelEdit = () => {
     setIsEditModalVisible(false);
     editForm.resetFields();
-    setSelectedEventType(null); // Reset selectedEventType on cancel
+    // setSelectedEventType(null); // Reset selectedEventType on cancel
   };
 
   // Hàm xử lý khi chọn học sinh
   const handleStudentChange = (value) => {
-    console.log('Selected student value:', value); // Debug log: value will now be just the student ID
-    const student = students.find(s => s.studentID === value); // Find by ID directly
-    console.log('Found student:', student); // Debug log
-    if (student) {
-      setSelectedStudent(student);
-      form.setFieldsValue({
-        studentId: student.studentID, // Set studentId to just the ID
-        parentId: student.parentID || ''
-      });
-    } else {
-      // Reset form fields if no student is found or deselected
-      form.setFieldsValue({
-        studentId: undefined,
-        parentId: undefined
-      });
-    }
+    // value là mảng studentID khi dùng mode="multiple"
+    form.setFieldsValue({
+      studentId: value
+    });
   };
 
   // Hàm xử lý khi chọn lớp
   const handleClassChange = async (className) => {
-    console.log('Selected class:', className); // Debug log
     setSelectedClass(className);
-    setSelectedStudent(null);
+    // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
     form.setFieldsValue({ 
       studentId: undefined,
       parentId: undefined 
@@ -521,13 +528,11 @@ const App = () => {
     
     if (className) {
       try {
-        console.log('Fetching students for class:', className); // Debug log
         const studentsData = await fetchStudentsByClass(className);
-        console.log('Fetched students:', studentsData); // Debug log
         setStudents(studentsData);
       } catch (error) {
         console.error('Error fetching students:', error);
-        message.error('Có lỗi xảy ra khi tải danh sách học sinh');
+        message.error(getErrorMessage(error));
       }
     } else {
       setStudents([]);
@@ -539,43 +544,43 @@ const App = () => {
     setIsModalVisible(true);
     form.resetFields();
     setSelectedClass(null);
-    setSelectedStudent(null);
+    // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
     setStudents([]);
     setSelectedSupplies([]);
   };
 
-  // Load events on component mount
+  // Đưa loadEvents ra ngoài để có thể gọi lại sau khi tạo sự kiện
+  const loadEvents = async () => {
+    try {
+      const eventsData = await getAllMedicalEvents();
+      // Transform the data to match the new structure for the table
+      const transformedEvents = eventsData.map(event => ({
+        key: event.eventDetailsID,
+        eventId: event.eventId,
+        eventDetailsID: event.eventDetailsID,
+        studentName: event.studentName,
+        eventType: Array.isArray(event.eventType) ? event.eventType : [event.eventType],
+        time: event.time,
+        status: event.processingStatus || 'PROCESSING',
+        processingStatus: event.processingStatus || 'PROCESSING',
+        actions: event.actions || ''
+      }));
+
+      // Sort events by time in descending order (newest first)
+      transformedEvents.sort((a, b) => {
+        const timeA = moment(a.time);
+        const timeB = moment(b.time);
+        return timeB - timeA;
+      });
+
+      setEvents(transformedEvents);
+    } catch (error) {
+      console.error('Error loading events:', error);
+      message.error(getErrorMessage(error));
+    }
+  };
+
   useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const eventsData = await getAllMedicalEvents();
-        console.log('API Response:', eventsData); // Debug log
-        // Transform the data to match the desired structure for the table
-        const transformedEvents = eventsData.map(event => ({
-          key: event.eventId,
-          eventId: event.eventId,
-          studentName: event.studentName ? event.studentName.split(' - ')[0] : '', // Extract only the name
-          eventType: event.eventType,
-          time: event.time,
-          status: event.processingStatus || 'PROCESSING',
-          processingStatus: event.processingStatus || 'PROCESSING'
-        }));
-
-        // Sort events by time in descending order (newest first)
-        transformedEvents.sort((a, b) => {
-          const timeA = moment(a.time);
-          const timeB = moment(b.time);
-          return timeB - timeA;
-        });
-
-        console.log('Transformed Events:', transformedEvents); // Debug log
-        setEvents(transformedEvents);
-      } catch (error) {
-        console.error('Error loading events:', error);
-        message.error('Có lỗi xảy ra khi tải danh sách sự kiện');
-      }
-    };
-
     loadEvents();
 
     const loadEventNames = async () => {
@@ -584,7 +589,7 @@ const App = () => {
         setEventTypeList(names);
       } catch (error) {
         console.error('Error loading event names:', error);
-        message.error('Có lỗi xảy ra khi tải danh sách loại sự kiện');
+        message.error(getErrorMessage(error));
       }
     };
     loadEventNames();
@@ -601,7 +606,6 @@ const App = () => {
           quantity: item.quantityAvailable,
           unit: item.unit,
           category: item.categoryName || item.categoryID || 'Khác',
-          // Các trường gốc giữ lại nếu cần dùng
           medicalSupplyID: item.medicalSupplyID,
           supplyName: item.supplyName,
           dateAdded: item.dateAdded,
@@ -613,7 +617,7 @@ const App = () => {
         }));
         setMedicalSupplies(mapped);
       } catch (error) {
-        message.error('Không thể tải danh sách vật tư y tế');
+        message.error(getErrorMessage(error));
       }
     };
     fetchSupplies();
@@ -622,10 +626,10 @@ const App = () => {
   // Lấy dữ liệu đã lọc
   const filteredEvents = getFilteredEvents();
 
-  // Add this useEffect to monitor events state changes
-  useEffect(() => {
-    console.log('Events state updated:', events);
-  }, [events]);
+  // Thêm hàm kiểm tra ngày không cho chọn ngày trong quá khứ
+  const disabledPastDate = (current) => {
+    return current && current < moment().startOf('day');
+  };
 
   return (
     <div className="medical-management-app">
@@ -682,7 +686,6 @@ const App = () => {
                 <Option value="">Tất cả trạng thái</Option>
                 <Option value="PROCESSING">Đang xử lý</Option>
                 <Option value="COMPLETED">Hoàn thành</Option>
-                <Option value="PENDING">Chờ xử lý</Option>
                 <Option value="DELETED">Đã xóa</Option>
               </Select>
             </Col>
@@ -692,15 +695,9 @@ const App = () => {
         <Table
           columns={eventColumns}
           dataSource={filteredEvents}
-          pagination={{
-            current: currentPage2,
-            pageSize: 10,
-            total: filteredEvents.length,
-            onChange: (page) => setCurrentPage2(page),
-            showSizeChanger: false,
-            showQuickJumper: false
-          }}
+          pagination={{ pageSize: 5 }}
           className="events-table"
+          rowKey={record => `${record.eventDetailsID}-${record.eventId}`}
         />
       </Card>
 
@@ -768,19 +765,9 @@ const App = () => {
           className="events-table"
         />
 
-        <div className="pagination-section">
-          <Pagination
-            current={currentPage3}
-            total={getFilteredSupplies().length}
-            pageSize={10}
-            onChange={(page) => setCurrentPage3(page)}
-            showSizeChanger={false}
-            showQuickJumper={false}
-          />
-        </div>
       </Card>
 
-      {/* Modal tạo sự kiện mới */}
+           {/* Modal tạo sự kiện mới */}
       <Modal
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Tạo sự kiện y tế mới</span>}
         open={isModalVisible}
@@ -795,9 +782,8 @@ const App = () => {
           if (!visible) {
             form.resetFields();
             setSelectedClass(null);
-            setSelectedStudent(null);
+            // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
             setStudents([]);
-            setSelectedEventType(null);
             setSelectedSupplies([]);
           }
         }}
@@ -818,6 +804,7 @@ const App = () => {
                   initialValue={undefined}
                 >
                   <Select
+                    mode="multiple"
                     placeholder="Chọn lớp"
                     onChange={handleClassChange}
                     allowClear
@@ -839,10 +826,12 @@ const App = () => {
                 <Form.Item
                   name="studentId"
                   label="Học sinh"
-                  rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
+                  rules={[{ required: true, type: 'array', min: 1, message: 'Vui lòng chọn học sinh' }]}
                 >
                   <Select
+                    mode="multiple"
                     placeholder="Chọn học sinh"
+                    value={Array.isArray(form.getFieldValue('studentId')) ? form.getFieldValue('studentId') : []}
                     onChange={handleStudentChange}
                     disabled={!selectedClass}
                     loading={!selectedClass}
@@ -855,13 +844,17 @@ const App = () => {
                     }}
                   >
                     {students && students.length > 0 ? (
-                      students.map(student => (
+                      [...students].sort((a, b) => {
+                        if (a.className < b.className) return -1;
+                        if (a.className > b.className) return 1;
+                        return 0;
+                      }).map(student => (
                         <Option 
-                          key={student.studentID} 
+                          key={student.studentID}
                           value={student.studentID}
-                          label={`${student.fullName} - ${student.gender === 1 ? 'Nam' : 'Nữ'}`}
+                          label={`${student.fullName} - ${student.className} `}
                         >
-                          {student.fullName} - {student.gender === 1 ? 'Nam' : 'Nữ'}
+                          {student.fullName} - {student.className} 
                         </Option>
                       ))
                     ) : (
@@ -878,12 +871,11 @@ const App = () => {
               rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
             >
               <Select 
+                mode="multiple"
                 placeholder="Chọn loại sự kiện" 
                 allowClear
-                onChange={(value) => {
-                  const selectedType = eventTypeList.find(type => type.typeName === value);
-                  setSelectedEventType(selectedType);
-                }}
+                value={Array.isArray(form.getFieldValue('typeName')) ? form.getFieldValue('typeName') : []}
+                onChange={() => {}}
               >
                 {eventTypeList.map(eventType => (
                   <Option key={eventType.eventTypeId} value={eventType.typeName}>
@@ -896,67 +888,11 @@ const App = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="temperature"
-                  label={<span>Nhiệt độ () {temperatureWarning && <span style={{color:'red', marginLeft:8}}>{temperatureWarning}</span>}</span>}
-                  rules={[
-                    { required: true, message: 'Vui lòng nhập nhiệt độ' },
-                    { validator: (_, value) => {
-                        if (value === undefined || value === '') return Promise.resolve();
-                        const num = Number(value);
-                        if (!isPositiveNumber(num)) return Promise.reject('Nhiệt độ phải là số dương!');
-                        if (isFever(num)) setTemperatureWarning('Sốt');
-                        else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
-                        else setTemperatureWarning('');
-                      return Promise.resolve();
-                      }
-                    }
-                    
-                  ]}
-                >
-                  <Input placeholder="Nhập nhiệt độ" onChange={e => {
-                    const num = Number(e.target.value);
-                    if (isFever(num)) setTemperatureWarning('Sốt');
-                    else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
-                    else setTemperatureWarning('');
-                  }} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="heartRate"
-                  label={<span>Nhịp tim {heartRateWarning && <span style={{color:'red', marginLeft:8}}>{heartRateWarning}</span>}</span>}
-                  rules={[
-                    { required: true, message: 'Vui lòng nhập nhịp tim' },
-                    { validator: (_, value) => {
-                        if (value === undefined || value === '') return Promise.resolve();
-                        const num = Number(value);
-                        if (!isPositiveNumber(num)) return Promise.reject('Nhịp tim phải là số dương!');
-                        if (isTachycardia(num)) setHeartRateWarning('Nhịp nhanh');
-                        else if (isBradycardia(num)) setHeartRateWarning('Nhịp chậm');
-                        else setHeartRateWarning('');
-                        return Promise.resolve();
-                      }
-                    }
-                  ]}
-                >
-                  <Input placeholder="Nhập nhịp tim" onChange={e => {
-                    const num = Number(e.target.value);
-                    if (isTachycardia(num)) setHeartRateWarning('Nhịp nhanh');
-                    else if (isBradycardia(num)) setHeartRateWarning('Nhịp chậm');
-                    else setHeartRateWarning('');
-                  }} />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
                   name="date"
                   label="Ngày"
                   rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
                 >
-                  <DatePicker style={{ width: '100%' }} />
+                  <DatePicker style={{ width: '100%' }} disabledDate={disabledPastDate} />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -1000,8 +936,9 @@ const App = () => {
                 { 
                   validator: (_, value) => {
                     if (value === undefined || value === '') return Promise.resolve();
+                    if (isOnlyWhitespace(value)) return Promise.reject('Phương pháp xử lý không được để khoảng trắng đầu dòng!');
+                    if (!hasNoSpecialCharacters(value)) return Promise.reject('Phương pháp xử lý không được nhập ký tự đặc biệt!');
                     if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Phương pháp xử lý không quá 255 ký tự!');
-                    if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
                     return Promise.resolve();
                   }
                 }
@@ -1017,7 +954,7 @@ const App = () => {
               <Select
                 mode="multiple"
                 placeholder="Chọn vật tư y tế sử dụng"
-                value={selectedSupplies.map(s => s.medicalSupplyId)}
+                value={Array.isArray(selectedSupplies) ? selectedSupplies.map(s => s.medicalSupplyId) : []}
                 onChange={ids => {
                   // Thêm mới các vật tư được chọn
                   const newSelected = ids.map(id => {
@@ -1123,8 +1060,8 @@ const App = () => {
                 <Typography.Text strong>{selectedEvent.className}</Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Loại sự kiện:</Typography.Text><br />
-                <Typography.Text>{selectedEvent.eventTypeNames && selectedEvent.eventTypeNames.length > 0 ? selectedEvent.eventTypeNames[0] : selectedEvent.eventType}</Typography.Text>
+                <Typography.Text type="secondary" strong>Giới tính:</Typography.Text><br />
+                <Typography.Text>{selectedEvent.gender === 1 ? 'Nam' : selectedEvent.gender === 2 ? 'Nữ' : 'Khác'}</Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Thời gian:</Typography.Text><br />
@@ -1135,27 +1072,33 @@ const App = () => {
                 <Tag color={
                   selectedEvent.processingStatus === 'COMPLETED' ? 'success' :
                   selectedEvent.processingStatus === 'PROCESSING' ? 'processing' :
-                  selectedEvent.processingStatus === 'PENDING' ? 'error' :
                   selectedEvent.processingStatus === 'DELETED' ? 'default' : 'default'
                 }>
                   {selectedEvent.processingStatus === 'COMPLETED' ? 'Hoàn thành' :
                    selectedEvent.processingStatus === 'PROCESSING' ? 'Đang xử lý' :
-                   selectedEvent.processingStatus === 'PENDING' ? 'Chờ xử lí' :
                    selectedEvent.processingStatus === 'DELETED' ? 'Đã xóa' : 'Chưa xử lý'}
                 </Tag>
               </Col>
-              {selectedEvent.createdByNurseName && (
-                <Col span={12} style={{ marginBottom: 6 }}>
-                  <Typography.Text type="secondary" strong>Người tạo sự kiện:</Typography.Text><br />
-                  <Typography.Text>{selectedEvent.createdByNurseName}</Typography.Text>
-                </Col>
-              )}
-              {selectedEvent.updatedByNurseName && (
-                <Col span={12} style={{ marginBottom: 6 }}>
-                  <Typography.Text type="secondary" strong>Người cập nhật cuối:</Typography.Text><br />
-                  <Typography.Text>{selectedEvent.updatedByNurseName}</Typography.Text>
-                </Col>
-              )}
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Loại sự kiện:</Typography.Text><br />
+                <Typography.Text>
+                  {Array.isArray(selectedEvent.eventTypeNames) && selectedEvent.eventTypeNames.length > 0
+                    ? selectedEvent.eventTypeNames.map((name, idx) => (
+                        <Tag color="red" key={idx} style={{ display: 'block', marginBottom: 4 }}>
+                          {name}
+                        </Tag>
+                      ))
+                    : selectedEvent.eventType}
+                </Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Người tạo sự kiện:</Typography.Text><br />
+                <Typography.Text>{selectedEvent.createdByNurseName}</Typography.Text>
+              </Col>
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Người cập nhật cuối:</Typography.Text><br />
+                <Typography.Text>{selectedEvent.updatedByNurseName}</Typography.Text>
+              </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Khẩn cấp:</Typography.Text><br />
                 <Tag color={selectedEvent.isEmergency || selectedEvent.emergency ? 'red' : 'default'}>
@@ -1230,7 +1173,7 @@ const App = () => {
           if (!visible) {
             editForm.resetFields();
             setSelectedClass(null);
-            setSelectedStudent(null);
+            // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
             setStudents([]);
           }
         }}
@@ -1251,6 +1194,7 @@ const App = () => {
                   initialValue={undefined}
                 >
                   <Select
+                    mode="multiple"
                     placeholder="Chọn lớp"
                     onChange={handleClassChange}
                     allowClear
@@ -1259,6 +1203,7 @@ const App = () => {
                     filterOption={(input, option) =>
                       (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                     }
+                    disabled
                   >
                     <Option value="Lớp 5A">Lớp 5A</Option>
                     <Option value="Lớp 4B">Lớp 4B</Option>
@@ -1275,7 +1220,9 @@ const App = () => {
                   rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}
                 >
                   <Select
+                    mode="multiple"
                     placeholder="Chọn học sinh"
+                    value={Array.isArray(editForm.getFieldValue('studentId')) ? editForm.getFieldValue('studentId') : []}
                     onChange={handleStudentChange}
                     disabled={!selectedClass}
                     loading={!selectedClass}
@@ -1288,13 +1235,17 @@ const App = () => {
                     }}
                   >
                     {students && students.length > 0 ? (
-                      students.map(student => (
+                      [...students].sort((a, b) => {
+                        if (a.className < b.className) return -1;
+                        if (a.className > b.className) return 1;
+                        return 0;
+                      }).map(student => (
                         <Option 
                           key={student.studentID} 
                           value={student.studentID}
-                          label={`${student.fullName} - ${student.gender === 1 ? 'Nam' : 'Nữ'}`}
+                          label={`${student.fullName} - ${student.className} - ${student.gender === 1 ? 'Nam' : 'Nữ'}`}
                         >
-                          {student.fullName} - {student.gender === 1 ? 'Nam' : 'Nữ'}
+                          {student.fullName} - {student.className} - {student.gender === 1 ? 'Nam' : 'Nữ'}
                         </Option>
                       ))
                     ) : (
@@ -1311,16 +1262,16 @@ const App = () => {
                   name="typeName"
                   label="Loại sự kiện"
                   rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
+                  
                 >
                   <Select 
+                    mode="multiple"
                     placeholder="Chọn loại sự kiện" 
                     allowClear
-                    onChange={(value) => {
-                      const selectedType = eventTypeList.find(type => type.typeName === value);
-                      setSelectedEventType(selectedType);
-                    }}
-                    value={editForm.getFieldValue('typeName')}
+                    value={Array.isArray(editForm.getFieldValue('typeName')) ? editForm.getFieldValue('typeName') : []}
+                    onChange={() => {}}
                     key={selectedEvent?.eventId || 'new'}
+                    disabled
                   >
                     {eventTypeList.map(eventType => (
                       <Option key={eventType.eventTypeId} value={eventType.typeName}>
@@ -1339,7 +1290,6 @@ const App = () => {
                   <Select placeholder="Chọn trạng thái">
                     <Option value="PROCESSING">Đang xử lý</Option>
                     <Option value="COMPLETED">Hoàn thành</Option>
-                    <Option value="PENDING">Chờ xử lí</Option>
                     <Option value="DELETED">Đã xóa</Option>
                   </Select>
                 </Form.Item>
@@ -1350,13 +1300,23 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="temperature"
-                  label={<span>Nhiệt độ {temperatureWarning && <span style={{color:'red', marginLeft:8}}>{temperatureWarning}</span>}</span>}
+                  label={<span>Nhiệt độ (°C)  {temperatureWarning && <span style={{color:'red', marginLeft:8}}>{temperatureWarning}</span>}</span>}
                   rules={[
                     { required: true, message: 'Vui lòng nhập nhiệt độ' },
                     { validator: (_, value) => {
-                        if (value === undefined || value === '') return Promise.resolve();
+                        if (value === undefined || value === '') {
+                          setTemperatureWarning('');
+                          return Promise.resolve();
+                        }
                         const num = Number(value);
-                        if (!isPositiveNumber(num)) return Promise.reject('Nhiệt độ phải là số dương!');
+                        if (isNaN(num)) {
+                          setTemperatureWarning('');
+                          return Promise.reject('Nhiệt độ phải là số!');
+                        }
+                        if (!isPositiveNumber(num)) {
+                          setTemperatureWarning('');
+                          return Promise.reject('Nhiệt độ phải là số dương!');
+                        }
                         if (isFever(num)) setTemperatureWarning('Sốt');
                         else if (isHypothermia(num)) setTemperatureWarning('Hạ thân nhiệt');
                         else setTemperatureWarning('');
@@ -1376,13 +1336,23 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="heartRate"
-                  label={<span>Nhịp tim {heartRateWarning && <span style={{color:'red', marginLeft:8}}>{heartRateWarning}</span>}</span>}
+                  label={<span>Nhịp tim (bpm) {heartRateWarning && <span style={{color:'red', marginLeft:8}}>{heartRateWarning}</span>}</span>}
                   rules={[
                     { required: true, message: 'Vui lòng nhập nhịp tim' },
                     { validator: (_, value) => {
-                        if (value === undefined || value === '') return Promise.resolve();
+                        if (value === undefined || value === '') {
+                          setHeartRateWarning('');
+                          return Promise.resolve();
+                        }
                         const num = Number(value);
-                        if (!isPositiveNumber(num)) return Promise.reject('Nhịp tim phải là số dương!');
+                        if (isNaN(num)) {
+                          setHeartRateWarning('');
+                          return Promise.reject('Nhịp tim phải là số!');
+                        }
+                        if (!isPositiveNumber(num)) {
+                          setHeartRateWarning('');
+                          return Promise.reject('Nhịp tim phải là số dương!');
+                        }
                         if (isTachycardia(num)) setHeartRateWarning('Nhịp nhanh');
                         else if (isBradycardia(num)) setHeartRateWarning('Nhịp chậm');
                         else setHeartRateWarning('');
@@ -1408,7 +1378,7 @@ const App = () => {
                   label="Ngày sự kiện"
                   rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
                 >
-                  <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                  <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" disabledDate={disabledPastDate} />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -1452,8 +1422,9 @@ const App = () => {
                     { 
                       validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Phương pháp xử lý không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Phương pháp xử lý không được nhập ký tự đặc biệt!');
                         if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Phương pháp xử lý không quá 255 ký tự!');
-                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
                         return Promise.resolve();
                       }
                     }
@@ -1473,8 +1444,9 @@ const App = () => {
                     { 
                       validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
+                        if (isOnlyWhitespace(value)) return Promise.reject('Ghi chú không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Ghi chú không được nhập ký tự đặc biệt!');
                         if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Ghi chú không quá 255 ký tự!');
-                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
                         return Promise.resolve();
                       }
                     }
@@ -1494,8 +1466,9 @@ const App = () => {
                     { 
                       validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
-                        if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Kết quả không quá 255 ký tự!');
-                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
+                        if (isOnlyWhitespace(value)) return Promise.reject('Kết quả xử lý không được để khoảng trắng đầu dòng!');
+                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Kết quả xử lý không được nhập ký tự đặc biệt!');
+                        if (!isStringLengthInRange(value, 0, 255)) return Promise.reject('Kết quả xử lý không quá 255 ký tự!');
                         return Promise.resolve();
                       }
                     }
@@ -1515,7 +1488,7 @@ const App = () => {
                   <Select
                     mode="multiple"
                     placeholder="Chọn vật tư y tế sử dụng"
-                    value={selectedSupplies.map(s => s.medicalSupplyId)}
+                    value={Array.isArray(selectedSupplies) ? selectedSupplies.map(s => s.medicalSupplyId) : []}
                     onChange={ids => {
                       // Thêm mới các vật tư được chọn
                       const newSelected = ids.map(id => {
