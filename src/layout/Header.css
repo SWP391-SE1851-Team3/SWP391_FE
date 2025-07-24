@@ -37,7 +37,7 @@
 .logo-text {
   font-size: 16px; /* Giảm font-size */
   font-weight: 700;
-  color: #1890ff;
+  color: #69CD32 !important;
   white-space: nowrap;
 }
 

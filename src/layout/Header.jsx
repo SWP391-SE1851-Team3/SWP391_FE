@@ -163,7 +163,7 @@ const HeaderLayout = () => {
         <div className="header-container">
           <div className="logo-section">
             <img src={Logo} alt="Logo" className="logo-image" />
-            <span className="logo-text">Y tế Học đường</span>
+            <span className="logo-text">Y Tế Học Đường</span>
           </div>
 
           <div 
