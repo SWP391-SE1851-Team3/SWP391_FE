@@ -14,7 +14,9 @@ import {
   UserOutlined,
   SettingOutlined,
   CalendarOutlined,
-  TeamOutlined
+  TeamOutlined,
+  FileTextOutlined,
+  AlertOutlined
 } from '@ant-design/icons';
 
 const { Header } = Layout;
@@ -27,6 +29,7 @@ const ROLE_MENUS = {
     { key: 'medications', label: 'Gửi thuốc', path: '/medications' },
     { key: 'health-check', label: 'Kiểm tra sức khỏe', path: '/health-check' },
     { key: 'vaccination', label: 'Tiêm chủng', path: '/vaccination' },
+    { key: 'medical-accident', label: 'Sự Kiện Y Tế', path: '/medical-accident' },
   ],
   2: [
     { key: 'home', label: 'Trang chủ', path: '/', icon: <HomeOutlined /> },
@@ -36,11 +39,11 @@ const ROLE_MENUS = {
     { key: 'manage-health-check', label: 'Kiểm tra y tế', path: '/manage-health-check', icon: <HeartOutlined /> },
   ],
   3: [
-    { key: 'home', label: 'Trang chủ', path: '/' },
-    { key: 'user-management', label: 'Quản Lý Người Dùng', path: '/manager-users' },
-    { key: 'supplies-management', label: 'Quản Lý Vật Tư', path: '/manager-supply' },
-    { key: 'manage-dashboard', label: 'Biểu Đồ Báo Cáo', path: '/manager-dashboard' },
-    { key: 'manager-event', label: 'Quản Lý Sự Kiện', path: '/manager-event' },
+    { key: 'home', label: 'Trang chủ', path: '/', icon: <HomeOutlined /> },
+    { key: 'user-management', label: 'Quản Lý Người Dùng', path: '/manager-users', icon: <TeamOutlined /> },
+    { key: 'supplies-management', label: 'Quản Lý Vật Tư', path: '/manager-supply', icon: <MedicineBoxOutlined /> },
+    { key: 'manage-dashboard', label: 'Biểu Đồ Báo Cáo', path: '/manager-dashboard', icon: <CalendarOutlined /> },
+    { key: 'manager-event', label: 'Quản Lý Sự Kiện', path: '/manager-event', icon: <AlertOutlined /> },
   ]
 };
 
@@ -160,7 +163,7 @@ const HeaderLayout = () => {
         <div className="header-container">
           <div className="logo-section">
             <img src={Logo} alt="Logo" className="logo-image" />
-            <span className="logo-text">Y tế Học đường</span>
+            <span className="logo-text">Y Tế Học Đường</span>
           </div>
 
           <div 
@@ -172,23 +175,24 @@ const HeaderLayout = () => {
               mode={isVerticalMenu ? "vertical" : "horizontal"}
               selectedKeys={[selectedKey]}
               className={`nav-menu${isVerticalMenu ? " vertical-menu" : " horizontal-menu"} ${collapsed ? " collapsed-menu" : ""} ${tempExpanded ? " temp-expanded" : ""}`}
-              // Disable overflow behavior completely
-              overflowedIndicator={false}
               style={{ 
                 border: 'none', 
                 background: 'transparent',
-                display: 'flex',
-                width: '100%'
+                width: '100%',
+                lineHeight: '64px'
               }}
-              items={menuItems.map(item => ({
+              items={menuItems.map((item, index) => ({
                 key: item.path,
-                icon: isVerticalMenu ? item.icon : undefined, // Only icons for vertical menu
+                icon: isVerticalMenu ? item.icon : undefined,
                 label: <Link to={item.path}>{item.label}</Link>,
                 title: (isVerticalMenu && collapsed && !isHovered) ? item.label : undefined,
-                style: isVerticalMenu ? {} : { 
-                  flex: 1, 
-                  justifyContent: 'center',
-                  textAlign: 'center'
+                style: isVerticalMenu ? {} : {
+                  flex: '1',
+                  textAlign: 'center',
+                  padding: '0 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }
               }))}
             />

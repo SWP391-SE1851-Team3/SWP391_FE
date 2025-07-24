@@ -101,7 +101,7 @@ function HomePage() {
         <div className="hero-content">
           <div className="hero-text">
             <Title level={1} className="hero-title">
-              Hệ thống Quản lý Y tế Học đường
+              Hệ Thống Quản Lý Y Tế Học Đường
             </Title>
             <Paragraph className="subtitle">
               Giải pháp toàn diện cho quản lý sức khỏe và y tế trong môi trường giáo dục.

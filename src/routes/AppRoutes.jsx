@@ -19,6 +19,7 @@ import NursePage from '../pages/school-nurse';
 import ManageMedication from '../pages/school-nurse/manage-medication';
 import ManageVaccination from '../pages/school-nurse/manage-vaccination';
 import HealthCheckNurse from '../pages/school-nurse/manage-health-check';
+import MedicalAccidentParent from '../pages/parent/medical-accident';
 
 const AppRoutes = () => {
   return (
@@ -92,6 +93,11 @@ const AppRoutes = () => {
         <Route path="vaccination" element={
           <PrivateRoute allowedRoles={[1]}>
             <ParentVaccineConfirmation />
+          </PrivateRoute>
+        } />
+        <Route path="medical-accident" element={
+          <PrivateRoute allowedRoles={[1]}>
+            <MedicalAccidentParent />
           </PrivateRoute>
         } />
         <Route path="school-nurse" element={

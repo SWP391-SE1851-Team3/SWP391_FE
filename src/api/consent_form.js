@@ -52,3 +52,14 @@ export const submitConsentForm = async (formData, id) => {
     throw error;
   }
 };
+
+export const getVaccinationRecordByStudent = async (studentId) => {
+  try {
+    const response = await apiClient.get(`/vaccination_records/vaccination_records/by-student/${studentId}`);
+    console.log('Retrieved Vaccination Record:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error retrieving vaccination record:', error);
+    throw error;
+  }
+};
