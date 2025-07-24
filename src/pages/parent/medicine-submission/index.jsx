@@ -74,7 +74,7 @@ const MedicineForm = () => {
       const submitData = {
         parentId: parseInt(parentId),
         studentId: parseInt(studentId),
-        medicineImage: '', // upload ảnh sau
+        medicineImage: '',
         medicationDetails,
         submissionDate
       };
@@ -99,7 +99,7 @@ const MedicineForm = () => {
       }
 
       form.resetFields();
-      setSelectedStudentId(null);
+      // setSelectedStudentId(null);
     } catch (error) {
       message.error("Có lỗi xảy ra khi gửi đơn thuốc!");
     }

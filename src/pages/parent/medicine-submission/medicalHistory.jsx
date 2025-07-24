@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Spin, Modal } from 'antd';
 import { getMedicationSubmissionsByParentId } from '../../../api/medicalSubmission';
 
-const statusText = {
-  pending: 'Chờ xác nhận',
-  approved: 'Đã xác nhận',
-  rejected: 'Đã từ chối'
+const statusClassMap = {
+  'Chờ xác nhận': 'pending',
+  'Đã xác nhận': 'approved',
+  'Đã từ chối': 'rejected'
 };
 
 const MedicineHistory = ({ parentId }) => {
@@ -13,9 +13,6 @@ const MedicineHistory = ({ parentId }) => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [detailModal, setDetailModal] = useState({ open: false, data: null });
 
-  // Debug log
-  console.log('parentId in MedicineHistory:', parentId);
-  console.log('history:', history);
   useEffect(() => {
     if (!parentId) {
       setHistory([]);
@@ -25,10 +22,7 @@ const MedicineHistory = ({ parentId }) => {
     setHistoryLoading(true);
     getMedicationSubmissionsByParentId(parentId)
       .then(res => {
-        console.log('Full API response:', res); // Debug log
-        // Thay đổi này - response trực tiếp là array
-        const rawHistory = res || []; // Thay vì res.data
-        console.log('Processed history:', rawHistory);
+        const rawHistory = res || [];
         setHistory(rawHistory);
       })
       .catch((error) => {
@@ -63,7 +57,6 @@ const MedicineHistory = ({ parentId }) => {
         </div>
       ) : (
         <>
-
           {history.map((item, idx) => (
             <div
               key={idx}
@@ -93,8 +86,9 @@ const MedicineHistory = ({ parentId }) => {
                   Xem chi tiết
                 </a>
               </div>
+
               <span
-                className={`status-badge ${item.status?.toLowerCase() || 'pending'}`}
+                className={`status-badge ${statusClassMap[item.status] || 'pending'}`}
                 style={{
                   position: 'absolute',
                   right: 32,
@@ -105,7 +99,7 @@ const MedicineHistory = ({ parentId }) => {
                   fontSize: 16
                 }}
               >
-                {statusText[(item.status || 'pending').toLowerCase()]}
+                {item.status || '---'}
               </span>
             </div>
           ))}
@@ -133,7 +127,7 @@ const MedicineHistory = ({ parentId }) => {
               <b>Ngày gửi:</b> {formatDate(detailModal.data.submissionDate)}
             </div>
             <div style={{ marginBottom: 8 }}>
-              <b>Trạng thái:</b> {statusText[(detailModal.data.status || 'pending').toLowerCase()]}
+              <b>Trạng thái:</b> {detailModal.data.status || '---'}
             </div>
             <hr />
             {(detailModal.data.medicationDetails || []).map((med, idx) => (

@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import './ParentVaccineConfirmation.css';
-import { getStudentsByParent, viewConsentForm, submitConsentForm } from '../../../api/consent_form';
-import { message, Form, Input, Radio, Button, Spin } from 'antd';
+import { getStudentsByParent, viewConsentForm, submitConsentForm, getVaccinationRecordByStudent } from '../../../api/consent_form';
+import { message, Form, Input, Radio, Button, Spin, Modal } from 'antd';
 
 const ParentVaccineConfirmation = () => {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [consentForm, setConsentForm] = useState(null);
+  const [vaccinationRecords, setVaccinationRecords] = useState([]);
   const [hasConsentForm, setHasConsentForm] = useState(false);
   const [hasPendingForm, setHasPendingForm] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingForm, setLoadingForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const [form] = Form.useForm();
   const parentId = localStorage.getItem('userId');
 
@@ -27,7 +30,7 @@ const ParentVaccineConfirmation = () => {
     setLoadingStudents(true);
     try {
       const res = await getStudentsByParent(parentId);
-      const studentsData = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+      const studentsData = Array.isArray(res) ? res : [];
       setStudents(studentsData);
     } catch (error) {
       console.error(error);
@@ -48,6 +51,7 @@ const ParentVaccineConfirmation = () => {
     setLoadingForm(true);
 
     try {
+      // Lấy thông tin consent form
       const dataList = await viewConsentForm(id);
       let consentData;
       let hasPending = false;
@@ -95,7 +99,7 @@ const ParentVaccineConfirmation = () => {
             const currentId = data.consent_id || data.consent_form_id;
             return (
               (isAgreeVal === "đồng ý" || isAgreeVal === "không đồng ý") &&
-              (item.consent_id !== currentId) // loại bỏ bản ghi đang hiển thị phía trên
+              (item.consent_id !== currentId)
             );
           }),
           isAgree: data.isAgree || "Chờ phản hồi",
@@ -113,10 +117,24 @@ const ParentVaccineConfirmation = () => {
       }
 
       setConsentForm(consentData);
+
+      // Lấy kết quả tiêm chủng
+      let vaccinationResults = [];
+      try {
+        const vaccinationRes = await getVaccinationRecordByStudent(id);
+        vaccinationResults = vaccinationRes || [];  
+      } catch (error) {
+        console.log('Không có kết quả tiêm chủng:', error.message);
+        vaccinationResults = [];
+      }
+
+      setVaccinationRecords(Array.isArray(vaccinationResults) ? vaccinationResults : []);
+
     } catch (error) {
       message.error("Không thể lấy thông tin chi tiết");
       setHasConsentForm(false);
       setHasPendingForm(false);
+      setVaccinationRecords([]);
     } finally {
       setLoadingForm(false);
     }
@@ -139,7 +157,6 @@ const ParentVaccineConfirmation = () => {
       return;
     }
 
-    // Sửa đổi logic xử lý reason
     let reasonValue = "";
     if (values.isAgree === "Không đồng ý") {
       reasonValue = values.reason?.trim() || "none";
@@ -178,9 +195,31 @@ const ParentVaccineConfirmation = () => {
   const resetState = () => {
     setSelectedStudent(null);
     setConsentForm(null);
+    setVaccinationRecords([]);
     setHasConsentForm(false);
     setHasPendingForm(false);
+    setShowDetailModal(false);
+    setSelectedRecord(null);
     form.resetFields();
+  };
+
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return "Chưa có dữ liệu";
+    try {
+      const date = new Date(dateTimeString);
+      return date.toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return "Không hợp lệ";
+    }
+  };
+
+  const handleViewRecordDetails = (record) => {
+    setSelectedRecord(record);
+    setShowDetailModal(true);
   };
 
   const renderNotificationInfo = () => (
@@ -222,6 +261,82 @@ const ParentVaccineConfirmation = () => {
     </li>
   );
 
+  const renderVaccinationRecords = () => {
+    const recordsArr = Array.isArray(vaccinationRecords) ? vaccinationRecords : [];
+    if (recordsArr.length === 0) {
+      return <div className="empty-history">Chưa có kết quả tiêm chủng.</div>;
+    }
+
+    return recordsArr.map((record, index) => (
+      <li key={index} className="history-card">
+        <span className={`status-badge ${record.status === "COMPLETED" ? "status-success" : "status-warning"}`}>
+          {record.status || "Chưa rõ"}
+        </span>
+        <div className="history-card-row">
+          <span className="history-label">Học sinh:</span> {record.studentName}
+          <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {record.className}
+        </div>
+        <div className="history-card-row">
+          <span className="history-label">Vắc xin:</span> {record.vaccineName}
+        </div>
+        <div className="history-card-row">
+          <span className="history-label">Ngày tiêm:</span> {formatDateTime(record.observation_time)}
+        </div>
+        <div className="history-card-row">
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => handleViewRecordDetails(record)}
+            style={{ marginTop: '10px' }}
+          >
+            Xem Chi Tiết
+          </Button>
+        </div>
+      </li>
+    ));
+  };
+
+  const renderDetailModal = () => (
+    <Modal
+      title="Chi tiết kết quả tiêm chủng"
+      open={showDetailModal}
+      wrapClassName="custom-vaccination-modal"
+      onCancel={() => setShowDetailModal(false)}
+      footer={[
+        <Button key="close" onClick={() => setShowDetailModal(false)}>
+          Đóng
+        </Button>
+      ]}
+      width={600}
+    >
+      {selectedRecord && (
+        <div className="record-detail">
+          <div className="detail-row">
+            <strong>Vắc xin:</strong> {selectedRecord.vaccineName}
+          </div>
+          <div className="detail-row">
+            <strong>Ghi chú:</strong> {selectedRecord.notes || "Không có"}
+          </div>
+          <div className="detail-row">
+            <strong>Thời gian quan sát:</strong> {formatDateTime(selectedRecord.observation_time)}
+          </div>
+          <div className="detail-row">
+            <strong>Triệu chứng:</strong> {selectedRecord.symptoms || "Không có"}
+          </div>
+          <div className="detail-row">
+            <strong>Mức độ nghiêm trọng:</strong> {selectedRecord.severity || "Không có"}
+          </div>
+          <div className="detail-row">
+            <strong>Ghi chú quan sát:</strong> {selectedRecord.observation_notes || "Không có"}
+          </div>
+          <div className="detail-row">
+            <strong>Tên y tá:</strong> {selectedRecord.createNurseName || "N/A"}
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+
   return (
     <div className="vaccine-record-container">
       {!selectedStudent ? (
@@ -258,6 +373,7 @@ const ParentVaccineConfirmation = () => {
         <>
           <Button type="link" onClick={resetState}>← Quay lại</Button>
           {renderNotificationInfo()}
+          
           {hasConsentForm && hasPendingForm && (
             <div className="vaccine-form">
               <Form
@@ -306,7 +422,7 @@ const ParentVaccineConfirmation = () => {
           )}
 
           <div className="history-section" style={{ marginTop: '40px' }}>
-            <h3>Lịch sử tiêm chủng</h3>
+            <h3>Lịch Sử Đồng Ý Tiêm Chủng</h3>
             <ul>
               {hasConsentForm && !hasPendingForm && consentForm?.isAgree &&
                 (consentForm.isAgree === "Đồng ý" || consentForm.isAgree === "Không đồng ý") &&
@@ -330,12 +446,19 @@ const ParentVaccineConfirmation = () => {
                     </div>
                   </li>
                 ))}
-
-              {(!hasConsentForm || (!hasPendingForm && (!consentForm?.vaccineHistory || consentForm.vaccineHistory.length === 0))) && (
-                <div className="empty-history">Không còn lịch sử tiêm chủng nào khác.</div>
-              )}
+                
             </ul>
           </div>
+
+          {/* Kết quả tiêm chủng */}
+          <div className="history-section" style={{ marginTop: '30px' }}>
+            <h3>Kết Quả Tiêm Chủng</h3>
+            <ul>
+              {renderVaccinationRecords()}
+            </ul>
+          </div>
+
+          {renderDetailModal()}
         </>
       )}
     </div>
