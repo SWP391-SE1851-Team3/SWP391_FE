@@ -4,12 +4,13 @@ import {
   Select,
   Input,
   Button,
-  Typography,
   Upload,
   message,
   Spin,
   Row,
-  Col
+  Col,
+  Typography,
+  DatePicker
 } from 'antd';
 import {
   UploadOutlined,
@@ -23,6 +24,7 @@ import {
 } from '../../../api/medicalSubmission';
 import MedicineHistory from './medicalHistory';
 import './medicineForm.css';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -32,7 +34,6 @@ const MedicineForm = () => {
   const [loading, setLoading] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [form] = Form.useForm();
-
   const parentId = localStorage.getItem('userId');
 
   useEffect(() => {
@@ -42,66 +43,83 @@ const MedicineForm = () => {
     }
     setLoading(true);
     getStudentHealthProfiles(parentId)
-      .then(data => {
-        setStudents(data || []);
-      })
+      .then(data => setStudents(data || []))
       .catch(() => message.error('Không tải được danh sách học sinh'))
       .finally(() => setLoading(false));
   }, [parentId]);
 
-  // Chỉ cho upload file .png
   const beforeUpload = (file) => {
     const isPng = file.type === 'image/png';
+    const isLt2M = file.size / 1024 / 1024 < 2;
+
     if (!isPng) {
       message.error('Chỉ chấp nhận file PNG!');
+      return Upload.LIST_IGNORE;
     }
-    return isPng ? false : Upload.LIST_IGNORE;
+
+    if (!isLt2M) {
+      message.error('Ảnh phải nhỏ hơn 2MB!');
+      return Upload.LIST_IGNORE;
+    }
+
+    return false;
+  };
+
+  const handleFileChange = (info) => info.fileList.slice(-1);
+
+  // Hàm kiểm tra ngày có phải thứ 7 hoặc chủ nhật không
+  const disabledDate = (current) => {
+    if (!current) return false;
+
+    // Không cho chọn ngày trong quá khứ
+    if (current.isBefore(dayjs(), 'day')) {
+      return true;
+    }
+
+    // Không cho chọn thứ 7 (6) và chủ nhật (0)
+    const dayOfWeek = current.day();
+    return dayOfWeek === 0 || dayOfWeek === 6;
   };
 
   const onFinish = async (values) => {
     try {
       const studentId = selectedStudentId;
-
       const medicationDetails = values.medicines.map(item => ({
         medicineName: item.medicineName,
         dosage: item.dosage,
         timeToUse: item.time,
-        note: item.note || ""
+        note: item.note || ''
       }));
 
-      const submissionDate = new Date().toISOString();
+      const medicationDate = values.medicationDate ;
 
       const submitData = {
         parentId: parseInt(parentId),
         studentId: parseInt(studentId),
-        medicineImage: '',
         medicationDetails,
-        submissionDate
+        medicationDate: medicationDate,
+        submissionDate: new Date().toISOString()
       };
 
       const result = await submitMedicationForm(submitData);
-      const submissionId = result.submissionId || result.id;
+      const submissionId = result.medicationSubmissionId;
 
-      if (
-        values.medicineImage &&
-        values.medicineImage.fileList &&
-        values.medicineImage.fileList.length > 0
-      ) {
-        const fileObj = values.medicineImage.fileList[0].originFileObj;
-        if (fileObj) {
-          await uploadMedicineImage(submissionId, fileObj, true);
-          message.success("Đơn thuốc & ảnh đã được gửi thành công!");
-        } else {
-          message.warning("Không tìm thấy file hợp lệ để upload.");
+      const file = values.medicineImage?.[0];
+
+      if (file) {
+        try {
+          await uploadMedicineImage(submissionId, file, true);
+          message.success('Đơn thuốc & ảnh đã được gửi thành công!');
+        } catch {
+          message.error('Đơn thuốc đã được gửi nhưng lỗi khi upload ảnh!');
         }
       } else {
-        message.success("Đơn thuốc đã được gửi thành công!");
+        message.success('Đơn thuốc đã được gửi thành công!');
       }
 
       form.resetFields();
-      // setSelectedStudentId(null);
-    } catch (error) {
-      message.error("Có lỗi xảy ra khi gửi đơn thuốc!");
+    } catch {
+      message.error('Có lỗi xảy ra khi gửi đơn thuốc!');
     }
   };
 
@@ -125,8 +143,8 @@ const MedicineForm = () => {
             optionFilterProp="children"
           >
             {students
-              .filter((s) => s.studentID != null)
-              .map((s) => (
+              .filter(s => s.studentID != null)
+              .map(s => (
                 <Option key={s.studentID} value={s.studentID}>
                   {s.fullName}
                 </Option>
@@ -141,11 +159,46 @@ const MedicineForm = () => {
             form={form}
             layout="vertical"
             onFinish={onFinish}
-            initialValues={{ medicines: [{}] }}
+            initialValues={{
+              medicines: [{}],
+              medicationDate: dayjs().add(1, 'day') // Mặc định là ngày mai
+            }}
           >
             <Typography.Title level={4}>
               Thông tin thuốc cho {students.find(s => s.studentID === selectedStudentId)?.fullName}
             </Typography.Title>
+
+            {/* Trường chọn ngày gửi thuốc */}
+            <Form.Item
+              name="medicationDate"
+              label="Ngày gửi thuốc"
+              rules={[
+                { required: true, message: 'Vui lòng chọn ngày gửi thuốc!' },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+
+                    const dayOfWeek = value.day();
+                    if (dayOfWeek === 0 || dayOfWeek === 6) {
+                      return Promise.reject(new Error('Không thể chọn thứ 7 hoặc chủ nhật!'));
+                    }
+
+                    if (value.isBefore(dayjs(), 'day')) {
+                      return Promise.reject(new Error('Không thể chọn ngày trong quá khứ!'));
+                    }
+
+                    return Promise.resolve();
+                  }
+                }
+              ]}
+            >
+              <DatePicker
+                placeholder="Chọn ngày gửi thuốc"
+                format="DD/MM/YYYY"
+                disabledDate={disabledDate}
+                style={{ width: '100%' }}
+              />
+            </Form.Item>
 
             <Form.List name="medicines">
               {(fields, { add, remove }) => (
@@ -153,12 +206,7 @@ const MedicineForm = () => {
                   {fields.map(({ key, name, ...restField }) => (
                     <div
                       key={key}
-                      style={{
-                        border: '1px solid #ddd',
-                        padding: 16,
-                        marginBottom: 16,
-                        borderRadius: 8
-                      }}
+                      className="medicine-form-section"
                     >
                       <Row gutter={16}>
                         <Col span={8}>
@@ -166,12 +214,11 @@ const MedicineForm = () => {
                             {...restField}
                             name={[name, 'medicineName']}
                             label="Tên thuốc"
-                            rules={[
-                              {required: true,
-                                pattern: /^[a-zA-Z0-9À-ỹ][a-zA-Z0-9À-ỹ\s]*$/,
-                                message: 'Tên thuốc không được bắt đầu bằng khoảng trắng hoặc chứa ký tự đặc biệt'
-                              }
-                            ]}
+                            rules={[{
+                              required: true,
+                              pattern: /^[a-zA-Z0-9À-ỹ][a-zA-Z0-9À-ỹ\s]*$/,
+                              message: 'Tên thuốc không hợp lệ'
+                            }]}
                           >
                             <Input placeholder="Ví dụ: Paracetamol" />
                           </Form.Item>
@@ -182,13 +229,11 @@ const MedicineForm = () => {
                             {...restField}
                             name={[name, 'dosage']}
                             label="Liều lượng"
-                            rules={[
-                              { required: true, message: 'Vui lòng nhập liều lượng' },
-                              {
-                                pattern: /^[a-zA-Z0-9À-ỹ\\/][a-zA-Z0-9À-ỹ\s\\/]*$/,
-                                message: 'Liều lượng không được bắt đầu bằng khoảng trắng hoặc chứa ký tự đặc biệt'
-                              }
-                            ]}
+                            rules={[{
+                              required: true,
+                              pattern: /^[a-zA-Z0-9À-ỹ\\/][a-zA-Z0-9À-ỹ\s\\/]*$/,
+                              message: 'Liều lượng không hợp lệ'
+                            }]}
                           >
                             <Input placeholder="Ví dụ: 1 viên/ngày" />
                           </Form.Item>
@@ -225,12 +270,10 @@ const MedicineForm = () => {
                         {...restField}
                         name={[name, 'note']}
                         label="Ghi chú"
-                        rules={[
-                          {
-                            pattern: /^[a-zA-Z0-9À-ỹ][a-zA-Z0-9À-ỹ\s]*$/,
-                            message: 'Ghi chú không được bắt đầu bằng khoảng trắng hoặc chứa ký tự đặc biệt'
-                          }
-                        ]}
+                        rules={[{
+                          pattern: /^[a-zA-Z0-9À-ỹ][a-zA-Z0-9À-ỹ\s]*$/,
+                          message: 'Ghi chú không hợp lệ'
+                        }]}
                       >
                         <TextArea rows={2} placeholder="Ghi chú đặc biệt..." />
                       </Form.Item>
@@ -253,9 +296,9 @@ const MedicineForm = () => {
 
             <Form.Item
               name="medicineImage"
-              label="Ảnh thuốc (chỉ nhận PNG, chỉ upload 1 lần)"
+              label="Ảnh thuốc (PNG, tối đa 1 ảnh)"
               valuePropName="fileList"
-              getValueFromEvent={e => (Array.isArray(e) ? e : e && e.fileList)}
+              getValueFromEvent={handleFileChange}
             >
               <Upload
                 maxCount={1}

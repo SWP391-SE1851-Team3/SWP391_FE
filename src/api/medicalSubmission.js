@@ -42,24 +42,26 @@ export const submitMedicationForm = async (data) => {
   }
 };
 
-export const uploadMedicineImage = async (submissionId, file, saveAsBase64 = true) => {
+export const uploadMedicineImage = async (submissionId, file) => {
   if (!file) throw new Error('Không có file để upload');
 
   const formData = new FormData();
   formData.append('file', file);
 
   const response = await apiClient.post(
-    '/medication-submission/upload-medicine-image',
+    `/medication-submission/upload-medicine-image?submissionId=${submissionId}&saveAsBase64=true`,
     formData,
     {
-      params: {
-        submissionId,
-        saveAsBase64,
+      headers: {
+        'Content-Type': 'multipart/form-data',
       },
+      timeout: 30000,
     }
   );
+
   return response.data;
 };
+
 
 export const getMedicationSubmissionsByParentId = async (parentId) => {
   try {
@@ -79,6 +81,18 @@ export const getMedicationSubmissionDetails = async (submissionId) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching medication submission details:', error);
+    throw error;
+  }
+};
+
+export const getEvidenceImage = async (confirmId) => {
+  try {
+    const response = await apiClient.get(`/medication-confirmations/evidence-image/${confirmId}`);
+    console.log(`Evidence image for confirmation ${confirmId} retrieved successfully`);
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching medication confirmation evidence image:', error);
     throw error;
   }
 };
