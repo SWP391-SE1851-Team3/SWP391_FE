@@ -29,6 +29,7 @@ import moment from 'moment';
 import { formatDateTime } from '../../../../utils/formatDate';
 import { getHealthCheckSchedules, createHealthCheckSchedule, updateHealthCheck, createHealthConsentForMultipleClasses } from '../../../../api/healthCheckAPI';
 import { hasNoSpecialCharacters, isOnlyWhitespace } from '../../../../validations';
+import { getErrorMessage } from '../../../../utils/getErrorMessage';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -174,7 +175,7 @@ const HealthCheckBatchManager = () => {
       setIsCreateModalOpen(false);
       form.resetFields();
     } catch (error) {
-      message.error('Vui lòng điền đầy đủ thông tin hoặc có lỗi khi tạo đợt khám!');
+      message.error(getErrorMessage(error));
     }
   };
 
@@ -229,41 +230,7 @@ const HealthCheckBatchManager = () => {
       setSelectedBatch(null);
       editForm.resetFields();
     } catch (error) {
-      console.error('Lỗi cập nhật đợt khám:', error);
-      if (error?.response?.data) {
-        const errData = error.response.data;
-        // Nếu có message hoặc errors chi tiết từ BE
-        if (typeof errData === 'object' && (errData.message || errData.errors)) {
-          Modal.error({
-            title: 'Lỗi cập nhật đợt khám',
-            content: (
-              <div>
-                {errData.message && <div style={{ marginBottom: 8 }}>{errData.message}</div>}
-                {Array.isArray(errData.errors) && errData.errors.length > 0 && (
-                  <ul style={{ paddingLeft: 18 }}>
-                    {errData.errors.map((err, idx) => (
-                      <li key={idx} style={{ color: '#fa541c' }}>{err}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ),
-            okText: 'OK'
-          });
-        } else {
-          Modal.error({
-            title: 'Lỗi cập nhật đợt khám',
-            content: JSON.stringify(errData),
-            okText: 'OK'
-          });
-        }
-      } else {
-        Modal.error({
-          title: 'Lỗi cập nhật đợt khám',
-          content: 'Vui lòng điền đầy đủ thông tin hoặc có lỗi khi cập nhật!',
-          okText: 'OK'
-        });
-      }
+      message.error(getErrorMessage(error));
     }
   };
 
@@ -310,27 +277,31 @@ const HealthCheckBatchManager = () => {
         cancelButtonProps: { style: { background: '#fff' } },
         centered: true,
         onOk: async () => {
-          const nurseId = Number(localStorage.getItem('userId') ||"");
-          const data = {
-            className: values.className,
-            healthScheduleId: selectedBatchForConsent.id,
-            sendDate: consentDateRange[0].toISOString(),
-            expireDate: consentDateRange[1].toISOString(),
-            isAgreed: 'Chờ xác nhận',
-            notes: values.notes,
-            createdByNurseId: nurseId,
-            updatedByNurseID: nurseId
-          };
-          await createHealthConsentForMultipleClasses(data);
-          message.success('Gửi phiếu xác nhận thành công!');
-          setIsConsentModalOpen(false);
-          setSelectedBatchForConsent(null);
-          consentForm.resetFields();
-          setConsentDateRange([]);
+          try {
+            const nurseId = Number(localStorage.getItem('userId') ||"");
+            const data = {
+              className: values.className,
+              healthScheduleId: selectedBatchForConsent.id,
+              sendDate: consentDateRange[0].toISOString(),
+              expireDate: consentDateRange[1].toISOString(),
+              isAgreed: 'Chờ xác nhận',
+              notes: values.notes,
+              createdByNurseId: nurseId,
+              updatedByNurseID: nurseId
+            };
+            await createHealthConsentForMultipleClasses(data);
+            message.success('Gửi phiếu xác nhận thành công!');
+            setIsConsentModalOpen(false);
+            setSelectedBatchForConsent(null);
+            consentForm.resetFields();
+            setConsentDateRange([]);
+          } catch (error) {
+            message.error(getErrorMessage(error));
+          }
         }
       });
     } catch (error) {
-      message.error('Gửi phiếu xác nhận thất bại!');
+      message.error(getErrorMessage(error));
     }
   };
 

@@ -34,19 +34,15 @@ export const getMedicationSubmissions = async () => {
   }
 };
 
-export const updateMedicationStatus = async (submissionId, status, reason, evidence) => {
-  try {
-    // Lấy nurseId từ localStorage
-    const nurseId = localStorage.getItem('nurseId') || localStorage.getItem('nurseID') || '';
-    const body = { status, nurseId };
-    if (reason) body.reason = reason;
-    if (evidence) body.evidence = evidence;
-    const response = await apiClient.put(`/medication-confirmations/${submissionId}/status`, body);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating medication status:', error);
-    throw error;
-  }
+// Cập nhật tình trạng xác nhận thuốc
+export const updateMedicationStatus = async (confirmId, { status, reason, nurseId, evidence }) => {
+  const response = await apiClient.put(`/medication-confirmations/${confirmId}/status`, {
+    status,
+    reason,
+    nurseId,
+    evidence
+  });
+  return response.data;
 };
 
 export const getMedicationSubmissionDetails = async (submissionId) => {
@@ -57,4 +53,46 @@ export const getMedicationSubmissionDetails = async (submissionId) => {
     console.error('Error fetching medication submission details:', error);
     throw error;
   }
+};
+
+export const getMedicationImage = async (submissionId) => {
+  const response = await apiClient.get(`/medication-submission/medicine-image/${submissionId}`, {
+    responseType: 'text'
+  });
+  if (!response.data || response.data.length === 0) {
+    throw new Error('Empty response from server');
+  }
+  return response.data;
+};
+
+// Lấy chi tiết xác nhận của nhân viên y tế theo submissionId
+export const getMedicationConfirmationBySubmission = async (submissionId) => {
+  const response = await apiClient.get(`/medication-confirmations/by-submission/${submissionId}`);
+  return response.data;
+};
+
+// Upload evidence image
+export const uploadEvidenceImage = async (file, confirmId, saveAsBase64 = true) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('confirmId', confirmId);
+  formData.append('saveAsBase64', saveAsBase64);
+
+  const response = await apiClient.post('/medication-confirmations/evidence-image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+// THÊM MỚI: Get evidence image
+export const getEvidenceImage = async (confirmId) => {
+  const response = await apiClient.get(`/medication-confirmations/evidence-image/${confirmId}`, {
+    responseType: 'text'
+  });
+  if (!response.data || response.data.length === 0) {
+    throw new Error('Empty response from server');
+  }
+  return response.data;
 };

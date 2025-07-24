@@ -18,7 +18,8 @@ import {
   Calendar,
   Badge,
   Empty,
-  Tabs
+  Tabs,
+  Upload
 } from 'antd';
 import {
   SearchOutlined,
@@ -29,12 +30,17 @@ import {
   CheckCircleTwoTone,
   CloseCircleTwoTone,
   ClockCircleTwoTone,
-  FileTextOutlined
+  FileTextOutlined,
+  UploadOutlined,
+  DeleteOutlined,
+  PictureOutlined // ← THÊM MỚI
 } from '@ant-design/icons';
-import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails } from '../../../api/medicalSubmissionNurse';
+import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails, getMedicationConfirmationBySubmission, uploadEvidenceImage, getEvidenceImage } from '../../../api/medicalSubmissionNurse';
 import { formatDateTime } from '../../../utils/formatDate';
 import './Medication.css';
 import { hasNoSpecialCharacters } from '../../../validations';
+import { getErrorMessage } from '../../../utils/getErrorMessage';
+import { getMedicationImage } from '../../../api/medicalSubmissionNurse';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 
@@ -53,10 +59,8 @@ const MedicationManagement = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [rejectForm] = Form.useForm();
-  const [rejectingId, setRejectingId] = useState(null);
   const [timelineRejectModalVisible, setTimelineRejectModalVisible] = useState(false);
   const [timelineRejectForm] = Form.useForm();
-  const [timelineRejectingId, setTimelineRejectingId] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [detailData, setDetailData] = useState(null);
@@ -67,72 +71,57 @@ const MedicationManagement = () => {
   const [currentCardPage, setCurrentCardPage] = useState(1);
   const cardsPerPage = 3;
   const tablePageSize = 5;
+  // Thêm state để điều khiển modal ảnh thuốc
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+  const [imageToShow, setImageToShow] = useState(null);
+  // 1. Thêm state cho modal cập nhật tình trạng thuốc
+  const [isUpdateStatusModalVisible, setIsUpdateStatusModalVisible] = useState(false);
+  const [updateStatusForm] = Form.useForm();
+  const [confirmationData, setConfirmationData] = useState(null);
+  // Thêm state cho upload evidence image
+  const [evidenceFileList, setEvidenceFileList] = useState([]);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
+  // THÊM MỚI: State cho modal ảnh evidence
+  const [isEvidenceImageModalVisible, setIsEvidenceImageModalVisible] = useState(false);
+  const [evidenceImageToShow, setEvidenceImageToShow] = useState(null);
 
-  const mapStatusToFE = (status) => {
-    switch (status) {
-      case 'APPROVED':
-        return 'confirmed';
-      case 'REJECTED':
-        return 'expired';
-      case 'ADMINISTERED':
-        return 'completed';
-      case 'PENDING':
-        return 'pending';
-      default:
-        return status?.toLowerCase?.() || status;
-    }
-  };
-
-  const mapStatusToBE = (status) => {
-    switch (status) {
-      case 'confirmed':
-        return 'APPROVED';
-      case 'expired':
-        return 'REJECTED';
-      case 'completed':
-        return 'ADMINISTERED';
-      case 'pending':
-        return 'PENDING';
-      default:
-        return status?.toUpperCase?.() || status;
-    }
-  };
+  // Xóa toàn bộ mapStatusToFE, mapStatusToBE, statusViMap, statusViReverseMap, chỉ dùng giá trị tiếng Việt cho status
 
   const fetchMedicationSubmissions = useCallback(async () => {
     try {
       setLoading(true);
       const submissions = await getMedicationSubmissions();
-      const formattedData = submissions.map((submission, index) => ({
-        key: index.toString(),
-        id: index + 1,
-        student: submission.studentName,
-        className: submission.className || '',
-        medication: submission.medicationDetails.map(m => m.medicineName).join(', '),
-        status: mapStatusToFE(submission.status),
-        time: formatDateTime(submission.submissionDate),
-        submissionDate: submission.submissionDate,
-        actions: mapStatusToFE(submission.status) === 'pending' ? ['view', 'confirm', 'cancel'] : ['view'],
-        rejectReason: '',
-        medicationDetails: submission.medicationDetails,
-        parentName: submission.parentName || '', // Added for new UI
-        dosage: submission.dosage || '', // Added for new UI
-        timeToUse: submission.timeToUse || '', // Added for new UI
-        note: submission.note || '', // Added for new UI
-        medicineImage: submission.medicineImage || '' // Added for new UI
-      }));
-      
-      // Sắp xếp theo ngày và giờ giảm dần (mới nhất lên đầu)
+      const formattedData = submissions.map((submission, index) => {
+        // Lấy thông tin từ medicationDetails đầu tiên (nếu có)
+        const firstDetail = Array.isArray(submission.medicationDetails) && submission.medicationDetails.length > 0 ? submission.medicationDetails[0] : {};
+        return {
+          key: submission.submissionId?.toString() || index.toString(),
+          id: submission.submissionId, // Sử dụng submissionId từ backend
+          student: submission.studentName,
+          className: submission.className || '',
+          medication: Array.isArray(submission.medicationDetails) ? submission.medicationDetails.map(m => m.medicineName).join(', ') : '',
+          status: submission.status, // Lấy trạng thái từ backend
+          time: formatDateTime(submission.submissionDate),
+          submissionDate: submission.submissionDate,
+          actions: submission.status === 'Chờ nhận thuốc' ? ['view', 'confirm', 'cancel'] : ['view'],
+          rejectReason: '',
+          medicationDetails: submission.medicationDetails,
+          dosage: firstDetail.dosage || '',
+          timeToUse: firstDetail.timeToUse || '',
+          note: firstDetail.note || '',
+          studentId: submission.studentId,
+          confirmId: submission.confirmId, // Lấy confirmId từ backend nếu có
+        };
+      });
       formattedData.sort((a, b) => {
         const dateA = new Date(a.submissionDate);
         const dateB = new Date(b.submissionDate);
         return dateB - dateA;
       });
-      
       setData(formattedData);
       updateSelectedDateData(formattedData, selectedDate);
     } catch (error) {
-      message.error('Failed to fetch medication submissions');
-      console.error('Error fetching submissions:', error);
+      message.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -178,16 +167,14 @@ const MedicationManagement = () => {
 
   const getStatusTag = (status) => {
     switch (status) {
-      case 'pending':
-        return <Tag color="orange">Chờ duyệt</Tag>;
-      case 'confirmed':
-        return <Tag color="green">Đã duyệt</Tag>;
-      case 'expired':
-        return <Tag color="red">Từ chối</Tag>;
-      case 'completed':
-        return <Tag color="blue">Đã phát thuốc</Tag>;
-      case 'uncompleted':
-        return <Tag color="volcano">Chưa phát thuốc</Tag>;
+      case 'Chờ nhận thuốc':
+        return <Tag color="orange">Chờ nhận thuốc</Tag>;
+      case 'Đã nhận thuốc':
+        return <Tag color="blue">Đã nhận thuốc</Tag>;
+      case 'Đã phát thuốc':
+        return <Tag color="green">Đã phát thuốc</Tag>;
+      case 'Đã hủy':
+        return <Tag color="red">Đã hủy</Tag>;
       default:
         return <Tag>{status}</Tag>;
     }
@@ -199,8 +186,8 @@ const MedicationManagement = () => {
 
   const getTabData = () => {
     if (activeTab === 'all') return selectedDateData;
-    if (activeTab === 'pending') return selectedDateData.filter(item => item.status === 'pending');
-    if (activeTab === 'confirmed') return selectedDateData.filter(item => item.status === 'confirmed');
+    if (activeTab === 'pending') return selectedDateData.filter(item => item.status === 'Chờ nhận thuốc');
+    if (activeTab === 'confirmed') return selectedDateData.filter(item => item.status === 'Đã nhận thuốc');
     return selectedDateData;
   };
 
@@ -248,85 +235,166 @@ const MedicationManagement = () => {
             onClick={() => handleViewDetails(record)}
           >
           </Button>
-          {record.status === 'pending' && (
-            <>
-              <Button
-                type="primary"
-                size="small"
-                icon={<CheckOutlined />}
-                onClick={() => handleUpdateStatus(record.id, 'confirmed')}
-              >
-              </Button>
-              <Button
-                danger
-                size="small"
-                icon={<CloseOutlined />}
-                onClick={() => handleUpdateStatus(record.id, 'expired')}
-              >
-              </Button>
-            </>
-          )}
-          {(record.status === 'confirmed' || record.status === 'expired') && (
-            <Button
-              size="small"
-              icon={<ClockCircleTwoTone twoToneColor="#faad14" />}
-              onClick={() => handleUpdateStatus(record.id, 'pending')}
-            >
-              Chuyển về chờ xử lý
-            </Button>
-          )}
         </Space>
       )
     }
   ];
 
-  const handleUpdateStatus = async (id, newStatus) => {
-    const statusTextMap = {
-      'confirmed': 'xác nhận hoàn thành',
-      'expired': 'từ chối phiếu',
-      'completed': 'xác nhận đã phát thuốc',
-      'uncompleted': 'chuyển sang chưa hoàn thành',
-      'pending': 'chuyển về chờ xử lý'
-    };
+  // 2. Sửa lại handleUpdateStatus để luôn lấy confirmationData khi cập nhật tình trạng
+  const handleUpdateStatus = async (record) => {
+    updateStatusForm.resetFields();
+    setEvidenceFileList([]);
+    // Lấy nurseId từ localStorage
+    const nurseId = localStorage.getItem('userId') || '';
+    let confirmation = null;
+    try {
+      confirmation = await getMedicationConfirmationBySubmission(record.id);
+      setConfirmationData(confirmation);
+    } catch (error) {
+      confirmation = null;
+      setConfirmationData(null);
+    }
+    // Lưu confirmId vào selectedRecord để dùng khi submit
+    setSelectedRecord({ ...record, confirmId: confirmation?.confirmId || record.confirmId });
+    // Nếu có dữ liệu xác nhận, điền các field từ confirmation
+    if (confirmation) {
+      updateStatusForm.setFieldsValue({
+        status: confirmation.status,
+        reason: confirmation.reason,
+        nurseId: nurseId,
+      });
+    } else {
+      updateStatusForm.setFieldsValue({
+        status: record.status,
+        reason: record.rejectReason,
+        nurseId: nurseId,
+      });
+    }
+    setIsUpdateStatusModalVisible(true);
+  };
 
-    if (newStatus === 'expired') {
-      setRejectingId(id);
-      setRejectModalVisible(true);
-      return;
+  // Hàm xử lý upload evidence image
+  const handleEvidenceUpload = async (file) => {
+    const confirmId = selectedRecord?.confirmId;
+    if (!confirmId) {
+      message.error('Không tìm thấy mã xác nhận để upload ảnh!');
+      return false;
     }
 
-    if (newStatus === 'uncompleted') {
-      setTimelineRejectingId(id);
-      setTimelineRejectModalVisible(true);
-      return;
+    try {
+      setUploadingEvidence(true);
+      await uploadEvidenceImage(file, confirmId);
+      message.success('Upload ảnh bằng chứng thành công!');
+      return true;
+    } catch (error) {
+      message.error('Lỗi khi upload ảnh: ' + getErrorMessage(error));
+      return false;
+    } finally {
+      setUploadingEvidence(false);
     }
+  };
 
-    Modal.confirm({
-      title: 'Xác nhận thay đổi trạng thái',
-      content: `Bạn có chắc chắn muốn ${statusTextMap[newStatus] || 'thay đổi trạng thái'}?`,
-      okText: 'Đồng ý',
-      cancelText: 'Hủy',
-      onOk: async () => {
-        try {
-          await updateMedicationStatus(id, mapStatusToBE(newStatus));
-          message.success('Cập nhật trạng thái thành công');
-          fetchMedicationSubmissions();
-        } catch (error) {
-          message.error('Cập nhật trạng thái thất bại');
-          console.error('Error updating status:', error);
+  // Props cho Upload component
+  const evidenceUploadProps = {
+    name: 'file',
+    multiple: false,
+    fileList: evidenceFileList,
+    beforeUpload: (file) => {
+      // Kiểm tra định dạng file
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        message.error('Chỉ được upload file ảnh!');
+        return false;
+      }
+      
+      // Kiểm tra kích thước file (5MB)
+      const isLt5M = file.size / 1024 / 1024 < 5;
+      if (!isLt5M) {
+        message.error('Kích thước file phải nhỏ hơn 5MB!');
+        return false;
+      }
+
+      return false; // Prevent automatic upload
+    },
+    onChange: (info) => {
+      setEvidenceFileList(info.fileList.slice(-1)); // Chỉ giữ 1 file
+    },
+    onRemove: () => {
+      setEvidenceFileList([]);
+    }
+  };
+
+  // THÊM MỚI: Hàm xử lý xem ảnh evidence
+  const handleViewEvidenceImage = async (confirmId) => {
+    let hideLoading = null;
+    try {
+      hideLoading = message.loading('Đang tải ảnh evidence...', 0);
+      const base64String = await getEvidenceImage(confirmId);
+      console.log('Nhận được evidence image base64:', base64String.substring(0, 50) + '...');
+      
+      // Đảm bảo có header data:image nếu chưa có
+      let imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
+      
+      setEvidenceImageToShow(imgSrc);
+      setIsEvidenceImageModalVisible(true);
+    } catch (error) {
+      setEvidenceImageToShow(null);
+      console.error('Lỗi khi tải ảnh evidence:', error);
+      if (error.response?.status === 403) {
+        message.error('Bạn không có quyền xem ảnh này');
+      } else if (error.response?.status === 404) {
+        message.error('Không tìm thấy ảnh evidence cho xác nhận này');
+      } else {
+        message.error('Không thể tải ảnh evidence: ' + getErrorMessage(error));
+      }
+    } finally {
+      if (hideLoading) hideLoading();
+    }
+  };
+
+  // THÊM MỚI: Hàm đóng modal ảnh evidence
+  const handleCloseEvidenceImageModal = () => {
+    setIsEvidenceImageModalVisible(false);
+    setEvidenceImageToShow(null);
+  };
+
+  // 3. Hàm xử lý submit cập nhật tình trạng thuốc
+  const handleSubmitUpdateStatus = async () => {
+    try {
+      const values = await updateStatusForm.validateFields();
+      // Lấy confirmId từ selectedRecord
+      const confirmId = selectedRecord?.confirmId;
+      if (!confirmId) {
+        message.error('Không tìm thấy mã xác nhận để cập nhật!');
+        return;
+      }
+
+      // Nếu có file evidence, upload trước
+      if (evidenceFileList.length > 0) {
+        const uploadSuccess = await handleEvidenceUpload(evidenceFileList[0].originFileObj);
+        if (!uploadSuccess) {
+          return;
         }
       }
-    });
+
+      await updateMedicationStatus(confirmId, values);
+      message.success('Cập nhật tình trạng thuốc thành công!');
+      setIsUpdateStatusModalVisible(false);
+      setEvidenceFileList([]);
+      fetchMedicationSubmissions();
+    } catch (error) {
+      message.error(getErrorMessage(error));
+    }
   };
 
   const handleReject = () => {
     rejectForm.validateFields().then(async values => {
       try {
-        await updateMedicationStatus(rejectingId, mapStatusToBE('expired'), values.reason);
+        await updateMedicationStatus(selectedRecord.id, 'Từ chối', values.reason);
         message.success('Đã từ chối phiếu thành công');
         fetchMedicationSubmissions();
       } catch (error) {
-        message.error('Từ chối phiếu thất bại');
+        message.error(getErrorMessage(error));
       }
       setRejectModalVisible(false);
       rejectForm.resetFields();
@@ -336,11 +404,11 @@ const MedicationManagement = () => {
   const handleTimelineReject = () => {
     timelineRejectForm.validateFields().then(async values => {
       try {
-        await updateMedicationStatus(timelineRejectingId, mapStatusToBE('uncompleted'), values.reason);
+        await updateMedicationStatus(selectedRecord.id, 'Chưa phát thuốc', values.reason);
         message.success('Đã cập nhật trạng thái và lưu lý do từ chối thành công');
         fetchMedicationSubmissions();
       } catch (error) {
-        message.error('Cập nhật trạng thái thất bại');
+        message.error(getErrorMessage(error));
       }
       setTimelineRejectModalVisible(false);
       timelineRejectForm.resetFields();
@@ -351,13 +419,27 @@ const MedicationManagement = () => {
     setSelectedRecord(record);
     setIsModalVisible(true);
     setDetailData(null);
+    setConfirmationData(null);
     if (record && record.id) {
       setDetailLoading(true);
       try {
         const details = await getMedicationSubmissionDetails(record.id);
-        setDetailData(details);
+        // Đảm bảo detailData có đủ các trường nurseName, studentClass, medicineImage, medicationDetails, submissionDate...
+        setDetailData({
+          medicationSubmissionId: details.medicationSubmissionId,
+          parentId: details.parentId,
+          studentId: details.studentId,
+          medicineImage: details.medicineImage,
+          nurseName: details.nurseName,
+          studentClass: details.studentClass,
+          medicationDetails: details.medicationDetails,
+          submissionDate: details.submissionDate,
+        });
+        // Lấy xác nhận của nhân viên y tế
+        const confirmation = await getMedicationConfirmationBySubmission(record.id);
+        setConfirmationData(confirmation);
       } catch (error) {
-        message.error('Không lấy được chi tiết phiếu gửi thuốc');
+        message.error(getErrorMessage(error));
       } finally {
         setDetailLoading(false);
       }
@@ -402,6 +484,12 @@ const MedicationManagement = () => {
         <button className="calendar-today-btn" onClick={() => onChange(dayjs())}>Hôm nay</button>
       </div>
     );
+  };
+
+  const handleCloseImageModal = () => {
+    // No need to revoke URL for base64 strings
+    setIsImageModalVisible(false);
+    setImageToShow(null);
   };
 
   return (
@@ -453,8 +541,8 @@ const MedicationManagement = () => {
             {/* Tabs for filtering */}
             <div className="medication-tabs" style={{ marginBottom: 16 }}>
               <Button type={activeTab === 'all' ? 'primary' : 'default'} onClick={() => setActiveTab('all')} style={{ marginRight: 8 }}>Tất cả ({selectedDateData.length})</Button>
-              <Button type={activeTab === 'pending' ? 'primary' : 'default'} onClick={() => setActiveTab('pending')} style={{ marginRight: 8 }}>Chờ duyệt ({getStatusCount('pending')})</Button>
-              <Button type={activeTab === 'confirmed' ? 'primary' : 'default'} onClick={() => setActiveTab('confirmed')}>Đã duyệt ({getStatusCount('confirmed')})</Button>
+              <Button type={activeTab === 'pending' ? 'primary' : 'default'} onClick={() => setActiveTab('pending')} style={{ marginRight: 8 }}>Chờ nhận thuốc ({getStatusCount('Chờ nhận thuốc')})</Button>
+              <Button type={activeTab === 'confirmed' ? 'primary' : 'default'} onClick={() => setActiveTab('confirmed')}>Đã nhận thuốc ({getStatusCount('Đã nhận thuốc')})</Button>
             </div>
             {/* Card list */}
             {getTabData().length === 0 ? (
@@ -476,14 +564,12 @@ const MedicationManagement = () => {
                       <div key={item.id} className="medication-batch-card">
                         <div className="medication-batch-card-header">
                           <div>
-                            <Typography.Title level={4} style={{ margin: 0, fontWeight: 600, color: '#0056b3' }}>{item.medication}</Typography.Title>
-                            <Typography.Text type="secondary">Phụ huynh: {item.parentName || ''}</Typography.Text>
+                            <Typography.Title level={4} style={{ margin: 0, fontWeight: 600, color: '#0056b3' }}>Học sinh: {item.student} - {item.className}</Typography.Title>
                           </div>
                           {getStatusTag(item.status)}
                         </div>
                         <div className="medication-batch-card-info">
-                          <Space><Typography.Text strong>Lớp:</Typography.Text> <Typography.Text>{item.className}</Typography.Text></Space>
-                          <Space><Typography.Text strong>Liều lượng:</Typography.Text> <Typography.Text>{item.dosage || '-'}</Typography.Text></Space>
+                          <Space><Typography.Text strong>Tên thuốc:</Typography.Text> <Typography.Text>{item.medication}</Typography.Text></Space>
                           <Space><Typography.Text strong>Thời gian uống:</Typography.Text> <Typography.Text>{item.timeToUse || '-'}</Typography.Text></Space>
                         </div>
                         <div className="medication-batch-card-info" style={{ marginTop: 8 }}>
@@ -494,21 +580,9 @@ const MedicationManagement = () => {
                           <Button size="small" icon={<EyeOutlined />} onClick={() => handleViewDetails(item)}>
                             Xem chi tiết
                           </Button>
-                          {item.status === 'pending' && (
-                            <>
-                              <Button type="primary" size="small" icon={<CheckOutlined />} onClick={() => handleUpdateStatus(item.id, 'confirmed')}>
-                                Duyệt đơn
-                              </Button>
-                              <Button danger size="small" icon={<CloseOutlined />} onClick={() => handleUpdateStatus(item.id, 'expired')}>
-                                Từ chối
-                              </Button>
-                            </>
-                          )}
-                          {item.status === 'confirmed' && (
-                            <Button type="primary" size="small" onClick={() => handleUpdateStatus(item.id, 'completed')}>
-                              Hoàn thành phát thuốc
-                            </Button>
-                          )}
+                          <Button type="primary" size="small" icon={<CheckOutlined />} onClick={() => handleUpdateStatus(item)}>
+                            Cập nhật tình trạng
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -555,11 +629,10 @@ const MedicationManagement = () => {
                 allowClear
               >
                 <Option value="">Tất cả trạng thái</Option>
-                <Option value="pending">Chờ duyệt</Option>
-                <Option value="confirmed">Đã duyệt</Option>
-                <Option value="expired">Từ chối</Option>
-                <Option value="completed">Đã phát thuốc</Option>
-                <Option value="uncompleted">Chưa phát thuốc</Option>
+                <Option value="Chờ nhận thuốc">Chờ nhận thuốc</Option>
+                <Option value="Đã nhận thuốc">Đã nhận thuốc</Option>
+                <Option value="Đã phát thuốc">Đã phát thuốc</Option>
+                <Option value="Đã hủy">Đã hủy</Option>
               </Select>
             </Col>
             <Col>
@@ -612,60 +685,36 @@ const MedicationManagement = () => {
         {selectedRecord && (
           <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
             <Row gutter={[24, 16]}>
+              {/* Thông tin học sinh và lớp */}
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Học sinh:</Typography.Text><br />
                 <Typography.Text strong style={{ fontSize: 16 }}>{selectedRecord.student}</Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Lớp:</Typography.Text><br />
-                <Typography.Text strong>{detailData?.studentClass || selectedRecord.className}</Typography.Text>
+                <Typography.Text type="secondary" strong>Lớp học sinh:</Typography.Text><br />
+                <Typography.Text>{detailData?.studentClass}</Typography.Text>
               </Col>
+              {/* Thời gian gửi và trạng thái */}
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Tên thuốc:</Typography.Text><br />
-                <Typography.Text>{selectedRecord.medication}</Typography.Text>
+                <Typography.Text type="secondary" strong>Thời gian gửi:</Typography.Text><br />
+                <Typography.Text>{detailData?.submissionDate ? formatDateTime(detailData.submissionDate) : ''}</Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Trạng thái:</Typography.Text><br />
                 <span>{getStatusTag(selectedRecord.status)}</span>
               </Col>
-              <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Thời gian:</Typography.Text><br />
-                <Typography.Text>{selectedRecord.time}</Typography.Text>
+              {/* Tên thuốc và chi tiết thuốc */}
+              <Col span={24} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Tên thuốc:</Typography.Text><br />
+                <Typography.Text>{selectedRecord.medication}</Typography.Text>
               </Col>
-              {detailData?.nurseName && (
-                <Col span={12} style={{ marginBottom: 6 }}>
-                  <Typography.Text type="secondary" strong>Y tá nhận:</Typography.Text><br />
-                  <Typography.Text>{detailData.nurseName}</Typography.Text>
-                </Col>
-              )}
-              {selectedRecord.status === 'expired' && selectedRecord.rejectReason && (
-                <Col span={24} style={{ marginBottom: 6 }}>
-                  <Typography.Text type="secondary" strong>Lý do từ chối:</Typography.Text><br />
-                  <Typography.Text>{selectedRecord.rejectReason}</Typography.Text>
-                </Col>
-              )}
-              {selectedRecord.status === 'uncompleted' && selectedRecord.rejectReason && (
-                <Col span={24} style={{ marginBottom: 6 }}>
-                  <Typography.Text type="secondary" strong>Lý do từ chối:</Typography.Text><br />
-                  <Typography.Text>{selectedRecord.rejectReason}</Typography.Text>
-                </Col>
-              )}
-              {detailData?.medicineImage && (
-                <Col span={12} style={{ marginBottom: 6 }}>
-                  <Typography.Text type="secondary" strong>Ảnh thuốc:</Typography.Text><br />
-                  <img src={detailData.medicineImage} alt="medicine" style={{maxWidth: 120}} />
-                </Col>
-              )}
-              {detailLoading && (
-                <Col span={24}><Typography.Text>Đang tải chi tiết...</Typography.Text></Col>
-              )}
               {detailData?.medicationDetails && Array.isArray(detailData.medicationDetails) && detailData.medicationDetails.length > 0 && (
                 <Col span={24} style={{ marginTop: 12 }}>
                   <Typography.Text type="secondary" strong>Chi tiết thuốc:</Typography.Text>
                   <div style={{marginTop: 8}}>
                     <ul style={{paddingLeft: 20}}>
-                      {detailData.medicationDetails.map((item) => (
-                        <li key={item.medicationDetailId} style={{marginBottom: 8}}>
+                      {detailData.medicationDetails.map((item, idx) => (
+                        <li key={item.medicationDetailId ? `med-${item.medicationDetailId}` : `idx-${idx}`} style={{marginBottom: 8}}>
                           <div><Typography.Text type="secondary">Tên thuốc:</Typography.Text> <Typography.Text>{item.medicineName}</Typography.Text></div>
                           <div><Typography.Text type="secondary">Liều dùng:</Typography.Text> <Typography.Text>{item.dosage}</Typography.Text></div>
                           <div><Typography.Text type="secondary">Thời gian sử dụng:</Typography.Text> <Typography.Text>{item.timeToUse}</Typography.Text></div>
@@ -675,6 +724,67 @@ const MedicationManagement = () => {
                     </ul>
                   </div>
                 </Col>
+              )}
+              {/* Ảnh thuốc */}
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong>Ảnh thuốc:</Typography.Text><br />
+                <Button type="primary" onClick={async () => {
+                  let hideLoading = null;
+                  try {
+                    hideLoading = message.loading('Đang tải ảnh...', 0);
+                    const base64String = await getMedicationImage(selectedRecord.id);
+                    console.log('Nhận được base64 string:', base64String.substring(0, 50) + '...');
+                    let imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
+                    setImageToShow(imgSrc);
+                    setIsImageModalVisible(true);
+                  } catch (error) {
+                    setImageToShow(null);
+                    console.error('Lỗi khi tải ảnh:', error);
+                    if (error.response?.status === 403) {
+                      message.error('Bạn không có quyền xem ảnh này');
+                    } else if (error.response?.status === 404) {
+                      message.error('Không tìm thấy ảnh thuốc cho phiếu này');
+                    } else {
+                      message.error('Không thể tải ảnh: ' + getErrorMessage(error));
+                    }
+                  } finally {
+                    if (hideLoading) hideLoading();
+                  }
+                }}>
+                  Xem ảnh thuốc
+                </Button>
+              </Col>
+              {/* Thông tin xác nhận của nhân viên y tế */}
+              {confirmationData && (
+                <Col span={24} style={{ marginTop: 12 }}>
+                  <Typography.Text type="secondary" strong>Thông tin xác nhận của nhân viên y tế:</Typography.Text>
+                  <div style={{marginTop: 8, marginLeft: 12}}>
+                    <div><Typography.Text strong>Mã xác nhận:</Typography.Text> <Typography.Text>{confirmationData.confirmId}</Typography.Text></div>
+                    <div><Typography.Text strong>Mã phiếu gửi thuốc:</Typography.Text> <Typography.Text>{confirmationData.medicationSubmissionId}</Typography.Text></div>
+                    <div><Typography.Text strong>Trạng thái:</Typography.Text> <Typography.Text>{confirmationData.status}</Typography.Text></div>
+                    <div><Typography.Text strong>Mã y tá:</Typography.Text> <Typography.Text>{confirmationData.nurseId}</Typography.Text></div>
+                    <div><Typography.Text strong>Lý do:</Typography.Text> <Typography.Text>{confirmationData.reason}</Typography.Text></div>
+                    {/* SỬA ĐỔI: Thay text thành button xem ảnh */}
+                    <div>
+                      <Typography.Text strong>Bằng chứng:</Typography.Text>{' '}
+                      {confirmationData.evidence ? (
+                        <Button 
+                          type="link" 
+                          icon={<PictureOutlined />} 
+                          size="small"
+                          onClick={() => handleViewEvidenceImage(confirmationData.confirmId)}
+                        >
+                          Xem ảnh bằng chứng
+                        </Button>
+                      ) : (
+                        <Typography.Text type="secondary">Chưa có ảnh bằng chứng</Typography.Text>
+                      )}
+                    </div>
+                  </div>
+                </Col>
+              )}
+              {detailLoading && (
+                <Col span={24}><Typography.Text>Đang tải chi tiết...</Typography.Text></Col>
               )}
             </Row>
           </div>
@@ -740,6 +850,126 @@ const MedicationManagement = () => {
             ]}
           >
             <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phát thuốc..." />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal hiển thị ảnh thuốc */}
+      <Modal
+        open={isImageModalVisible}
+        onCancel={handleCloseImageModal}
+        footer={null}
+        title="Ảnh thuốc"
+        centered
+        width={600}
+      >
+        {imageToShow ? (
+          <div style={{ textAlign: 'center' }}>
+            <img 
+              src={imageToShow} 
+              alt="medicine" 
+              style={{
+                maxWidth: '100%', 
+                maxHeight: '500px', 
+                display: 'block', 
+                margin: '0 auto',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }} 
+              onError={(e) => {
+                console.error('Image failed to load:', e);
+                message.error('Không thể hiển thị ảnh');
+                setImageToShow(null);
+              }}
+              onLoad={() => {
+                console.log('Image loaded successfully');
+              }}
+            />
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <Typography.Text type="secondary">Không có ảnh thuốc</Typography.Text>
+          </div>
+        )}
+      </Modal>
+
+      {/* THÊM MỚI: Modal hiển thị ảnh evidence */}
+      <Modal
+        open={isEvidenceImageModalVisible}
+        onCancel={handleCloseEvidenceImageModal}
+        footer={null}
+        title="Ảnh bằng chứng"
+        centered
+        width={600}
+      >
+        {evidenceImageToShow ? (
+          <div style={{ textAlign: 'center' }}>
+            <img 
+              src={evidenceImageToShow} 
+              alt="evidence" 
+              style={{
+                maxWidth: '100%', 
+                maxHeight: '500px', 
+                display: 'block', 
+                margin: '0 auto',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }} 
+              onError={(e) => {
+                console.error('Evidence image failed to load:', e);
+                message.error('Không thể hiển thị ảnh bằng chứng');
+                setEvidenceImageToShow(null);
+              }}
+              onLoad={() => {
+                console.log('Evidence image loaded successfully');
+              }}
+            />
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <Typography.Text type="secondary">Không có ảnh bằng chứng</Typography.Text>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal cập nhật tình trạng thuốc */}
+      <Modal
+        title="Cập nhật tình trạng thuốc"
+        open={isUpdateStatusModalVisible}
+        onOk={handleSubmitUpdateStatus}
+        onCancel={() => { 
+          setIsUpdateStatusModalVisible(false); 
+          setEvidenceFileList([]);
+        }}
+        okText="Cập nhật"
+        cancelText="Hủy"
+        confirmLoading={uploadingEvidence}
+      >
+        <Form form={updateStatusForm} layout="vertical">
+          <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}> 
+            <Select placeholder="Chọn trạng thái">
+              <Option value="Chờ nhận thuốc">Chờ nhận thuốc</Option>
+              <Option value="Đã nhận thuốc">Đã nhận thuốc</Option>
+              <Option value="Đã phát thuốc">Đã phát thuốc</Option>
+              <Option value="Đã hủy">Đã hủy</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="reason" label="Lý do" rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}> 
+            <Input.TextArea placeholder="Nhập lý do" />
+          </Form.Item>
+          <Form.Item name="nurseId" label="Mã y tá" rules={[{ required: true, message: 'Vui lòng nhập mã y tá' }]}> 
+            <Input placeholder="Nhập mã y tá" disabled />
+          </Form.Item>
+          <Form.Item label="Bằng chứng (Ảnh)"> 
+            <Upload.Dragger {...evidenceUploadProps}>
+              <p className="ant-upload-drag-icon">
+                <UploadOutlined />
+              </p>
+              <p className="ant-upload-text">Nhấn hoặc kéo thả file vào đây để upload</p>
+              <p className="ant-upload-hint">
+                Hỗ trợ upload file ảnh. Kích thước tối đa 5MB.
+              </p>
+            </Upload.Dragger>
           </Form.Item>
         </Form>
       </Modal>
