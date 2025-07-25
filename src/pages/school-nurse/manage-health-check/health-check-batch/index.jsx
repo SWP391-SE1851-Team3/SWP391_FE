@@ -595,19 +595,7 @@ const HealthCheckBatchManager = () => {
                 <Option value="Từ chối">Từ chối</Option>
               </Select>
             </Form.Item>
-            <Form.Item name="notes" label="Ghi chú"rules={[
-                     { validator: (_, value) => {
-                        if (value === undefined || value === '') return Promise.resolve();
-                        if (isOnlyWhitespace(value)) return Promise.reject('Không được để khoảng trắng đầu dòng!');
-                        if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
-                        
-                        return Promise.resolve();
-                      }
-                    }
-                  ]}
-                >
-              <Input.TextArea />
-            </Form.Item>
+           
           </Form>
         </div>
       </Modal>
