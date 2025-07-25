@@ -35,8 +35,12 @@ import './Manage-Vaccination.css';
 const { Title, Text } = Typography;
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('manageVaccinationTab') || 'dashboard');
 
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    localStorage.setItem('manageVaccinationTab', key);
+  };
 
   const dashboardStats = {
     totalSchedules: 15,
@@ -117,7 +121,7 @@ const Index = () => {
       <main className="vaccination-main">
         <Tabs 
           activeKey={activeTab} 
-          onChange={setActiveTab} 
+          onChange={handleTabChange} 
           className="vaccination-tabs"
           items={[
             {
