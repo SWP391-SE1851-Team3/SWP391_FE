@@ -151,7 +151,6 @@ const ParentHealthCheck = () => {
         if (hasPending && currentForm) {
           form.setFieldsValue({
             isAgreed: undefined,
-            notes: currentForm.notes || ""
           });
         }
       }
@@ -485,9 +484,9 @@ const ParentHealthCheck = () => {
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
-                initialValues={{
-                  notes: currentConsentForm.notes || ""
-                }}
+                // initialValues={{
+                //   notes: currentConsentForm.notes || ""
+                // }}
               >
                 <Form.Item name="notes" label="Ghi chú (nếu có):" className="short-textarea">
                   <Input.TextArea

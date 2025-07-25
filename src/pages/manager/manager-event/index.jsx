@@ -146,7 +146,7 @@ function VaccineApprovalPage() {
   const handleRejectHealth = async (id) => {
     setProcessingHealthId(id);
     try {
-      await updateHealthCheckStatus(id, "Đã Từ Chối");
+      await updateHealthCheckStatus(id, "Đã từ chối");
       message.success("Từ chối thành công!");
       const data = await getAllHealthCheck();
       // Sort the updated data by create_at

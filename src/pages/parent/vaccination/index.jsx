@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './ParentVaccineConfirmation.css';
 import { getStudentsByParent, viewConsentForm, submitConsentForm, getVaccinationRecordByStudent } from '../../../api/consent_form';
 import { message, Form, Input, Radio, Button, Spin, Modal } from 'antd';
+import { formatDateTime } from '../../../utils/formatDate';
 
 const ParentVaccineConfirmation = () => {
   const [students, setStudents] = useState([]);
@@ -24,6 +25,7 @@ const ParentVaccineConfirmation = () => {
       return;
     }
     fetchStudents();
+    // eslint-disable-next-line
   }, [parentId]);
 
   const fetchStudents = async () => {
@@ -124,7 +126,6 @@ const ParentVaccineConfirmation = () => {
         const vaccinationRes = await getVaccinationRecordByStudent(id);
         vaccinationResults = vaccinationRes || [];  
       } catch (error) {
-        console.log('Không có kết quả tiêm chủng:', error.message);
         vaccinationResults = [];
       }
 
@@ -203,7 +204,7 @@ const ParentVaccineConfirmation = () => {
     form.resetFields();
   };
 
-  const formatDateTime = (dateTimeString) => {
+  const formatDate = (dateTimeString) => {
     if (!dateTimeString) return "Chưa có dữ liệu";
     try {
       const date = new Date(dateTimeString);
@@ -269,7 +270,7 @@ const ParentVaccineConfirmation = () => {
 
     return recordsArr.map((record, index) => (
       <li key={index} className="history-card">
-        <span className={`status-badge ${record.status === "COMPLETED" ? "status-success" : "status-warning"}`}>
+        <span className={`status-badge ${record.status === "Hoàn thành" ? "status-success" : "status-warning"}`}>
           {record.status || "Chưa rõ"}
         </span>
         <div className="history-card-row">
@@ -280,7 +281,7 @@ const ParentVaccineConfirmation = () => {
           <span className="history-label">Vắc xin:</span> {record.vaccineName}
         </div>
         <div className="history-card-row">
-          <span className="history-label">Ngày tiêm:</span> {formatDateTime(record.observation_time)}
+          <span className="history-label">Ngày tiêm:</span> {formatDate(record.observation_time)}
         </div>
         <div className="history-card-row">
           <Button
@@ -372,54 +373,52 @@ const ParentVaccineConfirmation = () => {
       ) : (
         <>
           <Button type="link" onClick={resetState}>← Quay lại</Button>
-          {renderNotificationInfo()}
-          
-          {hasConsentForm && hasPendingForm && (
-            <div className="vaccine-form">
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-                initialValues={{
-                  hasAllergy: consentForm?.hasAllergy || "",
-                  reason: consentForm?.reason || ""
-                }}
-              >
-                <Form.Item name="hasAllergy" label="Dị ứng (nếu có):" className="short-textarea">
-                  <Input.TextArea placeholder="Nhập dị ứng (nếu có)..." autoSize={{ minRows: 1, maxRows: 2 }} />
-                </Form.Item>
-
-                <Form.Item
-                  name="isAgree"
-                  label="Bạn có đồng ý cho con tiêm vắc xin này không?"
-                  rules={[{ required: true, message: 'Vui lòng chọn đồng ý hay không đồng ý' }]}
+          <div className="vaccine-section-wrapper">
+            {renderNotificationInfo()}
+            {hasConsentForm && hasPendingForm && (
+              <div className="vaccine-form">
+                <Form
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSubmit}
+                  initialValues={{
+                    hasAllergy: consentForm?.hasAllergy || "",
+                    reason: consentForm?.reason || ""
+                  }}
                 >
-                  <Radio.Group>
-                    <Radio value="Đồng ý">Đồng ý</Radio>
-                    <Radio value="Không đồng ý">Không đồng ý</Radio>
-                  </Radio.Group>
-                </Form.Item>
-
-                <Form.Item shouldUpdate={(prev, cur) => prev.isAgree !== cur.isAgree}>
-                  {({ getFieldValue }) => getFieldValue('isAgree') === "Không đồng ý" && (
-                    <Form.Item
-                      name="reason"
-                      label="Lý do từ chối (bắt buộc):"
-                      rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
-                    >
-                      <Input.TextArea placeholder="Nhập lý do từ chối..." autoSize={{ minRows: 1, maxRows: 2 }} />
-                    </Form.Item>
-                  )}
-                </Form.Item>
-
-                <Form.Item>
-                  <Button type="primary" htmlType="submit" loading={submitting} size="large">
-                    Gửi xác nhận
-                  </Button>
-                </Form.Item>
-              </Form>
-            </div>
-          )}
+                  <Form.Item name="hasAllergy" label="Dị ứng (nếu có):" className="short-textarea">
+                    <Input.TextArea placeholder="Nhập dị ứng (nếu có)..." autoSize={{ minRows: 1, maxRows: 2 }} />
+                  </Form.Item>
+                  <Form.Item
+                    name="isAgree"
+                    label="Bạn có đồng ý cho con tiêm vắc xin này không?"
+                    rules={[{ required: true, message: 'Vui lòng chọn đồng ý hay không đồng ý' }]}
+                  >
+                    <Radio.Group>
+                      <Radio value="Đồng ý">Đồng ý</Radio>
+                      <Radio value="Không đồng ý">Không đồng ý</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                  <Form.Item shouldUpdate={(prev, cur) => prev.isAgree !== cur.isAgree}>
+                    {({ getFieldValue }) => getFieldValue('isAgree') === "Không đồng ý" && (
+                      <Form.Item
+                        name="reason"
+                        label="Lý do từ chối (bắt buộc):"
+                        rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+                      >
+                        <Input.TextArea placeholder="Nhập lý do từ chối..." autoSize={{ minRows: 1, maxRows: 2 }} />
+                      </Form.Item>
+                    )}
+                  </Form.Item>
+                  <Form.Item>
+                    <Button type="primary" htmlType="submit" loading={submitting} size="large">
+                      Gửi xác nhận
+                    </Button>
+                  </Form.Item>
+                </Form>
+              </div>
+            )}
+          </div>
 
           <div className="history-section" style={{ marginTop: '40px' }}>
             <h3>Lịch Sử Đồng Ý Tiêm Chủng</h3>
@@ -450,7 +449,6 @@ const ParentVaccineConfirmation = () => {
             </ul>
           </div>
 
-          {/* Kết quả tiêm chủng */}
           <div className="history-section" style={{ marginTop: '30px' }}>
             <h3>Kết Quả Tiêm Chủng</h3>
             <ul>

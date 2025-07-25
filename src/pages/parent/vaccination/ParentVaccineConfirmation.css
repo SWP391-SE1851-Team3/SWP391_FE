@@ -125,7 +125,7 @@
 
 .student-info h2 {
   text-align: center;
-  color: #1890ff;
+  color: #69CD32;
   margin-bottom: 16px;
 }
 
@@ -137,7 +137,7 @@
 }
 
 .student-info .info-row {
-  gap: 40px;
+  gap: 300px;
 }
 
 .student-info .info-row-large-gap {
@@ -171,7 +171,7 @@
 }
 
 .history-section h3 {
-  color: #1890ff;
+  color: #69CD32;
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 20px;

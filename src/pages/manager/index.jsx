@@ -42,8 +42,8 @@ const fetchData = async () => {
         const response = await getFullReport(params);
         console.log('API Response:', response); // Debug để xem cấu trúc
         
-        // Vì API trả về trực tiếp object chứa các stats, không cần .data
-        const data = response || {};
+        
+        const data = response.data || {};
         
         console.log('Setting systemStats:', data.systemStats); // Debug
         console.log('Setting medicationStats:', data.medicationStats); // Debug
@@ -195,7 +195,7 @@ const fetchData = async () => {
                 <div className="header-content">
                     <div className="header-text">
                         <Title level={1} className="header-title">
-                            Dashboard Y tế Trường học
+                            Dashboard Y Tế Trường Học
                         </Title>
                     </div>
                 </div>

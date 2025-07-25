@@ -12,7 +12,7 @@
 .user-management-header {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #1890ff;
+  color: #69CD32;
   margin-bottom: 25px;
   padding-bottom: 12px;
   border-bottom: 2px solid #e9ecef;
@@ -88,11 +88,11 @@
 
 .form-header {
   margin: 0 0 28px 0;
-  color: #1683c2;
+  color: #69CD32 !important;
   font-size: 1.4rem;
   font-weight: 700;
   text-align: center;
-  border-bottom: 3px solid #1890ff;
+  border-bottom: 3px solid #69CD32;
   padding-bottom: 14px;
 }
 
