@@ -288,7 +288,7 @@ const SupplyManagement = () => {
                         <Col xs={24} md={12}>
                             <Form.Item
                                 label="Danh mục"
-                                name="categoryId"
+                                name="categoryName"
                                 rules={[{ required: true, message: "Chọn danh mục!" }]}
                             >
                                 <Select placeholder="Chọn danh mục">

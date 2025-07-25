@@ -19,10 +19,12 @@
 
 /* Dropdown chọn học sinh */
 .student-selector {
-  margin-bottom: 20px;
+  margin: 0 auto 20px auto; /* Căn giữa theo chiều ngang */
   padding: 15px;
   background-color: #f8f9fa;
   border-radius: 8px;
+  max-width: 500px; /* Chiều rộng tối đa */
+  width: 100%;
 }
 
 .select-label {

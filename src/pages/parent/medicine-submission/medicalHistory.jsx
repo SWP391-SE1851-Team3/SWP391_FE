@@ -5,8 +5,9 @@ import { getMedicationSubmissionsByParentId, getEvidenceImage } from '../../../a
 
 const statusClassMap = {
   'Chờ xác nhận': 'pending',
+  'Đã nhận thuốc': 'approved',
   'Đã xác nhận': 'approved',
-  'Đã từ chối': 'rejected'
+  'Đã hủy': 'rejected'
 };
 
 const MedicineHistory = ({ parentId, studentId, students }) => {
@@ -25,12 +26,12 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
     getMedicationSubmissionsByParentId(parentId)
       .then(res => {
         const rawHistory = res || [];
-        
+
         // Filter theo studentId nếu có
-        const filteredHistory = studentId 
+        const filteredHistory = studentId
           ? rawHistory.filter(item => item.studentId === studentId)
           : rawHistory;
-        
+
         setHistory(filteredHistory);
       })
       .catch((error) => {
@@ -54,7 +55,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
     }
 
     setImageModal({ open: true, imageUrl: '', loading: true });
-    
+
     try {
       const imageUrl = await getEvidenceImage(confirmId);
       setImageModal({ open: true, imageUrl, loading: false });
@@ -90,7 +91,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
       ) : (
         <div className="status-list">
           {history.map((item, idx) => (
-            <div key={idx} className="status-item">
+            <div key={idx} className="status-items">
               <div className="status-header">
                 <div className="status-info">
                   <h3>Học sinh: {item.studentName || getStudentName(item.studentId)}</h3>
@@ -102,7 +103,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                   {item.status || '---'}
                 </span>
               </div>
-              
+
               <div className="status-actions">
                 <button
                   className="btn-text"
@@ -110,7 +111,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                 >
                   <span className="material-icons">Xem chi tiết</span>
                 </button>
-                
+
                 {item.confirmId && (
                   <button
                     className="btn-text"
@@ -125,7 +126,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
 
           {!historyLoading && history.length === 0 && (
             <div className="section-card">
-              {studentId 
+              {studentId
                 ? `Chưa có đơn thuốc nào cho ${getStudentName(studentId)}.`
                 : 'Chưa có đơn thuốc nào.'
               }
@@ -180,16 +181,16 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
           </div>
         ) : imageModal.imageUrl ? (
           <div className="section-card">
-            <img 
-              src={imageModal.imageUrl} 
-              alt="Evidence" 
-              style={{ 
-                maxWidth: '100%', 
-                maxHeight: '70vh', 
+            <img
+              src={imageModal.imageUrl}
+              alt="Evidence"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '70vh',
                 objectFit: 'contain',
                 display: 'block',
                 margin: '0 auto'
-              }} 
+              }}
             />
           </div>
         ) : (

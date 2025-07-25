@@ -16,7 +16,7 @@ import {
 import { UploadOutlined, FileExcelOutlined } from "@ant-design/icons";
 import {
     fetchUsersByRole,
-    createUser,
+    signupNurse,
     updateUser,
     deleteUser,
     importStudentsFromExcel,
@@ -31,6 +31,9 @@ const initialForm = {
     fullName: "",
     email: "",
     phone: "",
+    specialisation: "",
+    certification: "",
+    isActive: 1,
 };
 
 const roleOptions = [
@@ -54,7 +57,7 @@ const UserManagement = () => {
             const res = await fetchUsersByRole(role);
             const mapped = (res || []).map((u) => ({
                 ...u,
-                userName: u.userName || u.username || "",
+                userName: u.userName,
             }));
             setUsers(mapped);
         } catch {
@@ -77,7 +80,7 @@ const UserManagement = () => {
         setEditingUser(record);
         form.setFieldsValue({
             userName: record.userName,
-            password: record.password, 
+            password: record.password,
             fullName: record.fullName,
             email: record.email,
             phone: record.phone,
@@ -92,7 +95,7 @@ const UserManagement = () => {
     // Xử lý khi nhấn Switch trạng thái hoạt động
     const handleActiveChange = async (checked, record) => {
         try {
-            await deleteUser(record.id, roleId); // API này sẽ toggle trạng thái
+            await deleteUser(record.id, roleId);
             message.success(
                 checked ? "Đã kích hoạt tài khoản!" : "Đã vô hiệu hóa tài khoản!"
             );
@@ -115,10 +118,15 @@ const UserManagement = () => {
             }
         } else {
             try {
-                await createUser({ ...values, roleId });
-                message.success("Thêm mới thành công!");
-                reloadUsers(roleId);
-                form.resetFields();
+                // Tạo mới chỉ cho vai trò Y Tá (roleId === 2)
+                if (roleId === 2) {
+                    await signupNurse({ ...values, isActive: 1 });
+                    message.success("Thêm mới thành công!");
+                    reloadUsers(roleId);
+                    form.resetFields();
+                } else {
+                    message.error("Chỉ hỗ trợ tạo mới Y Tá!");
+                }
             } catch {
                 message.error("Thêm mới thất bại!");
             }
@@ -143,8 +151,8 @@ const UserManagement = () => {
 
     // Validate file trước khi upload
     const beforeUpload = (file) => {
-        const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-                       file.type === 'application/vnd.ms-excel';
+        const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+            file.type === 'application/vnd.ms-excel';
         if (!isExcel) {
             message.error('Chỉ có thể tải lên file Excel (.xlsx, .xls)!');
             return false;
@@ -235,7 +243,7 @@ const UserManagement = () => {
 
             <div ref={formRef} className="user-management-form-card">
                 <h3 className="form-header">
-                    {editingUser ? "Cập nhật tài khoản" : "Thêm tài khoản mới"}
+                    {editingUser ? "Cập nhật tài khoản" : "Thêm tài khoản y tá mới"}
                 </h3>
                 <Form
                     form={form}
@@ -248,7 +256,21 @@ const UserManagement = () => {
                             <Form.Item
                                 label="Tên đăng nhập"
                                 name="userName"
-                                rules={[{ required: true, message: "Nhập tên đăng nhập!" }]}
+                                rules={[
+                                    { required: true, message: "Nhập tên đăng nhập!" },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value) return Promise.resolve();
+                                            if (/^\s/.test(value)) {
+                                                return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                            }
+                                            if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                return Promise.reject("Không chứa ký tự đặc biệt!");
+                                            }
+                                            return Promise.resolve();
+                                        }
+                                    }
+                                ]}
                             >
                                 <Input placeholder="Tên đăng nhập" />
                             </Form.Item>
@@ -257,10 +279,20 @@ const UserManagement = () => {
                             <Form.Item
                                 label="Mật khẩu"
                                 name="password"
-                                rules={
-                                    editingUser
-                                        ? [] // Không required khi sửa
-                                        : [{ required: true, message: "Nhập mật khẩu!" }]
+                                rules={editingUser ? []
+                                    : [{ required: true, message: "Nhập mật khẩu!" },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value) return Promise.resolve();
+                                            if (/^\s/.test(value)) {
+                                                return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                            }
+                                            if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                return Promise.reject("Không chứa ký tự đặc biệt!");
+                                            }
+                                            return Promise.resolve();
+                                        }
+                                    }]
                                 }
                             >
                                 <Input placeholder="Mật khẩu" />
@@ -270,7 +302,21 @@ const UserManagement = () => {
                             <Form.Item
                                 label="Họ tên"
                                 name="fullName"
-                                rules={[{ required: !editingUser, message: "Nhập họ tên!" }]}
+                                rules={[
+                                    { required: !editingUser, message: "Nhập họ tên!" },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value) return Promise.resolve();
+                                            if (/^\s/.test(value)) {
+                                                return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                            }
+                                            if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                return Promise.reject("Không chứa ký tự đặc biệt!");
+                                            }
+                                            return Promise.resolve();
+                                        }
+                                    }
+                                ]}
                             >
                                 <Input placeholder="Họ tên" />
                             </Form.Item>
@@ -279,26 +325,81 @@ const UserManagement = () => {
                             <Form.Item
                                 label="Số điện thoại"
                                 name="phone"
-                                rules={[{ required: !editingUser, message: "Nhập số điện thoại!" }]}
+                                rules={[
+                                    {
+                                        required: !editingUser,
+                                        message: "Vui lòng nhập số điện thoại!"
+                                    },
+                                    () => ({
+                                        validator(_, value) {
+                                            if (!value) return Promise.resolve();
+                                            if (/\s/.test(value)) {
+                                                return Promise.reject('Số điện thoại không được chứa khoảng trắng');
+                                            }
+                                            if (!/^0\d{9}$/.test(value)) {
+                                                return Promise.reject('Số điện thoại phải gồm 10 số, bắt đầu bằng số 0');
+                                            }
+
+                                            return Promise.resolve();
+                                        }
+                                    })
+                                ]}
                             >
-                                <Input placeholder="Số điện thoại" />
+                                <Input
+                                    placeholder="Ví dụ: 0987654321"
+                                    maxLength={10}
+                                />
                             </Form.Item>
                         </Col>
-                        {!editingUser && (
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    label="Vai trò"
-                                    name="roleId"
-                                    initialValue={roleId}
-                                    rules={[{ required: true, message: "Chọn vai trò!" }]}
-                                >
-                                    <Select>
-                                        {roleOptions.map(r => (
-                                            <Option key={r.value} value={r.value}>{r.label}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            </Col>
+                        {roleId === 2 && !editingUser && (
+                            <>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        label="Chuyên môn"
+                                        name="specialisation"
+                                        rules={[
+                                            { required: true, message: "Nhập chuyên môn!" },
+                                            {
+                                                validator: (_, value) => {
+                                                    if (!value) return Promise.resolve();
+                                                    if (/^\s/.test(value)) {
+                                                        return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                                    }
+                                                    if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                        return Promise.reject("Không chứa ký tự đặc biệt!");
+                                                    }
+                                                    return Promise.resolve();
+                                                }
+                                            }
+                                        ]}
+                                    >
+                                        <Input placeholder="Chuyên môn" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        label="Chứng chỉ"
+                                        name="certification"
+                                        rules={[
+                                            { required: true, message: "Nhập chứng chỉ!" },
+                                            {
+                                                validator: (_, value) => {
+                                                    if (!value) return Promise.resolve();
+                                                    if (/^\s/.test(value)) {
+                                                        return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                                    }
+                                                    if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                        return Promise.reject("Không chứa ký tự đặc biệt!");
+                                                    }
+                                                    return Promise.resolve();
+                                                }
+                                            }
+                                        ]}
+                                    >
+                                        <Input placeholder="Chứng chỉ" />
+                                    </Form.Item>
+                                </Col>
+                            </>
                         )}
                         <Col xs={24} md={12}>
                             <Form.Item
@@ -339,8 +440,8 @@ const UserManagement = () => {
 
             {/* Phần Import Excel - Đặt ở cuối cùng */}
             <Divider style={{ margin: "40px 0" }} />
-            
-            <Card 
+
+            <Card
                 title={
                     <span>
                         <FileExcelOutlined style={{ marginRight: 8, color: '#52c41a' }} />
@@ -353,8 +454,8 @@ const UserManagement = () => {
                 <Row gutter={16} align="middle">
                     <Col>
                         <Upload {...uploadProps}>
-                            <Button 
-                                icon={<UploadOutlined />} 
+                            <Button
+                                icon={<UploadOutlined />}
                                 loading={uploadLoading}
                                 type="primary"
                                 style={{ background: '#52c41a', borderColor: '#52c41a' }}

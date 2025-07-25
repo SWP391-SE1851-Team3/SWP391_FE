@@ -11,11 +11,11 @@
 .approval-container h4,
 .approval-container h5,
 .approval-container h6 {
-  color: #1890FF;
-  background: linear-gradient(90deg, #1890FF, #36CFC9);
+  color: #69CD32;
+  /* background: linear-gradient(90deg, #1890FF, #36CFC9);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background-clip: text; */
 }
 
 .simple-card {

@@ -57,6 +57,37 @@ export const updateUser = async (id, roleId, userData) => {
   }
 };
 
+export const signupNurse = async (nurseData) => {
+  try {
+    const response = await axios.post('http://localhost:8080/api/auth/signup/nurse', 
+      {
+        username: nurseData.userName || nurseData.username,
+        password: nurseData.password,
+        fullName: nurseData.fullName,
+        email: nurseData.email,
+        phone: nurseData.phone,
+        specialisation: nurseData.specialisation,
+        certification: nurseData.certification,
+        isActive: 1
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error details:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      headers: error.response?.headers
+    });
+    throw error;
+  }
+};
+
 // Xóa tài khoản
 export const deleteUser = async (id, roleId) => {
   try {

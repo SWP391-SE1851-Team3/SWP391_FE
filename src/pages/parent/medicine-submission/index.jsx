@@ -25,6 +25,7 @@ import {
 import MedicineHistory from './medicalHistory';
 import './medicineForm.css';
 import dayjs from 'dayjs';
+import { formatDateTime } from '../../../utils/formatDate';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -67,16 +68,13 @@ const MedicineForm = () => {
 
   const handleFileChange = (info) => info.fileList.slice(-1);
 
-  // Hàm kiểm tra ngày có phải thứ 7 hoặc chủ nhật không
   const disabledDate = (current) => {
     if (!current) return false;
 
-    // Không cho chọn ngày trong quá khứ
     if (current.isBefore(dayjs(), 'day')) {
       return true;
     }
 
-    // Không cho chọn thứ 7 (6) và chủ nhật (0)
     const dayOfWeek = current.day();
     return dayOfWeek === 0 || dayOfWeek === 6;
   };
@@ -91,30 +89,40 @@ const MedicineForm = () => {
         note: item.note || ''
       }));
 
-      const medicationDate = values.medicationDate ;
+      const medicationDate = values.medicationDate;
+      
+      // GỬI ĐỊNH DẠNG ISO CHO SERVER (không format)
+      const medicationDateForServer = medicationDate.format('YYYY-MM-DDTHH:mm:ss');
+      
+      // FORMAT CHỈ ĐỂ HIỂN THỊ CHO USER
+      const formattedMedicationDateForDisplay = formatDateTime(medicationDate.toISOString());
 
       const submitData = {
         parentId: parseInt(parentId),
         studentId: parseInt(studentId),
         medicationDetails,
-        medicationDate: medicationDate,
-        submissionDate: new Date().toISOString()
+        medicationDate: medicationDateForServer, // GỬI ĐỊNH DẠNG ISO
       };
 
       const result = await submitMedicationForm(submitData);
       const submissionId = result.medicationSubmissionId;
 
-      const file = values.medicineImage?.[0];
+      const fileList = values.medicineImage;
 
-      if (file) {
+      if (fileList && fileList.length > 0) {
+        const fileObj = fileList[0];
+        const actualFile = fileObj.originFileObj || fileObj;
+
         try {
-          await uploadMedicineImage(submissionId, file, true);
-          message.success('Đơn thuốc & ảnh đã được gửi thành công!');
+          await uploadMedicineImage(submissionId, actualFile);
+          // SỬ DỤNG ĐỊNH DẠNG ĐÃ FORMAT CHỈ ĐỂ HIỂN THỊ
+          message.success(`Đơn thuốc & ảnh đã được gửi thành công cho ngày ${formattedMedicationDateForDisplay}!`);
         } catch {
-          message.error('Đơn thuốc đã được gửi nhưng lỗi khi upload ảnh!');
+          message.error(`Đơn thuốc đã được gửi cho ngày ${formattedMedicationDateForDisplay} nhưng lỗi khi upload ảnh!`);
         }
       } else {
-        message.success('Đơn thuốc đã được gửi thành công!');
+        // SỬ DỤNG ĐỊNH DẠNG ĐÃ FORMAT CHỈ ĐỂ HIỂN THỊ
+        message.success(`Đơn thuốc đã được gửi thành công cho ngày ${formattedMedicationDateForDisplay}!`);
       }
 
       form.resetFields();
@@ -161,14 +169,13 @@ const MedicineForm = () => {
             onFinish={onFinish}
             initialValues={{
               medicines: [{}],
-              medicationDate: dayjs().add(1, 'day') // Mặc định là ngày mai
+              medicationDate: dayjs()
             }}
           >
             <Typography.Title level={4}>
               Thông tin thuốc cho {students.find(s => s.studentID === selectedStudentId)?.fullName}
             </Typography.Title>
 
-            {/* Trường chọn ngày gửi thuốc */}
             <Form.Item
               name="medicationDate"
               label="Ngày gửi thuốc"
@@ -199,6 +206,15 @@ const MedicineForm = () => {
                 style={{ width: '100%' }}
               />
             </Form.Item>
+
+            {/* HIỂN THỊ NGÀY ĐÃ CHỌN VỚI FORMAT CHỈ ĐỂ XEM */}
+            {form.getFieldValue('medicationDate') && (
+              <div style={{ marginBottom: '16px', padding: '8px', backgroundColor: '#e6f7ff', borderRadius: '4px' }}>
+                <Typography.Text type="info">
+                  Ngày đã chọn: {formatDateTime(form.getFieldValue('medicationDate').toISOString())}
+                </Typography.Text>
+              </div>
+            )}
 
             <Form.List name="medicines">
               {(fields, { add, remove }) => (
@@ -250,7 +266,6 @@ const MedicineForm = () => {
                               <Option value="sang">Sáng</Option>
                               <Option value="trua">Trưa</Option>
                               <Option value="chieu">Chiều</Option>
-                              <Option value="toi">Tối</Option>
                             </Select>
                           </Form.Item>
                         </Col>
