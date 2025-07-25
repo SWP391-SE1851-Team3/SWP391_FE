@@ -368,9 +368,9 @@ const VaccinationScheduleManager = () => {
             <Typography.Paragraph style={{fontSize:20, marginBottom:10}}>
               Vui lòng kiểm tra lại thông tin :
             </Typography.Paragraph> 
-              <Typography.Text strong style={{fontSize:16, color:'#722ed1'}}>Tên lớp: {Array.isArray(values.className) ? values.className.join(', ') : values.className}</Typography.Text>
-              <Typography.Text strong style={{fontSize:16, color:'#13c2c2'}}>Tên đợt tiêm: {selectedBatchForConsent?.vaccineBatch}</Typography.Text>
-              <Typography.Text strong style={{fontSize:16, color:'#1890ff'}}>Địa điểm: {selectedBatchForConsent?.location}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16}}>Tên lớp: {Array.isArray(values.className) ? values.className.join(', ') : values.className}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16}}>Tên đợt tiêm: {selectedBatchForConsent?.vaccineBatch}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16}}>Địa điểm: {selectedBatchForConsent?.location}</Typography.Text>
               <Typography.Text style={{fontSize:16}}>
                 <b>Thời gian gửi phiếu:</b> <span style={{color:'#52c41a'}}>{consentDateRange[0]?.format('DD/MM/YYYY HH:mm')}</span>
               </Typography.Text>

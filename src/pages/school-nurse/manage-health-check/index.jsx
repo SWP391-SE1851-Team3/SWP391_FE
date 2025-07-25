@@ -28,7 +28,11 @@ import './health-check.css';
 const { Text } = Typography;
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('manageHealthCheckTab') || 'dashboard');
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    localStorage.setItem('manageHealthCheckTab', key);
+  };
 
   // Mock data for dashboard (health check context)
   const dashboardStats = {
@@ -107,7 +111,7 @@ const Index = () => {
       <main className="health-check-main">
         <Tabs
           activeKey={activeTab}
-          onChange={setActiveTab}
+          onChange={handleTabChange}
           className="health-check-tabs"
           items={[
             {

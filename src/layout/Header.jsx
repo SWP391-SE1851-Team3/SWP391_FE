@@ -56,6 +56,20 @@ const getMenuByRole = (role) => {
   return ROLE_MENUS[numericRole];
 };
 
+// Thêm hàm chuyển đổi role thành tên vai trò
+const getRoleName = (role) => {
+  switch (Number(role)) {
+    case 1:
+      return 'Phụ huynh';
+    case 2:
+      return 'Y tá';
+    case 3:
+      return 'Quản lý';
+    default:
+      return 'Người dùng';
+  }
+};
+
 const HeaderLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -65,6 +79,7 @@ const HeaderLayout = () => {
   
   const isAuthenticated = localStorage.getItem('token');
   const role = Number(localStorage.getItem('role')) || 1;
+  const roleName = getRoleName(role);
   const menuItems = getMenuByRole(role);
   
   const getCurrentSelectedKey = () => {
@@ -181,7 +196,7 @@ const HeaderLayout = () => {
                 width: '100%',
                 lineHeight: '64px'
               }}
-              items={menuItems.map((item, index) => ({
+              items={menuItems.map((item) => ({
                 key: item.path,
                 icon: isVerticalMenu ? item.icon : undefined,
                 label: <Link to={item.path}>{item.label}</Link>,
@@ -202,7 +217,7 @@ const HeaderLayout = () => {
             {isAuthenticated ? (
               <>
                 <div className="welcome-message">
-                  {fullName ? `Xin chào, ${fullName}` : `Xin chào, ${userName}`}
+                  {fullName ? `Xin chào, ${roleName} ${fullName}` : `Xin chào, ${roleName} ${userName}`}
                 </div>
                 <div className="user-info">
                   <Avatar size="small" className="user-avatar">

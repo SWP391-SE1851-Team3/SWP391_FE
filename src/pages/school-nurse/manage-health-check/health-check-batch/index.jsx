@@ -259,9 +259,9 @@ const HealthCheckBatchManager = () => {
               Vui lòng kiểm tra lại thông tin :
             </Typography.Paragraph> <br />
             <div style={{display:'flex', flexDirection:'column', alignItems:'start', gap:20}}>
-              <Typography.Text strong style={{fontSize:16, color:'#722ed1'}}>Tên đợt khám: {selectedBatchForConsent?.batchName}</Typography.Text>
-              <Typography.Text strong style={{fontSize:16, color:'#13c2c2'}}>Địa điểm: {selectedBatchForConsent?.location}</Typography.Text>
-              <Typography.Text strong style={{fontSize:16, color:'#1890ff'}}>Lớp: {Array.isArray(values.className) ? values.className.join(', ') : values.className}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16}}>Tên đợt khám: {selectedBatchForConsent?.batchName}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16}}>Địa điểm: {selectedBatchForConsent?.location}</Typography.Text>
+              <Typography.Text strong style={{fontSize:16}}>Lớp: {Array.isArray(values.className) ? values.className.join(', ') : values.className}</Typography.Text>
               <Typography.Text style={{fontSize:16}}>
                 <b>Thời gian gửi phiếu:</b> <span style={{color:'#52c41a'}}>{consentDateRange[0]?.format('DD/MM/YYYY HH:mm')}</span>
               </Typography.Text>
