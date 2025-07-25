@@ -116,32 +116,23 @@ const App = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status, record) => {
-        
-        
         let color = 'default';
         let text = 'Chờ xử lí';
-        
-        const currentStatus = status?.toUpperCase() || record.processingStatus?.toUpperCase() || 'PENDING';
-        
+        const currentStatus = status || record.processingStatus || 'Chờ xử lí';
         switch (currentStatus) {
-          case 'PROCESSING':
+          case 'Đang xử lí':
             color = 'processing';
             text = 'Đang xử lí';
             break;
-          case 'COMPLETED':
+          case 'Hoàn thành':
             color = 'success';
             text = 'Hoàn thành';
             break;
-          case 'PENDING': 
+          case 'Chờ xử lí':
             color = 'error';
             text = 'Chờ xử lí';
             break;
-          case 'DELETED':
-            color = 'default';
-            text = 'Đã xóa';
-            break;
         }
-        
         return <Tag color={color}>{text}</Tag>;
       }
     },
@@ -684,9 +675,9 @@ const App = () => {
                 allowClear
               >
                 <Option value="">Tất cả trạng thái</Option>
-                <Option value="PROCESSING">Đang xử lý</Option>
-                <Option value="COMPLETED">Hoàn thành</Option>
-                <Option value="DELETED">Đã xóa</Option>
+                <Option value="Đang xử lí">Đang xử lí</Option>
+                <Option value="Hoàn thành">Hoàn thành</Option>
+                <Option value="Chờ xử lí">Chờ xử lí</Option>
               </Select>
             </Col>
           </Row>
@@ -1070,13 +1061,13 @@ const App = () => {
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Trạng thái:</Typography.Text><br />
                 <Tag color={
-                  selectedEvent.processingStatus === 'COMPLETED' ? 'success' :
-                  selectedEvent.processingStatus === 'PROCESSING' ? 'processing' :
-                  selectedEvent.processingStatus === 'DELETED' ? 'default' : 'default'
+                  selectedEvent.processingStatus === 'Hoàn thành' ? 'success' :
+                  selectedEvent.processingStatus === 'Đang xử lí' ? 'processing' :
+                  selectedEvent.processingStatus === 'Đã xóa' ? 'default' : 'error'
                 }>
-                  {selectedEvent.processingStatus === 'COMPLETED' ? 'Hoàn thành' :
-                   selectedEvent.processingStatus === 'PROCESSING' ? 'Đang xử lý' :
-                   selectedEvent.processingStatus === 'DELETED' ? 'Đã xóa' : 'Chưa xử lý'}
+                  {selectedEvent.processingStatus === 'Hoàn thành' ? 'Hoàn thành' :
+                   selectedEvent.processingStatus === 'Đang xử lí' ? 'Đang xử lí' :
+                   selectedEvent.processingStatus === 'Đã xóa' ? 'Đã xóa' : 'Chờ xử lí'}
                 </Tag>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
@@ -1288,9 +1279,10 @@ const App = () => {
                   rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
                 >
                   <Select placeholder="Chọn trạng thái">
-                    <Option value="PROCESSING">Đang xử lý</Option>
-                    <Option value="COMPLETED">Hoàn thành</Option>
-                    <Option value="DELETED">Đã xóa</Option>
+                    <Option value="Đang xử lí">Đang xử lí</Option>
+                    <Option value="Hoàn thành">Hoàn thành</Option>
+                    <Option value="Chờ xử lí">Chờ xử lí</Option>
+                    <Option value="Đã xóa">Đã xóa</Option>
                   </Select>
                 </Form.Item>
               </Col>
