@@ -102,6 +102,11 @@
   background-color: #fff5f5;
 }
 
+.status-badge.pending {
+  background-color: #17a2b8; /* màu xanh ngọc nhẹ */
+  color: white;
+}
+
 /* Thông tin chính của sự kiện */
 .event-main-info {
   display: flex;

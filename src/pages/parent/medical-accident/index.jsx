@@ -101,11 +101,13 @@ const MedicalAccidentParent = () => {
     if (!status) return 'Không có thông tin';
 
     const statusLower = status.toLowerCase();
-    if (statusLower.includes('hoàn thành')) {
+    if (statusLower === 'hoàn thành') {
       return 'Hoàn thành';
-    } else if (statusLower.includes('đang xử lý')) {
+    } else if (statusLower === 'đang xử lý') {
       return 'Đang xử lý';
-    }
+    } else if (statusLower === 'chờ xử lý') {
+      return 'Chờ xử lý';
+  }
     return status;
   };
 
@@ -114,11 +116,13 @@ const MedicalAccidentParent = () => {
     if (!status) return 'processing';
 
     const statusLower = status.toLowerCase();
-    if (statusLower.includes('hoàn thành')) {
+    if (statusLower === 'hoàn thành') {
       return 'completed';
-    } else if (statusLower.includes('đang xử lý')) {
+    } else if (statusLower === 'đang xử lý') {
       return 'processing';
-    }
+    } else if (statusLower === 'chờ xử lý') {
+      return 'pending';
+  }
     return 'processing';
   };
 
