@@ -137,7 +137,7 @@
 }
 
 .student-info .info-row {
-  gap: 300px;
+  gap: 100px;
 }
 
 .student-info .info-row-large-gap {
@@ -147,6 +147,7 @@
 .student-info p {
   margin: 8px 0;
 }
+
 
 /* =============== Vaccine Form =============== */
 .vaccine-form textarea {

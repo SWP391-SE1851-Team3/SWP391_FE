@@ -21,17 +21,11 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
       setHistory([]);
       return;
     }
-
     setHistoryLoading(true);
     getMedicationSubmissionsByParentId(parentId)
       .then(res => {
         const rawHistory = res || [];
-
-        // Filter theo studentId nếu có
-        const filteredHistory = studentId
-          ? rawHistory.filter(item => item.studentId === studentId)
-          : rawHistory;
-
+        const filteredHistory = rawHistory.filter(item => item.studentId === studentId);
         setHistory(filteredHistory);
       })
       .catch((error) => {
@@ -39,7 +33,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
         setHistory([]);
       })
       .finally(() => setHistoryLoading(false));
-  }, [parentId, studentId]); // Thêm studentId vào dependency
+  }, [parentId, studentId]);
 
   const handleViewDetail = (idx) => {
     setDetailModal({
@@ -75,7 +69,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
   // Lấy tên học sinh từ students array
   const getStudentName = (studentId) => {
     const student = students?.find(s => s.studentID === studentId);
-    return student?.fullName || '---';
+    return student.fullName || '---';
   };
 
   return (
@@ -135,7 +129,6 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
         </div>
       )}
 
-      {/* Modal chi tiết */}
       <Modal
         open={detailModal.open}
         onCancel={() => setDetailModal({ open: false, data: null })}
@@ -156,7 +149,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                 <p>Tên thuốc: {med.medicineName}</p>
                 <p>Liều lượng: {med.dosage}</p>
                 <p>Thời gian sử dụng: {med.timeToUse}</p>
-                {med.note && <p>Ghi chú: {med.note}</p>}
+                <p>Ghi chú: {med.note}</p>
               </div>
             ))}
           </div>

@@ -30,14 +30,14 @@ const MedicalAccidentParent = () => {
     };
 
     fetchStudents();
-  }, [parentId]);
+  }, [parentId]); 
 
   // Sắp xếp sự kiện theo thời gian (mới nhất trước)
   const sortEventsByDateTime = (events) => {
     return events.sort((a, b) => {
       const dateA = new Date(a.eventDateTime);
       const dateB = new Date(b.eventDateTime);
-      return dateB - dateA; // Sắp xếp giảm dần (mới nhất trước)
+      return dateB - dateA;
     });
   };
 
@@ -53,11 +53,8 @@ const MedicalAccidentParent = () => {
       setSelectedStudent(studentId);
       const eventsData = await getMedicalEventsDetail(parentId, studentId);
       const eventsArray = Array.isArray(eventsData) ? eventsData : [eventsData];
-
-      // Sắp xếp theo thời gian trước khi set state
       const sortedEvents = sortEventsByDateTime(eventsArray);
       setMedicalEvents(sortedEvents);
-
       setError('');
       setExpandedEvents(new Set());
     } catch (err) {
@@ -85,15 +82,11 @@ const MedicalAccidentParent = () => {
     const date = new Date(dateTimeString);
     return date.toLocaleString('vi-VN', {
       year: 'numeric',
+      month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  // Format giới tính
-  const formatGender = (gender) => {
-    return gender === 1 ? 'Nam' : gender === 0 ? 'Nữ' : 'Không xác định';
   };
 
   // Format trạng thái xử lý
@@ -111,7 +104,6 @@ const MedicalAccidentParent = () => {
     return status;
   };
 
-  // Lấy class CSS cho badge trạng thái
   const getStatusBadgeClass = (status) => {
     if (!status) return 'processing';
 
@@ -138,7 +130,6 @@ const MedicalAccidentParent = () => {
     <div className="medical-events-container">
       <h2 className="title">Thông Tin Sự Kiện Y Tế</h2>
 
-      {/* Dropdown chọn học sinh */}
       <div className="student-selector">
         <label htmlFor="student-select" className="select-label">
           Chọn học sinh:
@@ -157,16 +148,13 @@ const MedicalAccidentParent = () => {
         >
           {students.map((student) => (
             <Option key={student.studentID} value={student.studentID}>
-              {student.fullName}
+              {student.fullName}  
             </Option>
           ))}
         </Select>
       </div>
 
-      {/* Hiển thị loading */}
       {loading && <div className="loading">Đang tải...</div>}
-
-      {/* Hiển thị lỗi */}
       {error && <div className="error-message">{error}</div>}
 
       {/* Hiển thị thông tin sự kiện y tế */}
@@ -183,6 +171,7 @@ const MedicalAccidentParent = () => {
                   </h4>
                   <div className="event-datetime">
                     {formatDateTime(event.eventDateTime)}
+                    {console.log(event.eventDateTime) }
                   </div>
                   <div className="event-result">
                     <span className="result-label">Kết quả:</span>
@@ -237,14 +226,12 @@ const MedicalAccidentParent = () => {
         </div>
       )}
 
-      {/* Thông báo khi chưa chọn học sinh */}
       {!selectedStudent && !loading && (
         <div className="no-selection">
           Vui lòng chọn học sinh để xem thông tin sự kiện y tế
         </div>
       )}
 
-      {/* Thông báo khi không có dữ liệu */}
       {selectedStudent && medicalEvents.length === 0 && !loading && !error && (
         <div className="no-data">
           Không có sự kiện y tế nào cho học sinh này

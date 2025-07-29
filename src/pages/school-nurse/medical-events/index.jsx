@@ -256,7 +256,7 @@ const App = () => {
           updatedByNurseName: updatedByNurseName,
           note: values?.note || '',
           result: values?.result || '',
-          processingStatus: 'PENDING',
+          processingStatus: 'Chờ xử lí',
           listMedicalEventTypes,
           medicalSupplies: mappedSupplies,
           emergency: values?.emergency || false

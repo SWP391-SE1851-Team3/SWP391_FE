@@ -12,10 +12,6 @@
 .approval-container h5,
 .approval-container h6 {
   color: #69CD32;
-  /* background: linear-gradient(90deg, #1890FF, #36CFC9);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text; */
 }
 
 .simple-card {
@@ -28,7 +24,12 @@
   box-shadow: 0 4px 14px #0001;
 }
 
-/* Tiêu đề trong simple-card nếu có */
+/* Thẻ bị từ chối - nền đỏ nhạt */
+.simple-card.rejected-bg {
+  background: #ffe9e9 !important;
+  border-color: #e53935 !important;
+}
+
 .simple-card .card-title,
 .simple-card h1,
 .simple-card h2,
