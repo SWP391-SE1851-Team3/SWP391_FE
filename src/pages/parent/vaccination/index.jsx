@@ -19,29 +19,28 @@ const ParentVaccineConfirmation = () => {
   const [form] = Form.useForm();
   const parentId = localStorage.getItem('userId');
 
-  useEffect(() => {
-    if (!parentId) {
-      message.error('Vui lòng đăng nhập!');
-      return;
-    }
-    fetchStudents();
-    // eslint-disable-next-line
-  }, [parentId]);
+    useEffect(() => {
+      if (!parentId) {
+        message.error('Vui lòng đăng nhập!');
+        return;
+      }
+      fetchStudents();
+    }, [parentId]);
 
-  const fetchStudents = async () => {
-    setLoadingStudents(true);
-    try {
-      const res = await getStudentsByParent(parentId);
-      const studentsData = Array.isArray(res) ? res : [];
-      setStudents(studentsData);
-    } catch (error) {
-      console.error(error);
-      message.error('Không tải được danh sách học sinh');
-      setStudents([]);
-    } finally {
-      setLoadingStudents(false);
-    }
-  };
+    const fetchStudents = async () => {
+      setLoadingStudents(true);
+      try {
+        const res = await getStudentsByParent(parentId);
+        const studentsData = res;
+        setStudents(studentsData);
+      } catch (error) {
+        console.error(error);
+        message.error('Không tải được danh sách học sinh');
+        setStudents([]);
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
 
   const handleViewDetails = async (student) => {
     const id = Number(student.studentID || student.studentId || student.id);
@@ -204,19 +203,21 @@ const ParentVaccineConfirmation = () => {
     form.resetFields();
   };
 
-  const formatDate = (dateTimeString) => {
-    if (!dateTimeString) return "Chưa có dữ liệu";
-    try {
-      const date = new Date(dateTimeString);
-      return date.toLocaleString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return "Không hợp lệ";
-    }
-  };
+const formatDate = (dateTimeString) => {
+  if (!dateTimeString) return "Chưa có dữ liệu";
+  try {
+    const date = new Date(dateTimeString);
+    return date.toLocaleString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch (error) {
+    return "Không hợp lệ";
+  }
+};
 
   const handleViewRecordDetails = (record) => {
     setSelectedRecord(record);
@@ -228,13 +229,11 @@ const ParentVaccineConfirmation = () => {
       <h2>Thông Báo Tiêm Chủng</h2>
       {hasConsentForm && hasPendingForm ? (
         <>
-          <div className="info-row1">
-            <span><strong>Họ tên học sinh:</strong> {consentForm?.fullNameOfStudent}</span>
-            <span><strong>Lớp:</strong> {consentForm?.className}</span>
-          </div>
+            <span><strong>Họ tên học sinh: </strong> {consentForm?.fullNameOfStudent}</span>
+            <span><strong>   -</strong> {consentForm?.className}</span>
           <p><strong>Vắc xin đăng ký:</strong> {consentForm?.vaccineName}</p>
           <div className="info-row">
-            <span><strong>Ngày tiêm dự kiến:</strong> {consentForm?.scheduledDate}</span>
+            <span><strong>Ngày tiêm dự kiến:</strong> {formatDate(consentForm?.scheduledDate)}</span>
             <span><strong>Địa điểm tiêm:</strong> {consentForm?.location}</span>
           </div>
         </>

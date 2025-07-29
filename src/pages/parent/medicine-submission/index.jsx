@@ -12,16 +12,8 @@ import {
   Typography,
   DatePicker
 } from 'antd';
-import {
-  UploadOutlined,
-  PlusOutlined,
-  MinusCircleOutlined
-} from '@ant-design/icons';
-import {
-  getStudentHealthProfiles,
-  submitMedicationForm,
-  uploadMedicineImage
-} from '../../../api/medicalSubmission';
+import {UploadOutlined,PlusOutlined,MinusCircleOutlined} from '@ant-design/icons';
+import {getStudentHealthProfiles,submitMedicationForm,uploadMedicineImage} from '../../../api/medicalSubmission';
 import MedicineHistory from './medicalHistory';
 import './medicineForm.css';
 import dayjs from 'dayjs';
@@ -38,15 +30,23 @@ const MedicineForm = () => {
   const parentId = localStorage.getItem('userId');
 
   useEffect(() => {
-    if (!parentId) {
-      message.error('Vui lòng đăng nhập!');
-      return;
-    }
-    setLoading(true);
-    getStudentHealthProfiles(parentId)
-      .then(data => setStudents(data || []))
-      .catch(() => message.error('Không tải được danh sách học sinh'))
-      .finally(() => setLoading(false));
+    const fetchStudents = async () => {
+      if (!parentId) {
+        message.error('Vui lòng đăng nhập!');
+        return;
+      }
+      try {
+        setLoading(true);
+        const data = await getStudentHealthProfiles(parentId);
+        setStudents(data || []);
+      } catch (error) {
+        message.error('Không tải được danh sách học sinh');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
   }, [parentId]);
 
   const beforeUpload = (file) => {
@@ -62,7 +62,6 @@ const MedicineForm = () => {
       message.error('Ảnh phải nhỏ hơn 2MB!');
       return Upload.LIST_IGNORE;
     }
-
     return false;
   };
 
@@ -90,18 +89,14 @@ const MedicineForm = () => {
       }));
 
       const medicationDate = values.medicationDate;
-      
-      // GỬI ĐỊNH DẠNG ISO CHO SERVER (không format)
       const medicationDateForServer = medicationDate.format('YYYY-MM-DDTHH:mm:ss');
-      
-      // FORMAT CHỈ ĐỂ HIỂN THỊ CHO USER
-      const formattedMedicationDateForDisplay = formatDateTime(medicationDate.toISOString());
+      //const formattedMedicationDateForDisplay = formatDateTime(medicationDate.toISOString());
 
       const submitData = {
         parentId: parseInt(parentId),
         studentId: parseInt(studentId),
         medicationDetails,
-        medicationDate: medicationDateForServer, // GỬI ĐỊNH DẠNG ISO
+        medicationDate: medicationDateForServer,
       };
 
       const result = await submitMedicationForm(submitData);
@@ -115,16 +110,13 @@ const MedicineForm = () => {
 
         try {
           await uploadMedicineImage(submissionId, actualFile);
-          // SỬ DỤNG ĐỊNH DẠNG ĐÃ FORMAT CHỈ ĐỂ HIỂN THỊ
-          message.success(`Đơn thuốc & ảnh đã được gửi thành công cho ngày ${formattedMedicationDateForDisplay}!`);
+          message.success(`Đơn thuốc & ảnh đã được gửi thành công !`);
         } catch {
-          message.error(`Đơn thuốc đã được gửi cho ngày ${formattedMedicationDateForDisplay} nhưng lỗi khi upload ảnh!`);
+          message.error(`Đơn thuốc đã được gửi nhưng lỗi khi upload ảnh!`);
         }
       } else {
-        // SỬ DỤNG ĐỊNH DẠNG ĐÃ FORMAT CHỈ ĐỂ HIỂN THỊ
-        message.success(`Đơn thuốc đã được gửi thành công cho ngày ${formattedMedicationDateForDisplay}!`);
+        message.success(`Đơn thuốc đã được gửi thành công!`);
       }
-
       form.resetFields();
     } catch {
       message.error('Có lỗi xảy ra khi gửi đơn thuốc!');
@@ -150,9 +142,7 @@ const MedicineForm = () => {
             showSearch
             optionFilterProp="children"
           >
-            {students
-              .filter(s => s.studentID != null)
-              .map(s => (
+            {students.map(s => (
                 <Option key={s.studentID} value={s.studentID}>
                   {s.fullName}
                 </Option>
@@ -181,22 +171,6 @@ const MedicineForm = () => {
               label="Ngày gửi thuốc"
               rules={[
                 { required: true, message: 'Vui lòng chọn ngày gửi thuốc!' },
-                {
-                  validator: (_, value) => {
-                    if (!value) return Promise.resolve();
-
-                    const dayOfWeek = value.day();
-                    if (dayOfWeek === 0 || dayOfWeek === 6) {
-                      return Promise.reject(new Error('Không thể chọn thứ 7 hoặc chủ nhật!'));
-                    }
-
-                    if (value.isBefore(dayjs(), 'day')) {
-                      return Promise.reject(new Error('Không thể chọn ngày trong quá khứ!'));
-                    }
-
-                    return Promise.resolve();
-                  }
-                }
               ]}
             >
               <DatePicker
@@ -206,15 +180,6 @@ const MedicineForm = () => {
                 style={{ width: '100%' }}
               />
             </Form.Item>
-
-            {/* HIỂN THỊ NGÀY ĐÃ CHỌN VỚI FORMAT CHỈ ĐỂ XEM */}
-            {form.getFieldValue('medicationDate') && (
-              <div style={{ marginBottom: '16px', padding: '8px', backgroundColor: '#e6f7ff', borderRadius: '4px' }}>
-                <Typography.Text type="info">
-                  Ngày đã chọn: {formatDateTime(form.getFieldValue('medicationDate').toISOString())}
-                </Typography.Text>
-              </div>
-            )}
 
             <Form.List name="medicines">
               {(fields, { add, remove }) => (
@@ -311,7 +276,7 @@ const MedicineForm = () => {
 
             <Form.Item
               name="medicineImage"
-              label="Ảnh thuốc (PNG, tối đa 1 ảnh)"
+              label="Ảnh thuốc (PNG)"
               valuePropName="fileList"
               getValueFromEvent={handleFileChange}
             >

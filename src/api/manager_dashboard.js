@@ -68,7 +68,6 @@ export const getMedicalEvents = async () => {
   }
 };
 
-// Kiểm tra service
 export const getHealthStatus = async () => {
   try {
     const response = await apiClient.get('/admin/dashboard/health');
@@ -79,7 +78,6 @@ export const getHealthStatus = async () => {
   }
 };
 
-// Thống kê khám sức khỏe
 export const getHealthCheckStats = async () => {
   try {
     const response = await apiClient.get('/admin/dashboard/health-check');
@@ -90,11 +88,10 @@ export const getHealthCheckStats = async () => {
   }
 };
 
-// Cập nhật hàm getFullReport để nhận params
 export const getFullReport = async (params = {}) => {
   try {
     const response = await apiClient.get('/admin/dashboard/full-report', { params });
-    return response.data; // Đảm bảo trả về response.data
+    return response;
   } catch (error) {
     console.error('Error fetching full report:', error);
     throw error;
