@@ -18,6 +18,7 @@ import {
   Input, 
   Select, 
   DatePicker,
+  TimePicker,
   Badge, 
   Space, 
   Typography, 
@@ -134,8 +135,14 @@ const HealthCheckBatchManager = () => {
       // Chuẩn bị dữ liệu đúng format API
       const nurseName = localStorage.getItem('fullname') || 'Y tá';
       const nurseID = Number(localStorage.getItem('userId') || "");
+      // Kết hợp ngày và giờ
+      let scheduleDateTime = now;
+      if (values.scheduledDateTime) {
+        scheduleDateTime = values.scheduledDateTime.toISOString();
+      }
+      
       const data = {
-        schedule_Date: values.scheduledDate ? values.scheduledDate.toISOString() : now,
+        schedule_Date: scheduleDateTime,
         name: values.batchName,
         location: values.location,
         notes: values.notes,
@@ -183,9 +190,12 @@ const HealthCheckBatchManager = () => {
   const handleEdit = (batch) => {
     setSelectedBatch(batch);
     setIsEditModalOpen(true);
+    // Chuyển đổi scheduledDate thành moment object
+    const scheduledDateTime = batch.scheduledDate ? moment(batch.scheduledDate) : null;
+    
     editForm.setFieldsValue({
       batchName: batch.batchName,
-      scheduledDate: batch.scheduledDate ? moment(batch.scheduledDate) : null,
+      scheduledDateTime: scheduledDateTime,
       location: batch.location,
       notes: batch.notes,
       status: mapStatus(batch.status),
@@ -200,9 +210,15 @@ const HealthCheckBatchManager = () => {
     
       const nurseName = localStorage.getItem('fullname') || 'Y tá';
       const nurseID = Number(localStorage.getItem('userId') || "");
+      // Kết hợp ngày và giờ
+      let scheduleDateTime = nowUpdate;
+      if (values.scheduledDateTime) {
+        scheduleDateTime = values.scheduledDateTime.toISOString();
+      }
+      
       const data = {
         health_ScheduleID: selectedBatch.id,
-        schedule_Date: values.scheduledDate ? values.scheduledDate.toISOString() : nowUpdate,
+        schedule_Date: scheduleDateTime,
         name: values.batchName,
         location: values.location,
         notes: values.notes,
@@ -364,7 +380,7 @@ const HealthCheckBatchManager = () => {
               </div>
 
               <div className="health-check-batch-card-info">
-                <Space><CalendarOutlined /><Text>Ngày khám: {batch.scheduledDate ? formatDateTime(batch.scheduledDate, 'DD/MM/YYYY') : '-'}</Text></Space>
+                <Space><CalendarOutlined /><Text>Ngày khám: {batch.scheduledDate ? formatDateTime(batch.scheduledDate) : '-'}</Text></Space>
                 <Space><EnvironmentOutlined /><Text>Địa điểm: {batch.location}</Text></Space>
               </div>
 
@@ -437,9 +453,12 @@ const HealthCheckBatchManager = () => {
                 >
               <Input />
             </Form.Item>
-            <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
+            <Form.Item name="scheduledDateTime" label="Thời gian khám" rules={[{ required: true, message: 'Vui lòng chọn thời gian khám' }]}> 
               <DatePicker 
+                showTime
                 style={{ width: '100%' }} 
+                format="YYYY-MM-DD HH:mm"
+                placeholder="Chọn ngày và giờ khám"
                 disabledDate={current => current && current < new Date().setHours(0,0,0,0)}
               />
             </Form.Item>
@@ -512,9 +531,12 @@ const HealthCheckBatchManager = () => {
                 >
               <Input />
             </Form.Item>
-            <Form.Item name="scheduledDate" label="Ngày khám" rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}> 
+            <Form.Item name="scheduledDateTime" label="Thời gian khám" rules={[{ required: true, message: 'Vui lòng chọn thời gian khám' }]}> 
               <DatePicker 
+                showTime
                 style={{ width: '100%' }} 
+                format="YYYY-MM-DD HH:mm"
+                placeholder="Chọn ngày và giờ khám"
                 disabledDate={current => current && current < new Date().setHours(0,0,0,0)}
               />
             </Form.Item>
