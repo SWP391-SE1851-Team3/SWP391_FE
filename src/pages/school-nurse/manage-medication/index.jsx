@@ -36,7 +36,7 @@ import {
   PictureOutlined // ← THÊM MỚI
 } from '@ant-design/icons';
 import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails, getMedicationConfirmationBySubmission, uploadEvidenceImage, getEvidenceImage } from '../../../api/medicalSubmissionNurse';
-import { formatDateTime } from '../../../utils/formatDate';
+import { formatDate } from '../../../utils/formatDate';
 import './Medication.css';
 import { hasNoSpecialCharacters } from '../../../validations';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
@@ -101,7 +101,7 @@ const MedicationManagement = () => {
           className: submission.className || '',
           medication: Array.isArray(submission.medicationDetails) ? submission.medicationDetails.map(m => m.medicineName).join(', ') : '',
           status: submission.status, // Lấy trạng thái từ backend
-          time: formatDateTime(submission.submissionDate),
+          time: formatDate(submission.submissionDate),
           submissionDate: submission.submissionDate,
           actions: submission.status === 'Chờ nhận thuốc' ? ['view', 'confirm', 'cancel'] : ['view'],
           rejectReason: '',
@@ -697,7 +697,7 @@ const MedicationManagement = () => {
               {/* Thời gian gửi và trạng thái */}
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Thời gian gửi:</Typography.Text><br />
-                <Typography.Text>{detailData?.submissionDate ? formatDateTime(detailData.submissionDate) : ''}</Typography.Text>
+                <Typography.Text>{detailData?.submissionDate ? formatDate(detailData.submissionDate) : ''}</Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Trạng thái:</Typography.Text><br />

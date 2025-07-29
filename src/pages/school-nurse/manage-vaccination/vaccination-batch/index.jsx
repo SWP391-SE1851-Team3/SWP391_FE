@@ -27,7 +27,7 @@ import {
 } from 'antd';
 import './Vaccination-batch.css';
 import moment from 'moment';
-import { formatDateTime, formatDateTimePlus14Hours } from '../../../../utils/formatDate';
+import { formatDateTime } from '../../../../utils/formatDate';
 import { hasNoSpecialCharacters, isOnlyWhitespace, isFirstCharUppercase  } from '../../../../validations/stringValidations';
 import { createVaccinationBatch, getVaccineTypeByName, getVaccinationBatches, updateVaccinationBatch, sendConsentFormByClassName} from '../../../../api/vaccinationAPI';
 
@@ -80,8 +80,7 @@ const VaccinationScheduleManager = () => {
             batchID: item.batchID,
             vaccine: vaccineName, 
             vaccineBatch: item.dot,
-            scheduledDate: new Date(item.scheduled_date).toLocaleDateString('vi-VN'),
-            originalScheduledDate: item.scheduled_date,
+            scheduledDate: item.scheduled_date, // Giữ nguyên date gốc như health-check-batch
             location: item.location,
             status: item.status,
             studentsCount: item.quantity_received || 0,
@@ -114,7 +113,7 @@ const VaccinationScheduleManager = () => {
   // Filter and search logic
   useEffect(() => {
     // Sắp xếp schedules theo ngày tiêm mới nhất lên trên
-    let result = [...schedules].sort((a, b) => new Date(b.originalScheduledDate || b.scheduledDate) - new Date(a.originalScheduledDate || a.scheduledDate));
+    let result = [...schedules].sort((a, b) => new Date(b.scheduledDate) - new Date(a.scheduledDate));
 
     if (searchTerm) {
       result = result.filter(schedule =>
@@ -174,25 +173,21 @@ const VaccinationScheduleManager = () => {
       const nurseId = Number(localStorage.getItem('userId') || 1);
       const nurseName = localStorage.getItem('fullname') || 'Y tá Mặc định';
       const vaccineTypeID = Number(values.vaccineTypeID || 0);
-      const quantityReceived = Number(values.quantity_received);
-      let scheduledDate = '';
-      if (values.scheduledDate && typeof values.scheduledDate.toISOString === 'function') {
-        scheduledDate = values.scheduledDate.toISOString();
-      } else {
-        message.error('Vui lòng chọn ngày tiêm hợp lệ!');
-        return;
+      let scheduledDate = new Date().toISOString(); // fallback
+      if (values.scheduledDateTime) {
+        scheduledDate = values.scheduledDateTime.add(7, 'hours').toISOString();
       }
-      const createdAt = new Date().toISOString();
+      // Tự động lấy thời gian hiện tại và cộng thêm 7 tiếng
+      const currentTime = moment().add(7, 'hours').toISOString();
      
       const payload = {
-        created_at: createdAt,
-        updated_at: createdAt,
+        created_at: currentTime,
+        updated_at: currentTime,
         created_by_nurse_id: nurseId,
         created_by_nurse_name: nurseName,
         edit_nurse_id: nurseId,
         edit_nurse_name: nurseName,
         dot: String(values.vaccine_batch || ''),
-        quantity_received: quantityReceived,
         scheduled_date: scheduledDate,
         location: String(values.location || ''),
         status: values.status || 'Chờ xác nhận',
@@ -237,15 +232,14 @@ const VaccinationScheduleManager = () => {
     } else {
       setVaccineOptions([]);
     }
-    // Convert original date to moment object for DatePicker
-    const momentDate = moment(schedule.originalScheduledDate);
+    // Chuyển đổi scheduledDate thành moment object (like health-check-batch)
+    const scheduledDateTime = schedule.scheduledDate ? moment(schedule.scheduledDate) : null;
     editForm.setFieldsValue({
       batchId: schedule.batchID,
       vaccine: schedule.vaccine, // Sử dụng tên vaccine
       vaccineTypeID: schedule.vaccineTypeID, // Use the stored vaccineTypeID
       vaccine_batch: schedule.vaccineBatch, // Set vaccine batch
-      quantity_received: schedule.studentsCount,
-      scheduledDate: momentDate, // DatePicker expects a moment object
+      scheduledDateTime: scheduledDateTime, // DatePicker with showTime expects a Date object
       location: schedule.location,
       status: schedule.status,
       nurse_name: schedule.created_by_nurse_name, // Điền tên y tá tạo
@@ -262,10 +256,9 @@ const VaccinationScheduleManager = () => {
       const nurseName = localStorage.getItem('fullname') || 'Y tá Mặc định';
       const batchId = editForm.getFieldValue('batchId');
       const vaccineTypeID = Number(values.vaccineTypeID || 0);
-      const quantityReceived = Number(values.quantity_received);
-      const scheduledDate = values.scheduledDate.toISOString();
       const createdAt = selectedSchedule.created_at;
-      const updatedAt = new Date().toISOString();
+      // Tự động lấy thời gian hiện tại và cộng thêm 7 tiếng
+      const updatedAt = moment().add(7, 'hours').toISOString();
     
       // Chỉ gửi đúng các trường cần thiết cho API
       const payload = {
@@ -273,8 +266,6 @@ const VaccinationScheduleManager = () => {
         updated_at: updatedAt,
         edit_nurse_id: nurseId,
         dot: String(values.vaccine_batch || ''),
-        quantity_received: quantityReceived,
-        scheduled_date: scheduledDate,
         location: String(values.location || ''),
         status: values.status || 'Chờ xác nhận',
         notes: String(values.notes || ''),
@@ -283,38 +274,23 @@ const VaccinationScheduleManager = () => {
         vaccineTypeID: vaccineTypeID
       };
 
+            // Kết hợp ngày và giờ (like health-check-batch)
+      let scheduleDateTime = new Date().toISOString();
+      if (values.scheduledDateTime) {
+        scheduleDateTime = values.scheduledDateTime.add(7, 'hours').toISOString();
+      }
+      payload.scheduled_date = scheduleDateTime;
+      
       console.log('🚀 [Vaccination Schedule] Gửi payload cập nhật đợt tiêm:', payload);
       const response = await updateVaccinationBatch(batchId, payload);
       const updatedBatchData = response.data;
 
-      // Find vaccine name from existing options
-      const vaccine = vaccineOptions.find(v => v.id === updatedBatchData.vaccineTypeID);
-      const vaccineName = vaccine ? vaccine.name : 'Không xác định';
+      // Log response để debug
+      console.log('✅ [Vaccination Schedule] Phản hồi từ server khi cập nhật:', updatedBatchData);
 
-      const formattedUpdatedBatch = {
-        ...selectedSchedule, // Preserve existing fields like consentsSent
-        batchID: updatedBatchData.batchID,
-        vaccine: vaccineName,
-        vaccineBatch: updatedBatchData.dot,
-        scheduledDate: new Date(updatedBatchData.scheduled_date).toLocaleDateString('vi-VN'),
-        originalScheduledDate: updatedBatchData.scheduled_date,
-        location: updatedBatchData.location,
-        status: updatedBatchData.status,
-        studentsCount: updatedBatchData.quantity_received || 0,
-        notes: updatedBatchData.notes,
-        vaccineTypeID: updatedBatchData.vaccineTypeID,
-        created_at: updatedBatchData.created_at,
-        updated_at: updatedBatchData.updated_at ? formatDateTimePlus14Hours(updatedBatchData.updated_at) : '',
-        edit_nurse_id: updatedBatchData.edit_nurse_id,
-        edit_nurse_name: updatedBatchData.edit_nurse_name,
-      };
-
-      setSchedules(prevSchedules => 
-        prevSchedules.map(schedule => 
-          schedule.batchID === formattedUpdatedBatch.batchID ? formattedUpdatedBatch : schedule
-        )
-      );
-
+      // Sau khi cập nhật thành công, reload lại danh sách từ server
+      await fetchSchedules();
+      
       editForm.resetFields();
       setIsEditModalOpen(false);
       setSelectedSchedule(null);
@@ -508,28 +484,30 @@ const VaccinationScheduleManager = () => {
               </div>
 
               <div className="vaccination-schedule-card-info">
-                <Space><CalendarOutlined /><Text>Ngày tiêm: {schedule.scheduledDate}</Text></Space>
+                <Space><CalendarOutlined /><Text>Thời gian tiêm: {schedule.scheduledDate ? formatDateTime(schedule.scheduledDate) : '-'}</Text></Space>
                 <Space><EnvironmentOutlined /><Text>Địa điểm: {schedule.location}</Text></Space>
                 
               </div>
-
               <div className="vaccination-schedule-card-info" style={{ marginTop: 8 }}>
                 <Space>
                   <Text strong>Y tá chỉnh sửa:</Text> <Text>{schedule.edit_nurse_name || '-'}</Text>
                 </Space>
+              </div>
+
+              <div className="vaccination-schedule-card-info" style={{ marginTop: 8 }}>
                 <Space>
                   <Text strong>Ngày tạo:</Text> <Text>{schedule.created_at ? formatDateTime(schedule.created_at) : '-'}</Text>
                 </Space>
+                <Space>
+                  <Text strong>Cập nhật:</Text> <Text>{schedule.updated_at ? formatDateTime(schedule.updated_at) : '-'}</Text>
+                </Space>
               </div>
 
-              {(schedule.notes || schedule.updated_at) && (
-                <div className="vaccination-schedule-card-info" style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {schedule.notes && (
+                <div className="vaccination-schedule-card-info" style={{ marginTop: 8 }}>
                   <Space>
                     <Text type="secondary">Ghi chú:</Text> <Text>{schedule.notes || '-'}</Text>
-                    </Space>
-                  <Space>
-                    <Text strong>Cập nhật:</Text> <Text>{schedule.updated_at ? formatDateTime(schedule.updated_at) : '-'}</Text>
-                    </Space>
+                  </Space>
                 </div>
               )}
 
@@ -632,17 +610,19 @@ const VaccinationScheduleManager = () => {
           >
             <Input />
           </Form.Item>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="scheduledDate"
-                label="Ngày tiêm"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày tiêm' }]}
-              >
-                <DatePicker style={{ width: '100%' }} disabledDate={current => current && current < moment().startOf('day')} />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item
+            name="scheduledDateTime"
+            label="Thời gian tiêm"
+            rules={[{ required: true, message: 'Vui lòng chọn thời gian tiêm' }]}
+          >
+            <DatePicker 
+              showTime
+              style={{ width: '100%' }} 
+              format="YYYY-MM-DD HH:mm"
+              placeholder="Chọn ngày và giờ tiêm"
+              disabledDate={current => current && current < new Date().setHours(0,0,0,0)}
+            />
+          </Form.Item>
 
           <Form.Item
             name="notes"
@@ -809,19 +789,20 @@ const VaccinationScheduleManager = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={16}>
-           
-            <Col span={12}>
-              <Form.Item
-                name="scheduledDate"
-                label={<span style={{ fontWeight: 600 }}>Ngày tiêm</span>}
-                rules={[{ required: true, message: 'Vui lòng chọn ngày tiêm' }]}
-                style={{ marginBottom: 18 }}
-              >
-                <DatePicker style={{ width: '100%', borderRadius: 8 }} disabledDate={current => current && current < moment().startOf('day')} />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item
+            name="scheduledDateTime"
+            label={<span style={{ fontWeight: 600 }}>Thời gian tiêm</span>}
+            rules={[{ required: true, message: 'Vui lòng chọn thời gian tiêm' }]}
+            style={{ marginBottom: 18 }}
+          >
+            <DatePicker 
+              showTime
+              style={{ width: '100%', borderRadius: 8 }} 
+              format="YYYY-MM-DD HH:mm"
+              placeholder="Chọn ngày và giờ tiêm"
+              disabledDate={current => current && current < new Date().setHours(0,0,0,0)}
+            />
+          </Form.Item>
           <Form.Item
             name="notes"
             label={<span style={{ fontWeight: 600 }}>Ghi chú</span>}
