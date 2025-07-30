@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './login.css';
 import { Form, Input, Button, Checkbox, Typography, message, Select } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import logo from "../../assets/images/logo.jpg";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate} from 'react-router-dom';
 import { loginByRole } from '../../api/auth';
 
 const { Title, Paragraph } = Typography;
@@ -12,51 +12,80 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const location = useLocation();
+ 
+
+  useEffect(() => {
+    // Nếu đã đăng nhập, điều hướng về trang phù hợp với vai trò
+    const token = localStorage.getItem('token');
+    const role = Number(localStorage.getItem('role'));
+    if (token) {
+      switch (role) {
+        case 1:
+          navigate('/parent', { replace: true });
+          break;
+        case 2:
+          navigate('/school-nurse', { replace: true });
+          break;
+        case 3:
+          navigate('/manager', { replace: true });
+          break;
+        default:
+          navigate('/', { replace: true });
+          break;
+      }
+    }
+  }, [navigate]);
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const response = await loginByRole(values.role, values.email, values.password);
+      // Convert role number to string for API
+      const roleMap = {
+        1: 'PARENT',
+        2: 'NURSE', 
+        3: 'ADMIN'
+      };
+      
+      const response = await loginByRole(
+        roleMap[values.role], 
+        values.email, 
+        values.password
+      );
       const data = response?.data;
 
-      if (!data || typeof data.role !== 'number') {
-        message.error('Dữ liệu đăng nhập không hợp lệ!');
+      if (!data || !data.token) {
+        message.error('Đăng nhập thất bại!');
         return;
       }
 
       const {
-        email,
-        role: userRole,
-        parentId,
-        nurseId,
-        token
+        token,
+        id,
+        fullName,
+        email: responseEmail,
+        roles
       } = data;
-      const fullname = data.fullname || data.fullName;
 
-      // Lưu thông tin người dùng vào localStorage
-      localStorage.setItem('email', email);
-      localStorage.setItem('role', String(userRole));
-      localStorage.setItem('token', token || 'your-auth-token');
-      if (parentId) localStorage.setItem('parentId', parentId);
-      if (fullname) localStorage.setItem('fullname', fullname);
-      if (nurseId) localStorage.setItem('nurseId', nurseId);
+      const userRole = values.role; // Use the original role number for navigation
+
+      localStorage.setItem('email', responseEmail || values.email); 
+      localStorage.setItem('fullname', fullName || '');
+      localStorage.setItem('userId', id || '');
+      localStorage.setItem('token', token || '');
+      localStorage.setItem('roles', JSON.stringify(roles || []));
+      localStorage.setItem('role', userRole); 
 
       message.success('Đăng nhập thành công!');
 
-      // Điều hướng theo vai trò
       switch (userRole) {
         case 1:
-          navigate('/parent');
-          window.location.reload();
+          navigate('/parent', { replace: true });
           break;
         case 2:
-          navigate('/school-nurse');
-          window.location.reload();
+          navigate('/school-nurse', { replace: true });
           break;
         case 3:
-          navigate('/manager');
-          window.location.reload();
+          navigate('/manager', { replace: true });
           break;
         default:
           message.warning('Vai trò không hợp lệ!');
@@ -131,9 +160,7 @@ const Login = () => {
 
             <Form.Item>
               <Checkbox>Ghi nhớ đăng nhập</Checkbox>
-              <a href="#" className="forgot-password" style={{ float: 'right' }}>
-                Quên mật khẩu?
-              </a>
+         
             </Form.Item>
 
             <Form.Item>

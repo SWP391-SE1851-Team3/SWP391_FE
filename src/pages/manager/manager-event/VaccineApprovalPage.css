@@ -1,0 +1,71 @@
+.approval-container {
+  max-width: 1100px;
+  margin: 32px auto;
+  padding: 0 16px;
+}
+
+/* Tiêu đề trong approval-container */
+.approval-container h1,
+.approval-container h2,
+.approval-container h3,
+.approval-container h4,
+.approval-container h5,
+.approval-container h6 {
+  color: #69CD32;
+}
+
+.simple-card {
+  background: #f6fff8;
+  border: 1.5px solid #76d7c4;
+  border-radius: 12px;
+  padding: 20px 28px;
+  margin: 20px 0;
+  font-size: 16px;
+  box-shadow: 0 4px 14px #0001;
+}
+
+/* Thẻ bị từ chối - nền đỏ nhạt */
+.simple-card.rejected-bg {
+  background: #ffe9e9 !important;
+  border-color: #e53935 !important;
+}
+
+.simple-card .card-title,
+.simple-card h1,
+.simple-card h2,
+.simple-card h3,
+.simple-card h4,
+.simple-card h5,
+.simple-card h6 {
+  color: #1890FF;
+  background: linear-gradient(90deg, #1890FF, #36CFC9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.status-label {
+  display: inline-block;
+  min-width: 110px;
+  text-align: center;
+  border-radius: 12px;
+  padding: 5px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  margin-left: 12px;
+  text-transform: capitalize;
+}
+
+.approval-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 80px;
+}

@@ -1,0 +1,250 @@
+/* consent-management.css */
+
+.consent-management-container {
+  padding: 24px;
+  background-color: #f7f8fc;
+}
+
+.consent-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background-color: #69CD32;
+  border-radius: 12px;
+}
+
+.consent-management-header h2 {
+  margin: 17px;
+  font-size: 25px;
+  font-weight: 600;
+  color: #fff;
+  padding-bottom: 17px;
+}
+
+.consent-management-header p {
+  margin: 0;
+  color: #6c757d;
+}
+
+.consent-management-stats {
+  margin-bottom: 24px;
+}
+
+.consent-management-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  flex-wrap: wrap;
+}
+
+.consent-management-create-btn {
+  background: linear-gradient(135deg, #1890ff, #38a9ff);
+  border: none;
+  box-shadow: 0 4px 10px rgba(24, 144, 255, 0.3);
+}
+
+.consent-management-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: stretch;
+  max-width: 100%;
+  padding: 0;
+}
+
+.consent-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  border: 1px solid #e8e8e8;
+  transition: box-shadow 0.3s ease;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+}
+
+.consent-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.consent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  max-width: 100%;
+}
+
+.consent-card-header .ant-typography {
+  margin: 0;
+}
+
+.consent-card-header h4.ant-typography {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0056b3;
+}
+
+.consent-card-header .ant-badge-status-text {
+  font-weight: 500;
+}
+
+.student-info {
+  text-align: left;
+  margin-left: 0;
+  padding-left: 0;
+  max-width: 100%;
+}
+
+.consent-card-status {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  min-width: 180px;
+  font-size: 16px;
+  max-width: 100%;
+  margin-left: auto;
+  padding-right: 0;
+}
+
+/* Đảm bảo info-row và info-col giống hệt vaccination-batch */
+.consent-card-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  color: #495057;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.consent-card-info-col {
+  font-size: 14px;
+}
+.consent-card-info-row .anticon {
+  color: #1890ff;
+  font-size: 16px;
+}
+
+.consent-card-progress-card {
+  background-color: #f9fafb;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.consent-card-progress-card .ant-card-head {
+  border-bottom: none;
+  padding: 16px 20px 0;
+  min-height: auto;
+}
+
+.consent-card-progress-card .ant-card-head-title {
+  padding: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.consent-card-progress-card .ant-card-body {
+  padding: 16px 20px;
+}
+
+.consent-card-progress-list {
+  width: 100%;
+}
+
+.progress-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.progress-item .ant-typography {
+  color: #495057;
+}
+
+.progress-item .ant-badge-status-text {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.progress-item-value {
+  font-weight: 600;
+  color: #212529;
+}
+
+.consent-card-alert {
+  margin: 16px 0 0 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.consent-card .ant-btn {
+  height: 36px;
+  font-size: 15px;
+  padding: 0 18px;
+  border-radius: 8px;
+}
+
+.consent-card .ant-btn svg {
+  font-size: 18px;
+}
+
+.consent-card-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  max-width: 100%;
+  padding-left: 0;
+}
+
+/* Responsive giống vaccination-batch */
+@media (max-width: 1200px) {
+  .consent-management-list {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+}
+@media (max-width: 768px) {
+  .consent-management-list {
+    grid-template-columns: 1fr;
+  }
+  .consent-card-info-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .consent-card-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+}
+
+.consent-card-info {
+  display: grid;
+  grid-template-columns: max-content 1fr max-content 1fr;
+  gap: 0 32px;
+  margin-bottom: 20px;
+  color: #495057;
+  align-items: center;
+}
+.consent-card-info .ant-typography[type="secondary"] {
+  white-space: nowrap;
+}
+@media (max-width: 768px) {
+  .consent-card-info {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+

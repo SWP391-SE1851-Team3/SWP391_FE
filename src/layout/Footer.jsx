@@ -1,25 +1,24 @@
-// src/components/layout/Footer.jsx
 import React from 'react';
 import { Layout } from 'antd';
-import { Link } from 'react-router-dom';
 
-const { Footer } = Layout;
+const { Footer: AntFooter } = Layout;
 
-const AppFooter = () => {
+const Footer = () => {
   return (
-    <Footer className="site-footer">
-        <div className="footer-content">
-          <div className="footer-links">
-            <Link to="/about">Giới thiệu</Link>
-            <Link to="/contact">Liên hệ</Link>
-            <Link to="/privacy">Chính sách bảo mật</Link>
-          </div>
-          <div className="footer-copyright">
-            <p>© 2025 Hệ thống Y tế Học đường. All rights reserved.</p>
-          </div>
+    <AntFooter className="site-footer">
+      <div className="footer-content">
+        <div className="footer-links">
+          <a href="/about">Giới thiệu</a>
+          <a href="/contact">Liên hệ</a>
+          <a href="/privacy">Chính sách bảo mật</a>
+          <a href="/terms">Điều khoản sử dụng</a>
         </div>
-      </Footer>
+        <div className="footer-copyright">
+          © 2024 Hệ thống Y tế Học đường. Bản quyền thuộc về Trường Đại học.
+        </div>
+      </div>
+    </AntFooter>
   );
 };
 
-export default AppFooter;
+export default Footer;

@@ -1,21 +1,17 @@
-
-
-/* Thêm class mới để wrap toàn bộ content */
 .health-records-page {
     width: 100%;
     padding: 24px;
     min-height: 100%;
 }
 
-/* Điều chỉnh lại width cho các elements bên trong */
 .health-record-form {
     padding: 0;
     width: 100%;
 }
 
 .health-record-title {
-    color: #059669;
-    font-weight: 500;
+    color: #69CD32;
+    font-weight: 700;
 }
 
 .health-record-form .ant-form-item {
@@ -40,7 +36,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    width: 100%; /* Đảm bảo group có width 100% */
+    width: 100%;
 }
 
 /* Thêm style cho input trong group */
@@ -115,7 +111,6 @@
     color: #047857;
 }
 
-/* Custom overrides for Ant Design components in health record */
 .health-record-form .ant-select-selector {
     border-radius: 6px;
 }
@@ -128,8 +123,7 @@
     border-radius: 6px;
 }
 
-/* Style cho form item */
-.ant-form-item {
+.health-records-page .ant-form-item {
     width: 100%;
 }
 
@@ -141,7 +135,7 @@
 }
 
 /* Style cho form */
-.ant-form {
+ .ant-form {
     width: 100%;
     display: flex;
     flex-direction: column;

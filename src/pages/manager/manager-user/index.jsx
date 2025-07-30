@@ -1,0 +1,477 @@
+import React, { useEffect, useState, useRef } from "react";
+import {
+    Table,
+    Form,
+    Input,
+    Button,
+    Select,
+    Row,
+    Col,
+    message,
+    Switch,
+    Upload,
+    Card,
+    Divider,
+} from "antd";
+import { UploadOutlined, FileExcelOutlined } from "@ant-design/icons";
+import {
+    fetchUsersByRole,
+    signupNurse,
+    updateUser,
+    deleteUser,
+    importStudentsFromExcel,
+} from "../../../api/manager_user";
+import "./managerUser.css";
+
+const { Option } = Select;
+
+const initialForm = {
+    userName: "",
+    password: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    specialisation: "",
+    certification: "",
+    isActive: 1,
+};
+
+const roleOptions = [
+    { value: 1, label: "Phụ Huynh" },
+    { value: 2, label: "Y Tá" },
+    { value: 3, label: "Quản Lý" },
+];
+
+const UserManagement = () => {
+    const [users, setUsers] = useState([]);
+    const [roleId, setRoleId] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const [uploadLoading, setUploadLoading] = useState(false);
+    const [form] = Form.useForm();
+    const formRef = useRef(null);
+
+    const reloadUsers = async (role = roleId) => {
+        setLoading(true);
+        try {
+            const res = await fetchUsersByRole(role);
+            const mapped = (res || []).map((u) => ({
+                ...u,
+                userName: u.userName,
+            }));
+            setUsers(mapped);
+        } catch {
+            setUsers([]);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        reloadUsers();
+    }, [roleId]);
+
+    const handleRoleChange = (value) => {
+        setRoleId(value);
+        setEditingUser(null);
+        form.resetFields();
+    };
+
+    const handleEdit = (record) => {
+        setEditingUser(record);
+        form.setFieldsValue({
+            userName: record.userName,
+            password: record.password,
+            fullName: record.fullName,
+            email: record.email,
+            phone: record.phone,
+        });
+        setTimeout(() => {
+            if (formRef.current) {
+                formRef.current.scrollIntoView({ behavior: "smooth" });
+            }
+        }, 100);
+    };
+
+    // Xử lý khi nhấn Switch trạng thái hoạt động
+    const handleActiveChange = async (checked, record) => {
+        try {
+            await deleteUser(record.id, roleId);
+            message.success(
+                checked ? "Đã kích hoạt tài khoản!" : "Đã vô hiệu hóa tài khoản!"
+            );
+            reloadUsers();
+        } catch {
+            message.error("Thay đổi trạng thái thất bại!");
+        }
+    };
+
+    const handleFinish = async (values) => {
+        if (editingUser) {
+            try {
+                await updateUser(editingUser.id, roleId, values);
+                message.success("Cập nhật thành công!");
+                reloadUsers(roleId);
+                setEditingUser(null);
+                form.resetFields();
+            } catch {
+                message.error("Cập nhật thất bại!");
+            }
+        } else {
+            try {
+                // Tạo mới chỉ cho vai trò Y Tá (roleId === 2)
+                if (roleId === 2) {
+                    await signupNurse({ ...values, isActive: 1 });
+                    message.success("Thêm mới thành công!");
+                    reloadUsers(roleId);
+                    form.resetFields();
+                } else {
+                    message.error("Chỉ hỗ trợ tạo mới Y Tá!");
+                }
+            } catch {
+                message.error("Thêm mới thất bại!");
+            }
+        }
+    };
+
+    // Xử lý upload file Excel
+    const handleExcelUpload = async (file) => {
+        setUploadLoading(true);
+        try {
+            const result = await importStudentsFromExcel(file);
+            message.success("Import file Excel thành công!");
+            reloadUsers();
+            return false;
+        } catch (error) {
+            message.error("Import file Excel thất bại!");
+            return false;
+        } finally {
+            setUploadLoading(false);
+        }
+    };
+
+    // Validate file trước khi upload
+    const beforeUpload = (file) => {
+        const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+            file.type === 'application/vnd.ms-excel';
+        if (!isExcel) {
+            message.error('Chỉ có thể tải lên file Excel (.xlsx, .xls)!');
+            return false;
+        }
+        const isLt10M = file.size / 1024 / 1024 < 10;
+        if (!isLt10M) {
+            message.error('File phải nhỏ hơn 10MB!');
+            return false;
+        }
+        return true;
+    };
+
+    const uploadProps = {
+        name: 'file',
+        multiple: false,
+        accept: '.xlsx,.xls',
+        beforeUpload,
+        customRequest: ({ file }) => {
+            handleExcelUpload(file);
+        },
+        showUploadList: false,
+    };
+
+    const columns = [
+        { title: "ID", dataIndex: "id", width: 60 },
+        { title: "Tên đăng nhập", dataIndex: "userName" },
+        // { title: "Mật khẩu", dataIndex: "password" },
+        { title: "Họ tên", dataIndex: "fullName" },
+        { title: "Email", dataIndex: "email" },
+        { title: "SĐT", dataIndex: "phone" },
+        {
+            title: "Trạng thái",
+            dataIndex: "isActive",
+            render: (isActive, record) => (
+                <Switch
+                    checked={isActive === 1 || isActive === true || isActive === "1"}
+                    onChange={checked => handleActiveChange(checked, record)}
+                />
+            ),
+            width: 100,
+        },
+        {
+            title: "Hành động",
+            render: (_, record) => (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <Button
+                        type="primary"
+                        size="small"
+                        onClick={() => handleEdit(record)}
+                        style={{
+                            background: "#1890ff",
+                            borderColor: "#1890ff",
+                        }}
+                    >
+                        Sửa
+                    </Button>
+                </div>
+            ),
+            width: 90,
+        },
+    ];
+
+    return (
+        <div className="user-management-container">
+            <h2 className="user-management-header">Quản Lý Người Dùng Theo Vai Trò</h2>
+
+            <div className="role-select">
+                <span>Chọn vai trò: </span>
+                <Select
+                    value={roleId}
+                    style={{ width: 200 }}
+                    onChange={handleRoleChange}
+                >
+                    {roleOptions.map(r => (
+                        <Option key={r.value} value={r.value}>{r.label}</Option>
+                    ))}
+                </Select>
+            </div>
+
+            <Table
+                dataSource={users}
+                columns={columns}
+                rowKey="id"
+                loading={loading}
+                pagination={false}
+                style={{ marginTop: 20 }}
+            />
+
+            <div ref={formRef} className="user-management-form-card">
+                <h3 className="form-header">
+                    {editingUser ? "Cập nhật tài khoản" : "Thêm tài khoản y tá mới"}
+                </h3>
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleFinish}
+                    initialValues={initialForm}
+                >
+                    <Row gutter={16}>
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Tên đăng nhập"
+                                name="userName"
+                                rules={[
+                                    { required: true, message: "Nhập tên đăng nhập!" },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value) return Promise.resolve();
+                                            if (/^\s/.test(value)) {
+                                                return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                            }
+                                            if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                return Promise.reject("Không chứa ký tự đặc biệt!");
+                                            }
+                                            return Promise.resolve();
+                                        }
+                                    }
+                                ]}
+                            >
+                                <Input placeholder="Tên đăng nhập" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Mật khẩu"
+                                name="password"
+                                rules={editingUser ? []
+                                    : [{ required: true, message: "Nhập mật khẩu!" },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value) return Promise.resolve();
+                                            if (/^\s/.test(value)) {
+                                                return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                            }
+                                            if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                return Promise.reject("Không chứa ký tự đặc biệt!");
+                                            }
+                                            return Promise.resolve();
+                                        }
+                                    }]
+                                }
+                            >
+                                <Input placeholder="Mật khẩu" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Họ tên"
+                                name="fullName"
+                                rules={[
+                                    { required: !editingUser, message: "Nhập họ tên!" },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value) return Promise.resolve();
+                                            if (/^\s/.test(value)) {
+                                                return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                            }
+                                            if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                return Promise.reject("Không chứa ký tự đặc biệt!");
+                                            }
+                                            return Promise.resolve();
+                                        }
+                                    }
+                                ]}
+                            >
+                                <Input placeholder="Họ tên" />
+                            </Form.Item>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Số điện thoại"
+                                name="phone"
+                                rules={[
+                                    {
+                                        required: !editingUser,
+                                        message: "Vui lòng nhập số điện thoại!"
+                                    },
+                                    () => ({
+                                        validator(_, value) {
+                                            if (!value) return Promise.resolve();
+                                            if (/\s/.test(value)) {
+                                                return Promise.reject('Số điện thoại không được chứa khoảng trắng');
+                                            }
+                                            if (!/^0\d{9}$/.test(value)) {
+                                                return Promise.reject('Số điện thoại phải gồm 10 số, bắt đầu bằng số 0');
+                                            }
+
+                                            return Promise.resolve();
+                                        }
+                                    })
+                                ]}
+                            >
+                                <Input
+                                    placeholder="Ví dụ: 0987654321"
+                                    maxLength={10}
+                                />
+                            </Form.Item>
+                        </Col>
+                        {roleId === 2 && !editingUser && (
+                            <>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        label="Chuyên môn"
+                                        name="specialisation"
+                                        rules={[
+                                            { required: true, message: "Nhập chuyên môn!" },
+                                            {
+                                                validator: (_, value) => {
+                                                    if (!value) return Promise.resolve();
+                                                    if (/^\s/.test(value)) {
+                                                        return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                                    }
+                                                    if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                        return Promise.reject("Không chứa ký tự đặc biệt!");
+                                                    }
+                                                    return Promise.resolve();
+                                                }
+                                            }
+                                        ]}
+                                    >
+                                        <Input placeholder="Chuyên môn" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        label="Chứng chỉ"
+                                        name="certification"
+                                        rules={[
+                                            { required: true, message: "Nhập chứng chỉ!" },
+                                            {
+                                                validator: (_, value) => {
+                                                    if (!value) return Promise.resolve();
+                                                    if (/^\s/.test(value)) {
+                                                        return Promise.reject("Không được bắt đầu bằng khoảng trắng!");
+                                                    }
+                                                    if (!/^[A-Za-zÀ-ỹà-ỹ0-9\s]+$/.test(value)) {
+                                                        return Promise.reject("Không chứa ký tự đặc biệt!");
+                                                    }
+                                                    return Promise.resolve();
+                                                }
+                                            }
+                                        ]}
+                                    >
+                                        <Input placeholder="Chứng chỉ" />
+                                    </Form.Item>
+                                </Col>
+                            </>
+                        )}
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Email"
+                                name="email"
+                                rules={[
+                                    { required: !editingUser, message: "Nhập email!" },
+                                    { type: "email", message: "Email không hợp lệ!" },
+                                ]}
+                            >
+                                <Input placeholder="Email" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Form.Item>
+                        <Button type="primary" htmlType="submit">
+                            {editingUser ? "Cập nhật" : "Thêm mới"}
+                        </Button>
+                        {editingUser && (
+                            <Button
+                                style={{
+                                    marginLeft: 12,
+                                    background: "#52c41a",
+                                    color: "#fff",
+                                    border: "none",
+                                }}
+                                onClick={() => {
+                                    setEditingUser(null);
+                                    form.resetFields();
+                                }}
+                            >
+                                Hủy
+                            </Button>
+                        )}
+                    </Form.Item>
+                </Form>
+            </div>
+
+            <Divider style={{ margin: "40px 0" }} />
+
+            <Card
+                title={
+                    <span>
+                        <FileExcelOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                        Import danh sách học sinh từ Excel
+                    </span>
+                }
+                style={{ marginBottom: 20 }}
+                size="small"
+            >
+                <Row gutter={16} align="middle">
+                    <Col>
+                        <Upload {...uploadProps}>
+                            <Button
+                                icon={<UploadOutlined />}
+                                loading={uploadLoading}
+                                type="primary"
+                                style={{ background: '#52c41a', borderColor: '#52c41a' }}
+                            >
+                                {uploadLoading ? 'Đang xử lý...' : 'Chọn file Excel'}
+                            </Button>
+                        </Upload>
+                    </Col>
+                    <Col>
+                        <span style={{ color: '#666', fontSize: '14px' }}>
+                            Hỗ trợ file .xlsx, .xls (tối đa 10MB)
+                        </span>
+                    </Col>
+                </Row>
+            </Card>
+        </div>
+    );
+};
+
+export default UserManagement;

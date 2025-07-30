@@ -1,0 +1,86 @@
+.health-check-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(to bottom right, #e6f7ff, #ffffff, #f6ffed);
+  }
+  
+  .health-check-main {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  .health-check-header {
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  
+  .health-check-header-inner {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  
+  .health-check-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+  }
+  
+  .health-check-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .health-check-header-icon {
+    background: linear-gradient(to right, #1890ff, #52c41a);
+    padding: 8px;
+    border-radius: 8px;
+  }
+  
+  .health-check-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .health-check-header-user {
+    text-align: right;
+  }
+  
+  .health-check-dashboard-flex {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .health-check-card-secondary {
+    color: #faad14;
+  }
+  
+  .health-check-card-success {
+    color: #52c41a;
+  }
+  
+  .health-check-card-processing {
+    color: #722ed1;
+  }
+  
+  .health-check-card-primary {
+    color: #1890ff;
+  }
+  
+  .health-check-card-bg {
+    background: #fafafa;
+  }
+  
+  .health-check-activity-icon {
+    color: #1890ff;
+  }
+  
+  .health-check-schedule-icon {
+    color: #52c41a;
+  }
+  

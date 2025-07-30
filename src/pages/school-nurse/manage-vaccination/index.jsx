@@ -27,19 +27,21 @@ import {
   Tag,
   Divider
 } from 'antd';
-import VaccinationScheduleManager from './vaccination-schedule';
+import VaccinationScheduleManager from './vaccination-batch';
 import ConsentManagement from './consent-management';
 import VaccinationRecords from './vaccination-records';
 import PostVaccinationObservation from './post-vaccination';
 import './Manage-Vaccination.css';
-
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('manageVaccinationTab') || 'dashboard');
 
-  // Mock data for dashboard
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    localStorage.setItem('manageVaccinationTab', key);
+  };
+
   const dashboardStats = {
     totalSchedules: 15,
     pendingConsents: 48,
@@ -117,13 +119,29 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="vaccination-main">
-        <Tabs activeKey={activeTab} onChange={setActiveTab} className="vaccination-tabs">
-          <TabPane tab="Tổng quan" key="dashboard" />
-          <TabPane tab="Đợt tiêm" key="schedule" />
-          <TabPane tab="Phiếu đồng ý" key="consent" />
-          <TabPane tab="Kết quả tiêm" key="records" />
-          <TabPane tab="Theo dõi" key="observation" />
-        </Tabs>
+        <Tabs 
+          activeKey={activeTab} 
+          onChange={handleTabChange} 
+          className="vaccination-tabs"
+          items={[
+            {
+              key: 'dashboard',
+              label: 'Tổng quan',
+            },
+            {
+              key: 'schedule',
+              label: 'Đợt tiêm',
+            },
+            {
+              key: 'consent',
+              label: 'Phiếu đồng ý',
+            },
+            {
+              key: 'records',
+              label: 'Kết quả tiêm',
+            }
+          ]}
+        />
 
         {activeTab === 'dashboard' && (
           <div className="vaccination-dashboard-flex">
@@ -247,7 +265,7 @@ const Index = () => {
         {activeTab === 'schedule' && <VaccinationScheduleManager />}
         {activeTab === 'consent' && <ConsentManagement />}
         {activeTab === 'records' && <VaccinationRecords />}
-        {activeTab === 'observation' && <PostVaccinationObservation />}
+        
       </main>
     </div>
   );

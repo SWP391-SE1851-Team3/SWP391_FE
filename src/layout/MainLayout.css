@@ -1,190 +1,95 @@
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 64px;
-  padding: 0;
-  margin: 0;
+/* Reset và base styles */
+* {
+  box-sizing: border-box;
 }
 
-
-.logo img {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-
-.logo span {
-  color: #1890ff;
-  font-size: 18px;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-
-.main-header {
-  background: #fff;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 0 24px;
-  box-shadow: 0 2px 8px #f0f1f2;
-}
-
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-
-
-.username {
-  font-weight: 500;
-}
-
-
+/* Main layout container */
 .main-layout {
   min-height: 100vh;
-}
-
-
-.custom-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 24px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  height: 64px;
-  flex-wrap: nowrap;
-  /* không xuống dòng */
+  flex-direction: column;
 }
 
-
-.header-left {
-  margin-right: auto;
-  min-height: fit-content;
-}
-
-.header-center {
-  width: 100%;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-
-.logo img {
-  height: 40px;
-  width: auto;
-}
-
-
-.logo span {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1890ff;
-}
-
-
-/* --- Phần menu giữa --- */
-.header-center {
-  flex: 1 1 auto;
-  /* chiếm không gian còn lại */
-  overflow-x: auto;
-  /* cho phép cuộn ngang */
-  white-space: nowrap;
-  /* không xuống dòng */
-  -webkit-overflow-scrolling: touch;
-  /* mượt trên mobile */
-}
-
-
-.custom-nav {
-  border-bottom: none;
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  white-space: nowrap;
-  overflow: visible !important;
-}
-
-
-.custom-nav .ant-menu-item {
-  white-space: nowrap;
-  flex-shrink: 0;
-  padding: 0 15px;
-}
-
-
-/* --- Phần bên phải --- */
-.user-section {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-
-.notification-icon {
-  font-size: 20px;
-  cursor: pointer;
-  color: #595959;
-}
-
-
-.user-avatar {
-  cursor: pointer;
-}
-
-
-.user-name {
-  margin: 0 8px;
-  color: #262626;
-}
-
-
-.logout-btn {
-  color: #595959;
-}
-
-
-.logout-btn:hover {
-  color: #1890ff;
-}
-
-
+/* Site content - main content area */
 .site-content {
-  padding: 24px;
+  flex: 1;
+  padding: 80px 16px 16px 16px;
   background: #f0f2f5;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 0;
 }
 
-
+/* Content wrapper */
 .content-wrapper {
   max-width: 1200px;
   margin: 0 auto;
   background: #fff;
   padding: 24px;
   border-radius: 8px;
-  min-height: calc(100vh - 184px);
+  min-height: calc(100vh - 200px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Điều chỉnh cho layout với vertical menu (nurse/admin) */
+body.nurse-admin-layout .site-content {
+  margin-left: 200px;
+  padding: 80px 16px 16px 16px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: margin-left;
+}
 
+/* Khi menu collapsed */
+body.nurse-admin-layout.menu-collapsed .site-content {
+  margin-left: 60px;
+}
+
+/* Đảm bảo content wrapper luôn căn giữa và responsive */
+body.nurse-admin-layout .content-wrapper {
+  max-width: calc(100vw - 240px);
+  margin: 0;
+  width: 100%;
+  will-change: max-width;
+  box-sizing: border-box;
+}
+
+body.nurse-admin-layout.menu-collapsed .content-wrapper {
+  max-width: calc(100vw - 100px);
+  box-sizing: border-box;
+}
+
+/* Đảm bảo tables và nội dung bên trong responsive */
+body.nurse-admin-layout .content-wrapper .ant-table-wrapper {
+  width: 100% !important;
+  overflow-x: auto;
+  max-width: 100% !important;
+}
+
+body.nurse-admin-layout .content-wrapper .ant-table {
+  min-width: 800px;
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+}
+
+/* Footer styles */
 .site-footer {
   background: #001529;
   padding: 24px 50px;
+  margin-top: auto;
+  color: #fff;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Footer cũng cần điều chỉnh với vertical menu */
+body.nurse-admin-layout .site-footer {
+  margin-left: 200px;
+}
+
+body.nurse-admin-layout.menu-collapsed .site-footer {
+  margin-left: 60px;
+}
 
 .footer-content {
   max-width: 1200px;
@@ -192,150 +97,200 @@
   text-align: center;
 }
 
-
 .footer-links {
   margin-bottom: 16px;
 }
 
-
 .footer-links a {
   color: #fff;
   margin: 0 16px;
+  text-decoration: none;
+  transition: color 0.3s ease;
 }
-
 
 .footer-links a:hover {
   color: #1890ff;
 }
 
-
 .footer-copyright {
   color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
 }
 
+/* Force immediate layout recalculation */
+body.nurse-admin-layout.menu-collapsed .site-content {
+  display: flex;
+  flex-direction: column;
+}
+
+body.nurse-admin-layout:not(.menu-collapsed) .site-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .content-wrapper {
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  body.nurse-admin-layout .content-wrapper {
+    max-width: 100%;
+  }
+  
+  body.nurse-admin-layout.menu-collapsed .content-wrapper {
+    max-width: 100%;
+  }
+}
 
 @media (max-width: 768px) {
-  .custom-header {
-    padding: 0 12px;
-  }
-
-
-  .logo span {
-    display: none;
-  }
-
-
-  .user-name {
-    display: none;
-  }
-
-
   .site-content {
-    padding: 12px;
+    padding: 80px 12px 12px 12px;
   }
-
-
+  
   .content-wrapper {
     padding: 16px;
+    border-radius: 4px;
   }
-
-
+  
   .site-footer {
-    padding: 16px;
+    padding: 16px 20px;
+  }
+  
+  .footer-links {
+    margin-bottom: 12px;
+  }
+  
+  .footer-links a {
+    margin: 0 8px;
+    font-size: 14px;
+  }
+  
+  .footer-copyright {
+    font-size: 12px;
+  }
+  
+  /* Mobile: tất cả đều dùng collapsed menu */
+  body.nurse-admin-layout .site-content {
+    margin-left: 60px;
+    padding: 80px 8px 8px 8px;
+  }
+  
+  body.nurse-admin-layout.menu-collapsed .site-content {
+    margin-left: 60px;
+  }
+  
+  body.nurse-admin-layout .site-footer {
+    margin-left: 60px;
+  }
+  
+  body.nurse-admin-layout.menu-collapsed .site-footer {
+    margin-left: 60px;
+  }
+  
+  body.nurse-admin-layout .content-wrapper {
+    max-width: calc(100vw - 80px);
+  }
+  
+  body.nurse-admin-layout.menu-collapsed .content-wrapper {
+    max-width: calc(100vw - 80px);
   }
 }
 
-.header {
-  padding: 0;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  position: fixed;
-  width: 100%;
-  z-index: 1000;
+@media (max-width: 576px) {
+  .site-content {
+    padding: 80px 8px 8px 8px;
+  }
+  
+  .content-wrapper {
+    padding: 12px;
+    min-height: calc(100vh - 180px);
+  }
+  
+  .footer-links a {
+    display: block;
+    margin: 8px 0;
+  }
+  
+  body.nurse-admin-layout .site-content {
+    margin-left: 60px;
+    padding: 80px 4px 4px 4px;
+  }
+  
+  body.nurse-admin-layout .content-wrapper {
+    max-width: calc(100vw - 68px);
+  }
+  
+  body.nurse-admin-layout.menu-collapsed .content-wrapper {
+    max-width: calc(100vw - 68px);
+  }
 }
 
-.header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  height: 64px;
+/* Đảm bảo transition smooth cho tất cả */
+.site-content,
+.content-wrapper,
+.site-footer {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Override any conflicting Ant Design styles */
+.ant-layout {
+  background: transparent;
+}
+
+.ant-layout-content {
+  background: transparent;
+}
+
+/* Đảm bảo overflow được xử lý đúng */
+.content-wrapper {
+  overflow-x: hidden;
+  word-wrap: break-word;
+}
+
+/* Specific fixes for tables and wide content */
+.content-wrapper .ant-table-wrapper {
+  margin: 0 -24px;
   padding: 0 24px;
-  gap: 24px;
 }
 
-.logo-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.content-wrapper .ant-table-wrapper .ant-table {
+  width: 100%;
+  table-layout: auto;
 }
 
-.logo-image {
-  height: 40px;
-  width: auto;
-  border-radius: 4px;
+/* Ensure proper spacing for different screen sizes */
+@media (min-width: 1400px) {
+  body:not(.nurse-admin-layout) .content-wrapper {
+    max-width: 1200px;
+  }
 }
 
-.logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1890ff;
+/* Print styles */
+@media print {
+  .site-content {
+    padding: 0;
+    margin-left: 0 !important;
+    background: white;
+  }
+  
+  .content-wrapper {
+    box-shadow: none;
+    padding: 0;
+    max-width: 100% !important;
+  }
+  
+  .site-footer {
+    margin-left: 0 !important;
+  }
 }
 
-.nav-menu {
-  flex: 1;
-  display: flex;
-  justify-content: flex-start;
-  margin-left: 40px;
-  border-bottom: none;
+/* Force recalculation on menu toggle */
+body.nurse-admin-layout .site-content {
+  transform: translateZ(0);
 }
 
-.nav-menu .ant-menu-item {
-  padding: 0 16px;
-  height: 64px;
-  line-height: 64px;
-}
-
-.nav-menu .ant-menu-item:hover {
-  color: #1890ff;
-}
-
-.user-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-left: auto;
-}
-
-.notification-badge {
-  cursor: pointer;
-}
-
-.notification-icon {
-  font-size: 20px;
-  color: #595959;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.user-avatar {
-  background: #1890ff;
-}
-
-.username {
-  font-size: 14px;
-  color: #262626;
-}
-
-.logout-button {
-  color: #595959;
-  padding: 4px 8px;
-}
-
-.logout-button:hover {
-  color: #ff4d4f;
+body.nurse-admin-layout.menu-collapsed .site-content {
+  transform: translateZ(0);
 }

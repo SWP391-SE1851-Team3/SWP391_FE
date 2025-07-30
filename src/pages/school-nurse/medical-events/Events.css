@@ -320,6 +320,7 @@
   border-radius: 12px;
   padding: 2px 8px;
   font-size: 12px;
+  border: none;
 }
 
 .ant-btn-primary {
@@ -327,11 +328,11 @@
 }
 
 .ant-input {
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
 .ant-select .ant-select-selector {
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
 .ant-card {

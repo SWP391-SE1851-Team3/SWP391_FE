@@ -1,13 +1,35 @@
 import axios from 'axios';
 import { message } from 'antd';
 
-const API_BASE = 'http://localhost:8080/api/medical-events';
-const API_BASE1 = `http://localhost:8080/getAll`
+
+
+// Create axios instance with authentication
+const apiClient = axios.create({
+  baseURL: 'http://localhost:8080',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to include token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Create new emergency medical event
 export const createEmergencyEvent = async (eventData) => {
   try {
     console.log("📦 Sending to /emergency:", eventData);
-    const response = await axios.post(`${API_BASE}/emergency`, eventData);
+    const response = await apiClient.post('/api/medical-events/emergency', eventData);
     return response.data;
   } catch (error) {
     console.error("❌ Error from /emergency:", error.response?.data || error.message);
@@ -15,33 +37,34 @@ export const createEmergencyEvent = async (eventData) => {
   }
 };
 
-// Update medical event
-export const updateMedicalEvent = async (eventId, eventTypeId, eventData) => {
-  try {
-    const response = await axios.put(
-      `${API_BASE}/${eventId}?eventTypeId=${eventTypeId}`,
-      eventData
-    );
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+// Update medical event by eventDetailsId (kiểu dữ liệu mới)
+export const updateMedicalEvent = async (eventDetailsId, eventData) => {
+  console.log('Calling:', `/api/medical-events/${eventDetailsId}`, eventData);
+  const response = await apiClient.put(
+    `/api/medical-events/${eventDetailsId}`,
+    eventData
+  );
+  return response.data;
 };
 
 // Get all medical events
 export const getAllMedicalEvents = async () => {
-  try {
-    const response = await axios.get(API_BASE1);
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.get('/getAll');
+  return response.data;
 };
 
-// Lấy danh sách học sinh theo lớp
-export const fetchStudentsByClass = async (className) => {
+// Lấy danh sách học sinh theo lớp (hỗ trợ nhiều lớp)
+export const fetchStudentsByClass = async (classNames) => {
   try {
-    const response = await axios.get(`${API_BASE}/${className}`);
+    let url = '/api/medical-events/className';
+    if (Array.isArray(classNames)) {
+      const params = classNames.map(c => `className=${encodeURIComponent(c)}`).join('&');
+      url += `?${params}`;
+    } else if (typeof classNames === 'string') {
+      url += `?className=${encodeURIComponent(classNames)}`;
+    }
+    const response = await apiClient.get(url);
+    console.log('Kết quả fetchStudentsByClass:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching students by class:', error);
@@ -49,14 +72,13 @@ export const fetchStudentsByClass = async (className) => {
   }
 };
 
-// Lấy chi tiết sự kiện theo endpoint mới
-export const getEventDetailsByEndpoint = async (eventId, setLoading) => {
+// Lấy chi tiết sự kiện theo eventDetailsId (kiểu dữ liệu mới)
+export const getEventDetailsByEndpoint = async (eventDetailsId, setLoading) => {
   try {
     setLoading?.(true);
-    const res = await axios.get(`${API_BASE}/viewDetails/${eventId}`, {
-      params: { eventId }
-    });
-    return res.data;
+    // Gọi endpoint với eventDetailsId
+    const res = await apiClient.get(`/api/medical-events/viewDetails/${eventDetailsId}`);
+    return res.data; // Đảm bảo trả về đúng kiểu dữ liệu mới
   } catch (err) {
     console.error('Lỗi khi tải chi tiết sự kiện:', err);
     message.error('Không thể tải chi tiết sự kiện');
@@ -69,7 +91,7 @@ export const getEventDetailsByEndpoint = async (eventId, setLoading) => {
 // Get all event names
 export const getEventNames = async () => {
   try {
-    const response = await axios.get(`${API_BASE}/all`);
+    const response = await apiClient.get('/api/medical-events/getAllEventTypeName');
     // Transform the response to match the expected structure
     const formattedData = response.data.map(item => ({
       eventTypeId: item.eventTypeId || 0,
@@ -78,6 +100,18 @@ export const getEventNames = async () => {
     return formattedData;
   } catch (error) {
     console.error('Error fetching event names:', error);
+    throw error;
+  }
+};
+
+//Lấy vật tư y tế 
+export const getMedicalSupplies = async () => {
+  try{
+    const response = await apiClient.get('/api/medical-supplies');
+    console.log('Kết quả getMedicalSupplies:', response.data);
+    return response.data;
+  }catch (error) {
+    console.error('Error fetching medical supplies:', error);
     throw error;
   }
 };
