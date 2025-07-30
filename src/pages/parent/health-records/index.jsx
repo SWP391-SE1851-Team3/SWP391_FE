@@ -73,7 +73,7 @@ const StudentHealthRecord = () => {
       })
       .catch(() => {
         setHasProfile(false);
-        message.error('Không thể kiểm tra hồ sơ sức khỏe');
+        message.error('Phụ huynh chưa nhập hồ sơ sức khỏe cho học sinh này.');
       })
       .finally(() => setLoading(false));
   }, [selectedStudentId, students, form]);

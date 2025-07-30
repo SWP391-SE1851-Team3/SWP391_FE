@@ -250,13 +250,16 @@ const formatDate = (dateTimeString) => {
       </span>
       <div className="history-card-row">
         <span className="history-label">Học Sinh:</span> {consentForm?.fullNameOfStudent}
-        <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {consentForm?.className}
+        <span className="history-label" style={{ marginLeft: '20px' }}> -</span> {consentForm?.className}
       </div>
       <div className="history-card-row">
         <span className="history-label">Vắc xin:</span> {consentForm?.vaccineName}
       </div>
       <div className="history-card-row">
         <span className="history-label">Địa điểm:</span> {consentForm?.location}
+      </div>
+      <div className="history-card-row">
+        <span className="history-label">Ngày tiêm :</span> {formatDate(consentForm?.scheduledDate)}
       </div>
     </li>
   );
@@ -269,12 +272,12 @@ const formatDate = (dateTimeString) => {
 
     return recordsArr.map((record, index) => (
       <li key={index} className="history-card">
-        <span className={`status-badge ${record.status === "Hoàn thành" || consentForm?.status === "Hoàn thành theo dõi" ? "status-success" : "status-warning"}`}>
+        <span className={`status-badge ${record.status === "Hoàn thành" || record.status === "Hoàn thành theo dõi" ? "status-success" : "status-warning"}`}>
           {record.status || "Chưa rõ"}
         </span>
         <div className="history-card-row">
           <span className="history-label">Học sinh:</span> {record.studentName}
-          <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {record.className}
+          <span className="history-label" style={{ marginLeft: '20px' }}> -</span> {record.className}
         </div>
         <div className="history-card-row">
           <span className="history-label">Vắc xin:</span> {record.vaccineName}
@@ -434,7 +437,7 @@ const formatDate = (dateTimeString) => {
                     </span>
                     <div className="history-card-row">
                       <span className="history-label">Học Sinh:</span> {item.fullNameOfStudent || item.student}
-                      <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {item.className || item.class}
+                      <span className="history-label" style={{ marginLeft: '20px' }}>- </span> {item.className || item.class}
                     </div>
                     <div className="history-card-row">
                       <span className="history-label">Vắc xin:</span> {item.vaccineName || item.vaccine}

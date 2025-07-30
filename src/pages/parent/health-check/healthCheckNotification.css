@@ -127,7 +127,7 @@
 
 .info-row1 {
   display: flex;
-  gap: 50px;
+  gap: 20px;
 }
 
 @media screen and (max-width: 768px) {
@@ -139,11 +139,6 @@
   }
 }
 
-.info-row1 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 50px !important; /* Khoảng cách giữa 2 cột */
-}
 
 /* Status badges */
 .status-badge {
