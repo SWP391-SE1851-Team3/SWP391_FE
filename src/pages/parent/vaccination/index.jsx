@@ -269,7 +269,7 @@ const formatDate = (dateTimeString) => {
 
     return recordsArr.map((record, index) => (
       <li key={index} className="history-card">
-        <span className={`status-badge ${record.status === "Hoàn thành" ? "status-success" : "status-warning"}`}>
+        <span className={`status-badge ${record.status === "Hoàn thành" || consentForm?.status === "Hoàn thành theo dõi" ? "status-success" : "status-warning"}`}>
           {record.status || "Chưa rõ"}
         </span>
         <div className="history-card-row">
@@ -330,7 +330,7 @@ const formatDate = (dateTimeString) => {
             <strong>Ghi chú quan sát:</strong> {selectedRecord.observation_notes || "Không có"}
           </div>
           <div className="detail-row">
-            <strong>Tên y tá:</strong> {selectedRecord.createNurseName || "N/A"}
+            <strong>Tên y tá:</strong> {selectedRecord.createNurseName || "Không rõ"}
           </div>
         </div>
       )}

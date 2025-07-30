@@ -38,7 +38,6 @@ const AdminSchoolNurse = () => {
 
         const wb = XLSX.utils.book_new();
 
-        // 1. Chuẩn bị dữ liệu cho từng sheet (ĐÃ BỎ * 100)
         const systemData = [
             { 'Tiêu chí': 'Tổng số học sinh', 'Giá trị': report.systemStats.totalStudents },
             { 'Tiêu chí': 'Học sinh đang hoạt động', 'Giá trị': report.systemStats.activeStudents },

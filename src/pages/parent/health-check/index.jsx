@@ -94,9 +94,7 @@ const ParentHealthCheck = () => {
       const allConsentForms =
         Array.isArray(consentRes)
           ? consentRes
-          : Array.isArray(consentRes?.data)
-            ? consentRes.data
-            : [];
+          : Array.isArray(consentRes?.data)? consentRes.data: [];
 
       let studentConsentForms = allConsentForms.filter(form =>
         Number(form.studentID) === studentId
@@ -110,9 +108,7 @@ const ParentHealthCheck = () => {
         const resultsRes = await getHealthCheckResultsByStudent(studentId);
         healthResults = Array.isArray(resultsRes)
           ? resultsRes
-          : Array.isArray(resultsRes?.data)
-            ? resultsRes.data
-            : [];
+          : Array.isArray(resultsRes?.data) ? resultsRes.data: [];
       } catch (error) {
         console.log('Không có kết quả health check:', error.message);
         healthResults = [];

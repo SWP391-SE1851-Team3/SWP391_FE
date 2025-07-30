@@ -339,6 +339,11 @@ button:hover {
   color: white;
 }
 
+.status-badge.submited {
+  background-color: #3689c5;
+  color: white;
+}
+
 .status-badge.rejected {
   background-color: #dc3545;
   color: white;

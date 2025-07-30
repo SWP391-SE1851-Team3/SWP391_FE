@@ -17,7 +17,6 @@ import {getStudentHealthProfiles,submitMedicationForm,uploadMedicineImage} from 
 import MedicineHistory from './medicalHistory';
 import './medicineForm.css';
 import dayjs from 'dayjs';
-import { formatDateTime } from '../../../utils/formatDate';
 
 const { Option } = Select;
 const { TextArea } = Input;

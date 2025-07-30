@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Spin, Modal, Button, message } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
 import { getMedicationSubmissionsByParentId, getEvidenceImage } from '../../../api/medicalSubmission';
 
 const statusClassMap = {
-  'Chờ xác nhận': 'pending',
-  'Đã nhận thuốc': 'approved',
-  'Đã xác nhận': 'approved',
+  'Chờ nhận thuốc': 'pending',
+  'Đã nhận thuốc': 'submited',
+  'Đã phát thuốc': 'approved',
   'Đã hủy': 'rejected'
 };
 

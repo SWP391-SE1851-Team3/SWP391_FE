@@ -30,7 +30,7 @@ const MedicalAccidentParent = () => {
     };
 
     fetchStudents();
-  }, [parentId]); 
+  }, [parentId]);
 
   // Sắp xếp sự kiện theo thời gian (mới nhất trước)
   const sortEventsByDateTime = (events) => {
@@ -100,7 +100,7 @@ const MedicalAccidentParent = () => {
       return 'Đang xử lý';
     } else if (statusLower === 'chờ xử lý') {
       return 'Chờ xử lý';
-  }
+    }
     return status;
   };
 
@@ -114,14 +114,14 @@ const MedicalAccidentParent = () => {
       return 'processing';
     } else if (statusLower === 'chờ xử lý') {
       return 'pending';
-  }
+    }
     return 'processing';
   };
 
   // Lấy tên loại sự kiện
   const getEventTypeName = (event) => {
     if (event.eventTypeNames && event.eventTypeNames.length > 0) {
-      return event.eventTypeNames;
+      return event.eventTypeNames.join(' - ');
     }
     return 'Không xác định';
   };
@@ -148,7 +148,7 @@ const MedicalAccidentParent = () => {
         >
           {students.map((student) => (
             <Option key={student.studentID} value={student.studentID}>
-              {student.fullName}  
+              {student.fullName}
             </Option>
           ))}
         </Select>
@@ -166,12 +166,12 @@ const MedicalAccidentParent = () => {
               <div className="event-main-info">
                 <div className="event-left">
                   <h4 className="event-title">
-                    {event.isEmergency && <span className="emergency-icon">🚨</span>}
+                    {event.isEmergency && <span className="emergency-icon">!!!</span>}
                     Loại Sự kiện: {getEventTypeName(event)}
                   </h4>
                   <div className="event-datetime">
                     {formatDateTime(event.eventDateTime)}
-                    {console.log(event.eventDateTime) }
+                    {console.log(event.eventDateTime)}
                   </div>
                   <div className="event-result">
                     <span className="result-label">Kết quả:</span>
