@@ -58,6 +58,7 @@ const HealthCheckBatchManager = () => {
   const [consentForm] = Form.useForm();
   const [selectedBatchForConsent, setSelectedBatchForConsent] = useState(null);
   const [consentDateRange, setConsentDateRange] = useState([]);
+  const [selectedScheduledDate, setSelectedScheduledDate] = useState(null);
 
   // TODO: Thêm các API health-check khi cần
 
@@ -256,6 +257,8 @@ const HealthCheckBatchManager = () => {
     setIsConsentModalOpen(true);
     consentForm.resetFields();
     setConsentDateRange([]);
+    // Lưu thời gian khám đã chọn để làm điều kiện cho DatePicker
+    setSelectedScheduledDate(batch.scheduledDate ? moment(batch.scheduledDate) : null);
   };
 
   const handleCreateConsent = async () => {
@@ -263,6 +266,31 @@ const HealthCheckBatchManager = () => {
       const values = await consentForm.validateFields();
       if (!consentDateRange || consentDateRange.length !== 2) {
         message.error('Vui lòng chọn khoảng thời gian gửi và hết hạn!');
+        return;
+      }
+      
+      // Kiểm tra thời gian gửi phiếu và hết hạn có vượt quá thời gian khám không
+      if (selectedScheduledDate) {
+        const sendDate = consentDateRange[0];
+        const expireDate = consentDateRange[1];
+        
+        if (sendDate && sendDate > selectedScheduledDate) {
+          message.error('Thời gian gửi phiếu không được vượt quá thời gian khám!');
+          return;
+        }
+        
+        if (expireDate && expireDate > selectedScheduledDate) {
+          message.error('Thời gian hết hạn không được vượt quá thời gian khám!');
+          return;
+        }
+      }
+      
+      // Kiểm tra ngày gửi và ngày hết hạn không được cùng một ngày
+      const sendDate = consentDateRange[0];
+      const expireDate = consentDateRange[1];
+      
+      if (sendDate && expireDate && sendDate.isSame(expireDate, 'day')) {
+        message.error('Ngày gửi và ngày hết hạn không được chọn cùng một ngày!');
         return;
       }
       // Hiển thị xác nhận lại thông tin
@@ -582,7 +610,12 @@ const HealthCheckBatchManager = () => {
       <Modal
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Gửi phiếu xác nhận cho lớp</span>}
         open={isConsentModalOpen}
-        onCancel={() => { setIsConsentModalOpen(false); setSelectedBatchForConsent(null); consentForm.resetFields(); }}
+        onCancel={() => { 
+          setIsConsentModalOpen(false); 
+          setSelectedBatchForConsent(null); 
+          setSelectedScheduledDate(null);
+          consentForm.resetFields(); 
+        }}
         onOk={handleCreateConsent}
         okText="Gửi phiếu"
         cancelText="Hủy"
@@ -607,16 +640,17 @@ const HealthCheckBatchManager = () => {
                 onChange={setConsentDateRange}
                 format="YYYY-MM-DD HH:mm"
                 placeholder={["Ngày gửi phiếu", "Ngày hết hạn"]}
-                disabledDate={current => current && current < moment().startOf('day')}
+                disabledDate={current => {
+                  if (!current) return false;
+                  // Không cho chọn ngày trong quá khứ
+                  if (current < moment().startOf('day')) return true;
+                  // Nếu có thời gian khám đã chọn, không cho chọn ngày sau ngày khám
+                  if (selectedScheduledDate && current > selectedScheduledDate.endOf('day')) return true;
+                  return false;
+                }}
               />
             </Form.Item>
-            <Form.Item name="isAgreed" label="Trạng thái xác nhận" initialValue="Chờ phản hồi"> 
-              <Select disabled>
-                <Option value="Chờ phản hồi">Chờ phản hồi</Option>
-                <Option value="Đồng ý">Đồng ý</Option>
-                <Option value="Từ chối">Từ chối</Option>
-              </Select>
-            </Form.Item>
+            
            
           </Form>
         </div>

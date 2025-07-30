@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SendOutlined, EyeOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Select, Modal, Typography, Row, Col, Tag, Space, message, Statistic, Badge, Alert } from 'antd';
 import './health-check-consent.css';
+import { formatDateTime } from '../../../../utils/formatDate';
 import {getAllHealthConsents} from '../../../../api/healthCheckAPI';
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -110,7 +111,7 @@ const HealthCheckConsent = () => {
           <div key={consent.formID} className="health-check-consent-card">
             <div className="health-check-consent-card-header">
               <div>
-                <Title level={4} style={{ marginBottom: 0 }}>{consent.studentName}</Title>
+                                 <Title level={4} style={{ marginBottom: 0 }}>{consent.studentName} - {consent.healthScheduleName}</Title>
                 <div style={{ marginBottom: 2 }}>
                   <Text type="secondary">Lớp: </Text><Text>{consent.className}</Text>
                 </div>
@@ -121,8 +122,8 @@ const HealthCheckConsent = () => {
               <Badge status={getStatusColor(consent.isAgreed)} text={getStatusText(consent.isAgreed)} />
             </div>
             <div className="health-check-consent-card-info">
-              <Space><Text type="secondary">Ngày gửi phiếu:</Text> <Text>{consent.send_date ? consent.send_date.substring(0, 10) : ''}</Text></Space>
-              <Space><Text type="secondary">Ngày hết hạn phản hồi:</Text> <Text>{consent.expire_date ? consent.expire_date.substring(0, 10) : ''}</Text></Space>
+              <Space><Text type="secondary">Ngày gửi phiếu:</Text> <Text>{formatDateTime(consent.send_date)}</Text></Space>
+              <Space><Text type="secondary">Ngày hết hạn phản hồi:</Text> <Text>{formatDateTime(consent.expire_date)}</Text></Space>
             </div>
             {consent.notes && (
               <div style={{ marginTop: 4 }}>
@@ -176,11 +177,11 @@ const HealthCheckConsent = () => {
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong>Ngày gửi phiếu:</Text><br />
-                <Text>{selectedConsent.send_date ? selectedConsent.send_date.replace('T', ' ').substring(0, 16) : ''}</Text>
+                <Text>{formatDateTime(selectedConsent.send_date)}</Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong>Ngày hết hạn phản hồi:</Text><br />
-                <Text>{selectedConsent.expire_date ? selectedConsent.expire_date.replace('T', ' ').substring(0, 16) : ''}</Text>
+                <Text>{formatDateTime(selectedConsent.expire_date)}</Text>
               </Col>
               <Col span={24} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong>Phản hồi của phụ huynh: </Text><br />
