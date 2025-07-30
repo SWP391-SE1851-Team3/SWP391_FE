@@ -22,7 +22,7 @@ import {
 } from 'antd';
 import './consent-management.css';
 import { getConsentForms, getConsentFormDetail } from '../../../../api/vaccinationAPI';
-import { formatDate } from '../../../../utils/formatDate';
+import { formatDateTime } from '../../../../utils/formatDate';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -64,8 +64,8 @@ const ConsentManagement = () => {
           parentName: item.fullNameOfParent || '',
           vaccine: item.vaccineName || '',
           scheduledDate: item.scheduledDate ? item.scheduledDate.substring(0, 10) : '',
-          sentDate: item.send_date ? item.send_date.substring(0, 10) : '',
-          expireDate: item.expire_date ? item.expire_date.substring(0, 10) : '',
+          sentDate: item.send_date || '',
+          expireDate: item.expire_date || '',
           className: item.className || '',
           location: item.location || '',
           status: mapStatusToUI(item.status || ''),
@@ -73,6 +73,7 @@ const ConsentManagement = () => {
           isAgree: mapIsAgree(item.isAgree),
           hasAllergy: item.hasAllergy || '',
           batchID: item.bacthID || '',
+          dot: item.dot || '',
         }));
         setConsents(mapped);
         console.log('consents:', mapped);
@@ -242,7 +243,7 @@ const ConsentManagement = () => {
               <div key={consent.id} className="consent-card">
                 <div className="consent-card-header">
                   <div>
-                    <Title level={4}>{consent.studentName}</Title>
+                    <Title level={4}>{consent.studentName} -  {consent.dot}</Title>
                     <Text type="secondary">
                       Lớp: {consent.className} | Phụ huynh: {consent.parentName}
                     </Text>
@@ -262,6 +263,7 @@ const ConsentManagement = () => {
                         <Text>{consent.vaccine}</Text>
                       </div>
                     </Col>
+                   
                     <Col span={12}>
                       <div style={{ marginBottom: '8px' }}>
                         <Text type="secondary">Địa điểm:</Text>
@@ -273,14 +275,14 @@ const ConsentManagement = () => {
                       <div style={{ marginBottom: '8px' }}>
                         <Text type="secondary">Ngày tiêm:</Text>
                         <br />
-                        <Text>{formatDate(consent.scheduledDate)}</Text>
+                        <Text>{formatDateTime(consent.scheduledDate)}</Text>
                       </div>
                     </Col>
                     <Col span={12}>
                       <div style={{ marginBottom: '8px' }}>
                         <Text type="secondary">Ngày gửi phiếu:</Text>
                         <br />
-                        <Text>{consent.sentDate}</Text>
+                        <Text>{formatDateTime(consent.sentDate)}</Text>
                       </div>
                     </Col>
                     {consent.expireDate && (
@@ -288,14 +290,14 @@ const ConsentManagement = () => {
                         <div style={{ marginBottom: '8px' }}>
                           <Text type="secondary">Ngày hết hạn phản hồi:</Text>
                           <br />
-                          <Text>{consent.expireDate}</Text>
+                                                     <Text>{formatDateTime(consent.expireDate)}</Text>
                         </div>
                       </Col>
                     )}
                   </Row>
                 </div>
 
-                {consent.reason && (
+                {consent.reason && consent.isAgree === 'Không đồng ý' && (
                   <Alert
                     message="Lý do"
                     description={consent.reason}
@@ -384,27 +386,34 @@ const ConsentManagement = () => {
               </Col>
               <Col span={12}>
                 <div style={{ marginBottom: '12px' }}>
+                  <Text type="secondary">Đợt tiêm:</Text>
+                  <br />
+                  <Text strong>{selectedConsent.dot || 'N/A'}</Text>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ marginBottom: '12px' }}>
                   <Text type="secondary">Ngày tiêm dự kiến:</Text>
                   <br />
-                  <Text strong>{formatDate(selectedConsent.scheduledDate)}</Text>
+                  <Text strong>{formatDateTime(selectedConsent.scheduledDate)}</Text>
                 </div>
               </Col>
               <Col span={12}>
                 <div style={{ marginBottom: '12px' }}>
                   <Text type="secondary">Ngày gửi phiếu:</Text>
                   <br />
-                  <Text strong>
-                    {selectedConsent.send_date ? selectedConsent.send_date.substring(0, 10) : 'N/A'}
-                  </Text>
+                                     <Text strong>
+                     {formatDateTime(selectedConsent.send_date)}
+                   </Text>
                 </div>
               </Col>
               <Col span={12}>
                 <div style={{ marginBottom: '12px' }}>
                   <Text type="secondary">Ngày hết hạn phản hồi:</Text>
                   <br />
-                  <Text strong>
-                    {selectedConsent.expire_date ? selectedConsent.expire_date.substring(0, 10) : 'N/A'}
-                  </Text>
+                                     <Text strong>
+                     {formatDateTime(selectedConsent.expire_date)}
+                   </Text>
                 </div>
               </Col>
               <Col span={12}>
@@ -424,15 +433,9 @@ const ConsentManagement = () => {
                   <Text strong>{selectedConsent.hasAllergy || 'Không'}</Text>
                 </div>
               </Col>
-              <Col span={12}>
-                <div style={{ marginBottom: '12px' }}>
-                  <Text type="secondary">Batch ID:</Text>
-                  <br />
-                  <Text strong>{selectedConsent.bacthID || 'N/A'}</Text>
-                </div>
-              </Col>
+
             </Row>
-            {selectedConsent.reason && (
+            {selectedConsent.reason && mapIsAgree(selectedConsent.isAgree) === 'Không đồng ý' && (
               <Alert
                 message="Lý do"
                 description={selectedConsent.reason}
