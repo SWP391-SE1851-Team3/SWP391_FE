@@ -257,7 +257,7 @@ const ParentHealthCheck = () => {
         <>
           <div className="info-row1">
             <span><strong>Họ tên học sinh:</strong> {currentConsentForm.studentName}</span>
-            <span><strong>Lớp:</strong> {currentConsentForm.className}</span>
+            <span><strong> -</strong> {currentConsentForm.className}</span>
           </div>
           <p><strong>Chương trình kiểm tra:</strong> {currentConsentForm.healthScheduleName}</p>
           <div className="info-row">
@@ -284,7 +284,7 @@ const ParentHealthCheck = () => {
         </span>
         <div className="history-card-row">
           <span className="history-label">Học sinh:</span> {result.fullName}
-          <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {result.className}
+          <span className="history-label" ></span> {result.className}
         </div>
         <div className="history-card-row">
           <span className="history-label">Ngày tạo:</span> {formatDateTime(result.create_at)}
@@ -347,13 +347,13 @@ const ParentHealthCheck = () => {
           {displayStatus}
         </span>
         {isPendingButExpired && (
-          <span className="expired-badge" style={{ marginLeft: '10px', backgroundColor: '#ff4d4f', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
+          <span className="expired-badge" style={{ backgroundColor: '#ff4d4f', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
             Quá hạn
           </span>
         )}
         <div className="history-card-row">
           <span className="history-label">Học sinh:</span> {form.studentName}
-          <span className="history-label" style={{ marginLeft: '20px' }}>Lớp:</span> {form.className}
+          <span className="history-label" style={{ marginLeft: '5px' }}></span> {form.className}
         </div>
         <div className="history-card-row">
           <span className="history-label">Chương trình:</span> {form.healthScheduleName}
