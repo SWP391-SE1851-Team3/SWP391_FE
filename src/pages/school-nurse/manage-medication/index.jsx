@@ -38,7 +38,7 @@ import {
 import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails, getMedicationConfirmationBySubmission, uploadEvidenceImage, getEvidenceImage } from '../../../api/medicalSubmissionNurse';
 import { formatDate } from '../../../utils/formatDate';
 import './Medication.css';
-import { hasNoSpecialCharacters } from '../../../validations';
+
 import { getErrorMessage } from '../../../utils/getErrorMessage';
 import { getMedicationImage } from '../../../api/medicalSubmissionNurse';
 import dayjs from 'dayjs';
@@ -57,10 +57,7 @@ const MedicationManagement = () => {
   const [classFilter, setClassFilter] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [rejectModalVisible, setRejectModalVisible] = useState(false);
-  const [rejectForm] = Form.useForm();
-  const [timelineRejectModalVisible, setTimelineRejectModalVisible] = useState(false);
-  const [timelineRejectForm] = Form.useForm();
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [detailData, setDetailData] = useState(null);
@@ -103,8 +100,8 @@ const MedicationManagement = () => {
           status: submission.status, // Lấy trạng thái từ backend
           time: formatDate(submission.submissionDate),
           submissionDate: submission.submissionDate,
-          actions: submission.status === 'Chờ nhận thuốc' ? ['view', 'confirm', 'cancel'] : ['view'],
-          rejectReason: '',
+          actions: submission.status === 'Chờ nhận thuốc' ? ['view', 'confirm'] : ['view'],
+
           medicationDetails: submission.medicationDetails,
           dosage: firstDetail.dosage || '',
           timeToUse: firstDetail.timeToUse || '',
@@ -266,7 +263,7 @@ const MedicationManagement = () => {
     } else {
       updateStatusForm.setFieldsValue({
         status: record.status,
-        reason: record.rejectReason,
+        
         nurseId: nurseId,
       });
     }
@@ -387,33 +384,7 @@ const MedicationManagement = () => {
     }
   };
 
-  const handleReject = () => {
-    rejectForm.validateFields().then(async values => {
-      try {
-        await updateMedicationStatus(selectedRecord.id, 'Từ chối', values.reason);
-        message.success('Đã từ chối phiếu thành công');
-        fetchMedicationSubmissions();
-      } catch (error) {
-        message.error(getErrorMessage(error));
-      }
-      setRejectModalVisible(false);
-      rejectForm.resetFields();
-    });
-  };
 
-  const handleTimelineReject = () => {
-    timelineRejectForm.validateFields().then(async values => {
-      try {
-        await updateMedicationStatus(selectedRecord.id, 'Chưa phát thuốc', values.reason);
-        message.success('Đã cập nhật trạng thái và lưu lý do từ chối thành công');
-        fetchMedicationSubmissions();
-      } catch (error) {
-        message.error(getErrorMessage(error));
-      }
-      setTimelineRejectModalVisible(false);
-      timelineRejectForm.resetFields();
-    });
-  };
 
   const handleViewDetails = async (record) => {
     setSelectedRecord(record);
@@ -710,7 +681,7 @@ const MedicationManagement = () => {
               </Col>
               {detailData?.medicationDetails && Array.isArray(detailData.medicationDetails) && detailData.medicationDetails.length > 0 && (
                 <Col span={24} style={{ marginTop: 12 }}>
-                  <Typography.Text type="secondary" strong>Chi tiết thuốc:</Typography.Text>
+                  <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Chi tiết thuốc:</Typography.Text>
                   <div style={{marginTop: 8}}>
                     <ul style={{paddingLeft: 20}}>
                       {detailData.medicationDetails.map((item, idx) => (
@@ -726,9 +697,9 @@ const MedicationManagement = () => {
                 </Col>
               )}
               {/* Ảnh thuốc */}
-              <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Ảnh thuốc:</Typography.Text><br />
-                <Button type="primary" onClick={async () => {
+                             <Col span={12} style={{ marginBottom: 6 }}>
+                 <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Ảnh thuốc:</Typography.Text><br />
+                 <Button type="primary" onClick={async () => {
                   let hideLoading = null;
                   try {
                     hideLoading = message.loading('Đang tải ảnh...', 0);
@@ -751,19 +722,18 @@ const MedicationManagement = () => {
                     if (hideLoading) hideLoading();
                   }
                 }}>
-                  Xem ảnh thuốc
+                  Xem ảnh đơn thuốc
                 </Button>
               </Col>
               {/* Thông tin xác nhận của nhân viên y tế */}
               {confirmationData && (
                 <Col span={24} style={{ marginTop: 12 }}>
-                  <Typography.Text type="secondary" strong>Thông tin xác nhận của nhân viên y tế:</Typography.Text>
+                  <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Thông tin xác nhận của nhân viên y tế:</Typography.Text>
                   <div style={{marginTop: 8, marginLeft: 12}}>
-                    <div><Typography.Text strong>Mã xác nhận:</Typography.Text> <Typography.Text>{confirmationData.confirmId}</Typography.Text></div>
-                    <div><Typography.Text strong>Mã phiếu gửi thuốc:</Typography.Text> <Typography.Text>{confirmationData.medicationSubmissionId}</Typography.Text></div>
+                    
                     <div><Typography.Text strong>Trạng thái:</Typography.Text> <Typography.Text>{confirmationData.status}</Typography.Text></div>
-                    <div><Typography.Text strong>Mã y tá:</Typography.Text> <Typography.Text>{confirmationData.nurseId}</Typography.Text></div>
-                    <div><Typography.Text strong>Lý do:</Typography.Text> <Typography.Text>{confirmationData.reason}</Typography.Text></div>
+                    
+                    <div><Typography.Text strong>Ghi chú:</Typography.Text> <Typography.Text>{confirmationData.reason}</Typography.Text></div>
                     {/* SỬA ĐỔI: Thay text thành button xem ảnh */}
                     <div>
                       <Typography.Text strong>Bằng chứng:</Typography.Text>{' '}
@@ -791,68 +761,7 @@ const MedicationManagement = () => {
         )}
       </Modal>
 
-      <Modal
-        title={<span style={{ fontWeight: 900, fontSize: 20, color: '#FDE366' }}>Xác nhận từ chối phiếu</span>}
-        open={rejectModalVisible}
-        onOk={handleReject}
-        onCancel={() => {
-          setRejectModalVisible(false);
-          rejectForm.resetFields();
-        }}
-        okText="Xác nhận"
-        cancelText="Hủy"
-        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
-      >
-        <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(255,77,79,0.08)', border: '1px solid #ffe6e6' }}>
-          <Form form={rejectForm} layout="vertical">
-            <Form.Item
-              name="reason"
-              label={<span style={{ fontWeight: 600, color: '#ff4d4f' }}>Lý do từ chối</span>}
-              rules={[
-                { required: true, message: 'Vui lòng nhập lý do từ chối' },
-                { validator: (_, value) => {
-                    if (value === undefined || value === '') return Promise.resolve();
-                    if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
-                    return Promise.resolve();
-                  }
-                }
-              ]}
-            >
-              <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phiếu..." />
-            </Form.Item>
-          </Form>
-        </div>
-      </Modal>
 
-      <Modal
-        title="Xác nhận từ chối phát thuốc"
-        open={timelineRejectModalVisible}
-        onOk={handleTimelineReject}
-        onCancel={() => {
-          setTimelineRejectModalVisible(false);
-          timelineRejectForm.resetFields();
-        }}
-        okText="Xác nhận"
-        cancelText="Hủy"
-      >
-        <Form form={timelineRejectForm}>
-          <Form.Item
-            name="reason"
-            label="Lý do từ chối"
-            rules={[
-              { required: true, message: 'Vui lòng nhập lý do từ chối' },
-              { validator: (_, value) => {
-                  if (value === undefined || value === '') return Promise.resolve();
-                  if (!hasNoSpecialCharacters(value)) return Promise.reject('Không được nhập ký tự đặc biệt!');
-                  return Promise.resolve();
-                }
-              }
-            ]}
-          >
-            <Input.TextArea rows={4} placeholder="Nhập lý do từ chối phát thuốc..." />
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* Modal hiển thị ảnh thuốc */}
       <Modal
@@ -934,7 +843,7 @@ const MedicationManagement = () => {
 
       {/* Modal cập nhật tình trạng thuốc */}
       <Modal
-        title="Cập nhật tình trạng thuốc"
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Cập nhật tình trạng thuốc</span>}
         open={isUpdateStatusModalVisible}
         onOk={handleSubmitUpdateStatus}
         onCancel={() => { 
@@ -954,12 +863,10 @@ const MedicationManagement = () => {
               <Option value="Đã hủy">Đã hủy</Option>
             </Select>
           </Form.Item>
-          <Form.Item name="reason" label="Lý do" rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}> 
+          <Form.Item name="reason" label="Ghi chú" rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}> 
             <Input.TextArea placeholder="Nhập lý do" />
           </Form.Item>
-          <Form.Item name="nurseId" label="Mã y tá" rules={[{ required: true, message: 'Vui lòng nhập mã y tá' }]}> 
-            <Input placeholder="Nhập mã y tá" disabled />
-          </Form.Item>
+
           <Form.Item label="Bằng chứng (Ảnh)"> 
             <Upload.Dragger {...evidenceUploadProps}>
               <p className="ant-upload-drag-icon">

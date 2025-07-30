@@ -33,7 +33,7 @@ const HealthCheckRecord = () => {
           studentName: item.fullName || '',
           fullName: item.fullName || '',
           className: item.className || '',
-          checkType: 'Khám tổng quát', // Mặc định vì không có trong response mới
+
           checkDate: item.create_at ? item.create_at.split('T')[0] : '',
           nurseName: item.createdByNurseName || '',
           status: item.status || '', // Lấy status từ API
@@ -54,7 +54,8 @@ const HealthCheckRecord = () => {
           updatedByNurseName: item.updatedByNurseName || '',
           createdByNurseID: item.createdByNurseID,
           updatedByNurseID: item.updatedByNurseID,
-          formID: item.formID
+          formID: item.formID,
+          scheduleName: item.scheduleName || ''
         }));
         setRecords(mapped);
       } catch (err) {
@@ -64,10 +65,9 @@ const HealthCheckRecord = () => {
     fetchRecords();
   }, []);
 
-  const filteredRecords = records.filter(record => {
-    const matchesSearch = record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.checkType.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClass = classFilter === 'all' || record.className === classFilter;
+      const filteredRecords = records.filter(record => {
+      const matchesSearch = record.studentName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesClass = classFilter === 'all' || record.className === classFilter;
     const matchesStatus = statusFilter === 'all' || record.status === statusFilter;
     return matchesSearch && matchesClass && matchesStatus;
   });
@@ -119,7 +119,7 @@ const HealthCheckRecord = () => {
         studentName: item.fullName || '',
         fullName: item.fullName || '',
         className: item.className || '',
-        checkType: 'Khám tổng quát',
+        
         checkDate: item.create_at ? item.create_at.split('T')[0] : '',
         nurseName: item.createdByNurseName || '',
         status: item.status || '',
@@ -140,7 +140,8 @@ const HealthCheckRecord = () => {
         updatedByNurseName: item.updatedByNurseName || '',
         createdByNurseID: item.createdByNurseID,
         updatedByNurseID: item.updatedByNurseID,
-        formID: item.formID
+        formID: item.formID,
+        scheduleName: item.scheduleName || ''
       }));
       setRecords(mapped);
     } catch (err) {
@@ -213,7 +214,7 @@ const HealthCheckRecord = () => {
         {filteredRecords.map((record) => (
           <div key={record.id} className="health-check-record-card">
             <div className="health-check-record-card-header">
-              <div><Title level={4}>{record.studentName}</Title><Text type="secondary">Lớp: {record.className} | Loại khám: {record.checkType}</Text></div>
+                              <div><Title level={4}>{record.studentName} - {record.scheduleName}</Title><Text type="secondary">Lớp: {record.className}</Text></div>
               <Badge 
                 status={record.status === 'Đã hoàn thành' ? 'success' : record.status === 'Cần tư vấn y tế' ? 'error' : record.status === 'Chờ ghi nhận' ? 'warning' : 'default'}
                 text={
@@ -227,7 +228,7 @@ const HealthCheckRecord = () => {
               />
             </div>
             <div className="health-check-record-card-info">
-              <Space><Text type="secondary">Ngày khám:</Text> <Text>{record.checkDate ? formatDateTime(record.checkDate) : ''}</Text></Space>
+              <Space><Text type="secondary">Ngày ghi nhận:</Text> <Text>{record.checkDate ? formatDateTime(record.checkDate) : ''}</Text></Space>
               <Space><Text type="secondary">Y tá tạo hồ sơ:</Text> <Text>{record.nurseName}</Text></Space>
             </div>
             <div className="health-check-record-card-info">
@@ -259,11 +260,8 @@ const HealthCheckRecord = () => {
               {/* Thông tin học sinh */}
               <Col span={12}><Text strong>Tên học sinh:</Text><br /><Text>{selectedRecord.studentName}</Text></Col>
               <Col span={12}><Text strong>Lớp:</Text><br /><Text>{selectedRecord.className}</Text></Col>
-              <Col span={12}>
-                <Text strong>Loại khám:</Text>{'  '}
-                <Text>{selectedRecord.checkType}</Text>
-           
-                </Col>
+              <Col span={12}><Text strong>Lịch khám:</Text><br /><Text>{selectedRecord.scheduleName || 'N/A'}</Text></Col>
+              
             </Row>
             <div style={{margin: '18px 0 10px 0'}}><span style={{fontSize:16, color:'#69CD32', fontWeight: 700}}>- Chỉ số đo lường:</span></div>
             <Row gutter={[24, 16]}>
@@ -280,7 +278,7 @@ const HealthCheckRecord = () => {
             <Row gutter={[24, 16]}>
               <Col span={12}><Text strong>Kết luận chung:</Text><br /><Text>{selectedRecord.overallResult}</Text></Col>
               <Col span={12}><Text strong>Trạng thái:</Text><br /><Text>{selectedRecord.status}</Text></Col>
-              <Col span={12}><Text strong>Ngày khám:</Text><br /><Text>{selectedRecord.checkDate ? formatDateTime(selectedRecord.checkDate) : ''}</Text></Col>
+              <Col span={12}><Text strong>Ngày ghi nhận:</Text><br /><Text>{selectedRecord.checkDate ? formatDateTime(selectedRecord.checkDate) : ''}</Text></Col>
               <Col span={12}><Text strong>Ngày cập nhật:</Text><br /><Text>{selectedRecord.update_at ? formatDateTime(selectedRecord.update_at) : ''}</Text></Col>
               <Col span={12}><Text strong>Y tá tạo:</Text><br /><Text>{selectedRecord.nurseName}</Text></Col>
               <Col span={12}><Text strong>Y tá cập nhật:</Text><br /><Text>{selectedRecord.updatedByNurseName}</Text></Col>

@@ -61,6 +61,7 @@ const VaccinationScheduleManager = () => {
   const [sendingConsent, setSendingConsent] = useState(false);
   const [selectedBatchForConsent, setSelectedBatchForConsent] = useState(null);
   const [consentDateRange, setConsentDateRange] = useState([null, null]);
+  const [selectedScheduledDate, setSelectedScheduledDate] = useState(null);
 
   const fetchSchedules = async () => {
     try {
@@ -314,6 +315,8 @@ const VaccinationScheduleManager = () => {
   const handleOpenConsentModal = (schedule) => {
     setSelectedBatchForConsent(schedule);
     setConsentDateRange([null, null]);
+    // Lưu thời gian tiêm đã chọn để làm điều kiện cho DatePicker
+    setSelectedScheduledDate(schedule.scheduledDate ? moment(schedule.scheduledDate) : null);
     consentForm.setFieldsValue({
       className: [],
       batchId: schedule.batchID,
@@ -332,8 +335,33 @@ const VaccinationScheduleManager = () => {
         message.error('Vui lòng chọn khoảng thời gian gửi và hết hạn!');
         return;
       }
-      let sendDate = consentDateRange[0] ? consentDateRange[0].toISOString() : '';
-      let expireDate = consentDateRange[1] ? consentDateRange[1].toISOString() : '';
+      
+      // Kiểm tra thời gian gửi phiếu và hết hạn có vượt quá thời gian tiêm không
+      if (selectedScheduledDate) {
+        const sendDate = consentDateRange[0];
+        const expireDate = consentDateRange[1];
+        
+        if (sendDate && sendDate > selectedScheduledDate) {
+          message.error('Thời gian gửi phiếu không được vượt quá thời gian tiêm!');
+          return;
+        }
+        
+        if (expireDate && expireDate > selectedScheduledDate) {
+          message.error('Thời gian hết hạn không được vượt quá thời gian tiêm!');
+          return;
+        }
+      }
+      
+      // Kiểm tra ngày gửi và ngày hết hạn không được cùng một ngày
+      const sendDateCheck = consentDateRange[0];
+      const expireDateCheck = consentDateRange[1];
+      
+      if (sendDateCheck && expireDateCheck && sendDateCheck.isSame(expireDateCheck, 'day')) {
+        message.error('Ngày gửi và ngày hết hạn không được chọn cùng một ngày!');
+        return;
+      }
+      let sendDate = consentDateRange[0] ? consentDateRange[0].add(7, 'hours').toISOString() : '';
+      let expireDate = consentDateRange[1] ? consentDateRange[1].add(7, 'hours').toISOString() : '';
       // Hiển thị xác nhận lại thông tin trước khi gửi
       Modal.confirm({
         title: <span style={{fontWeight:900, fontSize:20, color:'#faad14'}}>Xác nhận gửi phiếu cho phụ huynh</span>,
@@ -347,11 +375,11 @@ const VaccinationScheduleManager = () => {
               <Typography.Text strong style={{fontSize:16}}>Tên lớp: {Array.isArray(values.className) ? values.className.join(', ') : values.className}</Typography.Text>
               <Typography.Text strong style={{fontSize:16}}>Tên đợt tiêm: {selectedBatchForConsent?.vaccineBatch}</Typography.Text>
               <Typography.Text strong style={{fontSize:16}}>Địa điểm: {selectedBatchForConsent?.location}</Typography.Text>
-              <Typography.Text style={{fontSize:16}}>
-                <b>Thời gian gửi phiếu:</b> <span style={{color:'#52c41a'}}>{consentDateRange[0]?.format('DD/MM/YYYY HH:mm')}</span>
+                                           <Typography.Text style={{fontSize:16}}>
+                <b>Thời gian gửi phiếu:</b> <span style={{color:'#52c41a'}}>{consentDateRange[0] ? consentDateRange[0].format('DD/MM/YYYY HH:mm') : 'Chưa chọn'}</span>
               </Typography.Text>
               <Typography.Text style={{fontSize:16}}>
-                <b>Thời gian hết hạn:</b> <span style={{color:'#fa541c'}}>{consentDateRange[1]?.format('DD/MM/YYYY HH:mm')}</span>
+                <b>Thời gian hết hạn:</b> <span style={{color:'#fa541c'}}>{consentDateRange[1] ? consentDateRange[1].format('DD/MM/YYYY HH:mm') : 'Chưa chọn'}</span>
               </Typography.Text>
             </div>
           </div>
@@ -830,7 +858,10 @@ const VaccinationScheduleManager = () => {
        
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Gửi phiếu đồng ý</span>}
         open={isConsentModalOpen}
-        onCancel={() => setIsConsentModalOpen(false) }
+        onCancel={() => {
+          setIsConsentModalOpen(false);
+          setSelectedScheduledDate(null);
+        }}
         onOk={handleSendConsentForm}
         okText="Gửi phiếu"
         confirmLoading={sendingConsent}
@@ -878,21 +909,17 @@ const VaccinationScheduleManager = () => {
               onChange={setConsentDateRange}
               format="YYYY-MM-DD HH:mm"
               placeholder={["Ngày gửi phiếu", "Ngày hết hạn"]}
-              disabledDate={current => current && current < moment().startOf('day')}
+              disabledDate={current => {
+                if (!current) return false;
+                // Không cho chọn ngày trong quá khứ
+                if (current < moment().startOf('day')) return true;
+                // Nếu có thời gian tiêm đã chọn, không cho chọn ngày sau ngày tiêm
+                if (selectedScheduledDate && current > selectedScheduledDate.endOf('day')) return true;
+                return false;
+              }}
             />
           </Form.Item>
-          <Form.Item
-            name="status"
-            label="Trạng thái"
-            rules={[{ required: true, message: 'Vui lòng nhập trạng thái' }]}
-            initialValue="Chờ xác nhận"
-          >
-            <Select disabled>
-              <Option value="Chờ xác nhận">Chờ xác nhận</Option>
-              <Option value="Đã phê duyệt">Đã phê duyệt</Option>
-              <Option value="Từ chối">Từ chối</Option>
-            </Select>
-          </Form.Item>
+          
         </Form>
         </div>
       </Modal>

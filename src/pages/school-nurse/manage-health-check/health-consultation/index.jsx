@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PlusOutlined, SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Select, Modal, Form, Typography, Row, Col, Tag, Space, message, Statistic, Badge, Alert, Checkbox, DatePicker } from 'antd';
 import './health-consultation.css';
+import { formatDateTime } from '../../../../utils/formatDate';
 import { getAllHealthConsultations, updateHealthConsultation } from '../../../../api/healthCheckAPI';
 import {isOnlyWhitespace, hasNoSpecialCharacters } from '../../../../validations';
 import moment from 'moment';
@@ -40,7 +41,8 @@ const HealthConsultation = () => {
           updatedByNurseName: item.updatedByNurseName,
           updatedByNurseID: item.updatedByNurseID,
           createdByNurseID: item.createdByNurseID,
-          location: item.location || ''
+          location: item.location || '',
+          scheduleName: item.scheduleName || ''
         })));
       } catch (err) {
         message.error('Lỗi khi tải danh sách tư vấn y tế');
@@ -115,13 +117,13 @@ const HealthConsultation = () => {
         {filteredConsultations.map((consultation) => (
           <div key={consultation.id} className="health-consultation-card">
             <div className="health-consultation-card-header">
-              <div><Title level={4}>{consultation.studentName}</Title><Text type="secondary">Lớp: {consultation.className}</Text></div>
+              <div><Title level={4}>{consultation.studentName} - {consultation.scheduleName}</Title><Text type="secondary">Lớp: {consultation.className}</Text></div>
               <Badge status={consultation.status === 'Đã hoàn thành' ? 'success' : (consultation.status === 'Đang chờ xử lý' ? 'warning' : (consultation.status === 'Chờ lên lịch' ? 'processing' : 'default'))} text={consultation.status || ''} />
             </div>
             <div className="health-consultation-card-info">
               <div className="info-item">
                 <Text type="secondary">Ngày tư vấn:</Text>
-                <Text>{consultation.consultDate ? consultation.consultDate.split('T')[0] : ''}</Text>
+                <Text>{formatDateTime(consultation.consultDate)}</Text>
               </div>
               <div className="info-item">
                 <Text type="secondary">Địa điểm:</Text>
@@ -159,9 +161,10 @@ const HealthConsultation = () => {
             <Row gutter={16}>
               <Col span={12}><Text type="secondary">Học sinh:</Text><br /><Text strong>{selectedConsultation.studentName}</Text></Col>
               <Col span={12}><Text type="secondary">Lớp:</Text><br /><Text strong>{selectedConsultation.className}</Text></Col>
+              <Col span={12}><Text type="secondary">Tên đợt khám:</Text><br /><Text strong>{selectedConsultation.scheduleName || 'N/A'}</Text></Col>
               <Col span={12}><Text type="secondary">Trạng thái:</Text><br /><Text strong>{selectedConsultation.status}</Text></Col>
-              <Col span={12}><Text type="secondary">Ngày tư vấn:</Text><br /><Text strong>{selectedConsultation.consultDate ? selectedConsultation.consultDate.split('T')[0] : ''}</Text></Col>
-              <Col span={12}><Text type="secondary">Ngày cập nhật:</Text><br /><Text strong>{selectedConsultation.update_at ? selectedConsultation.update_at.split('T')[0] : ''}</Text></Col>
+              <Col span={12}><Text type="secondary">Ngày tư vấn:</Text><br /><Text strong>{formatDateTime(selectedConsultation.consultDate)}</Text></Col>
+              <Col span={12}><Text type="secondary">Ngày cập nhật:</Text><br /><Text strong>{formatDateTime(selectedConsultation.update_at)}</Text></Col>
               <Col span={12}><Text type="secondary">Y tá tạo:</Text><br /><Text strong>{selectedConsultation.createdByNurseName}</Text></Col>
               <Col span={12}><Text type="secondary">Y tá cập nhật:</Text><br /><Text strong>{selectedConsultation.updatedByNurseName}</Text></Col>
               <Col span={12}><Text type="secondary">Địa điểm:</Text><br /><Text strong>{selectedConsultation.location}</Text></Col>
@@ -214,7 +217,8 @@ const HealthConsultation = () => {
               updatedByNurseName: item.updatedByNurseName,
               updatedByNurseID: item.updatedByNurseID,
               createdByNurseID: item.createdByNurseID,
-              location: item.location || ''
+              location: item.location || '',
+              scheduleName: item.scheduleName || ''
             })));
           } catch (err) {
             message.error('Cập nhật tư vấn thất bại!');
@@ -235,9 +239,15 @@ const HealthConsultation = () => {
                   <Option value="Chờ lên lịch">Chờ lên lịch</Option>
                 </Select>
               </Form.Item></Col>
-              <Col span={12}><Form.Item name="scheduledDate" label="Ngày tư vấn" rules={[{ required: true, message: 'Vui lòng chọn ngày tư vấn' }]} >
-                <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" disabledDate={current => current && current < moment().startOf('day')} />
-              </Form.Item></Col>
+                             <Col span={12}><Form.Item name="scheduledDate" label="Ngày tư vấn" rules={[{ required: true, message: 'Vui lòng chọn ngày tư vấn' }]} >
+                 <DatePicker 
+                   showTime
+                   style={{ width: '100%' }} 
+                   format="YYYY-MM-DD HH:mm"
+                   placeholder="Chọn ngày và giờ tư vấn"
+                   disabledDate={current => current && current < moment().startOf('day')}
+                 />
+               </Form.Item></Col>
               <Col span={12}><Form.Item name="location" label="Địa điểm" rules={[
                 { required: true, message: 'Vui lòng nhập địa điểm' },
                 {

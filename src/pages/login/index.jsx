@@ -160,9 +160,7 @@ const Login = () => {
 
             <Form.Item>
               <Checkbox>Ghi nhớ đăng nhập</Checkbox>
-              <a href="#" className="forgot-password" style={{ float: 'right' }}>
-                Quên mật khẩu?
-              </a>
+         
             </Form.Item>
 
             <Form.Item>

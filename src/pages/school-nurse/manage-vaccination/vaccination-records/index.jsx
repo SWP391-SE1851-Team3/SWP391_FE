@@ -78,7 +78,8 @@ const VaccinationRecords = () => {
           editNurseID: item.editNurseID,
           createNurseName: item.createNurseName,
           editNurseName: item.editNurseName,
-          studentName: item.studentName
+          studentName: item.studentName,
+          dot: item.dot || ''
         }));
         setRecords(mapped);
       } catch (err) {
@@ -115,6 +116,7 @@ const VaccinationRecords = () => {
   const mapStatus = (status) => {
     if (!status) return 'Chờ ghi nhận';
     if (status === 'Hoàn thành') return 'Đã hoàn thành';
+    if (status === 'Hoàn thành theo dõi') return 'Hoàn thành theo dõi';
     if (status === 'Đang theo dõi') return 'Cần theo dõi';
     return status;
   };
@@ -224,7 +226,8 @@ const VaccinationRecords = () => {
         editNurseID: item.editNurseID,
         createNurseName: item.createNurseName,
         editNurseName: item.editNurseName,
-        studentName: item.studentName
+        studentName: item.studentName,
+        dot: item.dot || ''
       }));
       setRecords(mapped);
     } catch (error) {
@@ -312,6 +315,7 @@ const VaccinationRecords = () => {
           <Option value="all">Tất cả trạng thái</Option>
           <Option value="Chờ ghi nhận">Chờ ghi nhận</Option>
           <Option value="Đã hoàn thành">Đã hoàn thành</Option>
+          <Option value="Hoàn thành theo dõi">Hoàn thành theo dõi</Option>
           <Option value="Cần theo dõi">Cần theo dõi</Option>
         </Select>
       </div>
@@ -322,15 +326,16 @@ const VaccinationRecords = () => {
           const displayStatus = mapStatus(record.status);
           let badgeStatus = 'default';
           if (displayStatus === 'Đã hoàn thành') badgeStatus = 'success';
+          else if (displayStatus === 'Hoàn thành theo dõi') badgeStatus = 'success';
           else if (displayStatus === 'Cần theo dõi') badgeStatus = 'error';
           else if (displayStatus === 'Chờ ghi nhận') badgeStatus = 'warning';
           return (
             <div key={record.vaccinationRecordID || record.id || Math.random()} className="records-card">
               <div className="records-card-header">
                 <div>
-                  <Title level={4}>{record.studentName}</Title>
+                  <Title level={4}>{record.studentName} -  {record.dot}</Title>
                   <Text type="secondary">
-                    Lớp: {record.className}    | Tên vaccine: {record.vaccineName}
+                    Lớp: {record.className} | Tên vaccine: {record.vaccineName}
                   </Text>
                 </div>
                 <Badge status={badgeStatus} text={displayStatus} />
@@ -375,6 +380,10 @@ const VaccinationRecords = () => {
               <Col key="vaccine" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Tên vaccine:</Text><br />
                 <Text strong>{selectedRecord.vaccineName}</Text>
+              </Col>
+              <Col key="dot" span={12} style={{ marginBottom: 6 }}>
+                <Text type="secondary" strong> Đợt tiêm:</Text><br />
+                <Text strong>{selectedRecord.dot || 'N/A'}</Text>
               </Col>
               <Col key="status" span={12} style={{ marginBottom: 6 }}>
                 <Text type="secondary" strong> Trạng thái:</Text><br />
@@ -493,12 +502,13 @@ const VaccinationRecords = () => {
                     }}
                   >
                     <Option value="Hoàn thành">Hoàn thành</Option>
+                    <Option value="Hoàn thành theo dõi">Hoàn thành theo dõi</Option>
                     <Option value="Cần theo dõi">Cần theo dõi</Option>
                   </Select>
                 </Form.Item>
               </Col>
             </Row>
-            {editingStatus === 'Cần theo dõi' && (
+            {(editingStatus === 'Cần theo dõi' || editingStatus === 'Hoàn thành theo dõi') && (
               <Row key="observation-row" gutter={16}>
                 <Col span={12}>
                   <Form.Item name="observation_time" label="Thời gian theo dõi" rules={[
@@ -510,6 +520,15 @@ const VaccinationRecords = () => {
                       style={{ width: '100%' }}
                       format="YYYY-MM-DD HH:mm"
                       placeholder="Chọn thời gian theo dõi"
+                      disabledDate={current => {
+                        if (!current) return false;
+                        // Chỉ cho phép chọn ngày hiện tại
+                        const today = new Date();
+                        const currentDate = new Date(current);
+                        return currentDate.getDate() !== today.getDate() ||
+                               currentDate.getMonth() !== today.getMonth() ||
+                               currentDate.getFullYear() !== today.getFullYear();
+                      }}
                     />
                   </Form.Item>
                 </Col>

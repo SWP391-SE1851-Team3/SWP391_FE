@@ -139,10 +139,6 @@ const Index = () => {
             {
               key: 'records',
               label: 'Kết quả tiêm',
-            },
-            {
-              key: 'observation',
-              label: 'Theo dõi',
             }
           ]}
         />
@@ -269,7 +265,7 @@ const Index = () => {
         {activeTab === 'schedule' && <VaccinationScheduleManager />}
         {activeTab === 'consent' && <ConsentManagement />}
         {activeTab === 'records' && <VaccinationRecords />}
-        {activeTab === 'observation' && <PostVaccinationObservation />}
+        
       </main>
     </div>
   );
