@@ -113,6 +113,10 @@ const StudentHealthRecord = () => {
 
   // Submit form
   const onSubmit = (values) => {
+    const student = students.find(s => s.studentID === selectedStudentId);
+    if (student) {
+      values.fullName = student.fullName; // Thêm thủ công
+    }
     if (hasProfile) {
       handleUpdate(values);
     } else {
@@ -149,10 +153,8 @@ const StudentHealthRecord = () => {
 
       {selectedStudentId && (
         <Form form={form} layout="vertical" onFinish={onSubmit}>
-          <Form.Item label="Họ tên học sinh" name="fullName"
-            rules={hasProfile ? [] : [{ required: true, message: 'Vui lòng nhập họ tên học sinh!' }]}
-          >
-            <Input disabled={hasProfile} />
+          <Form.Item name="fullName" hidden>
+            <Input />
           </Form.Item>
 
           <Form.Item label="Dị ứng" name="allergyDetails" rules={[
@@ -186,7 +188,8 @@ const StudentHealthRecord = () => {
                     return Promise.reject('Không bắt đầu bằng dấu cách!');
                   }
                   return Promise.resolve();
-                }}]}>
+                }
+              }]}>
             <Input rows={3} placeholder="Ví dụ: Từng điều trị viêm phổi năm 2023" />
           </Form.Item>
 

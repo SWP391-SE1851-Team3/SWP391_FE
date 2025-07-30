@@ -139,8 +139,8 @@ const UserManagement = () => {
         try {
             const result = await importStudentsFromExcel(file);
             message.success("Import file Excel thành công!");
-            reloadUsers(); // Reload lại danh sách users
-            return false; // Ngăn không cho upload file lên server
+            reloadUsers();
+            return false;
         } catch (error) {
             message.error("Import file Excel thất bại!");
             return false;
@@ -438,7 +438,6 @@ const UserManagement = () => {
                 </Form>
             </div>
 
-            {/* Phần Import Excel - Đặt ở cuối cùng */}
             <Divider style={{ margin: "40px 0" }} />
 
             <Card

@@ -83,7 +83,7 @@ const fetchData = async () => {
 
     const handleDownloadFullReport = async () => {
         try {
-            const params = getDateParams(); // 👉 chứa startDate, endDate
+            const params = getDateParams();
             const response = await getFullReport(params);
 
             console.log("Đang xuất báo cáo với:", params);
@@ -166,7 +166,7 @@ const fetchData = async () => {
     const healthCheckColumnData = [
         { type: 'Tổng lịch', value: healthCheckStats.totalSchedules || 0 },
         { type: 'Hoàn thành', value: healthCheckStats.completedSchedules || 0 },
-        { type: 'Đã khám', value: healthCheckStats.totalChecked || 0 }
+        { type: 'Đã khám', value: healthCheckStats.countRejected || 0 }
     ];
     const healthCheckColumnConfig = {
         data: healthCheckColumnData,
@@ -202,7 +202,7 @@ const fetchData = async () => {
             </div>
             <div className="dashboard-content">
                 <div className="dashboard-filter-bar">
-                    <span className="dashboard-filter-bar-label">
+                    {/* <span className="dashboard-filter-bar-label">
                         Nhập ngày để xem báo cáo cụ thể
                     </span>
                     <RangePicker
@@ -214,7 +214,7 @@ const fetchData = async () => {
                         placeholder={["Start date", "End date"]}
                         className="dashboard-range-picker"
                         popupStyle={{ borderRadius: 12 }}
-                    />
+                    /> */}
                     <Button
                         type="primary"
                         icon={<ReloadOutlined />}
