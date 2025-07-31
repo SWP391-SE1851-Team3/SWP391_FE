@@ -110,7 +110,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                     className="btn-text"
                     onClick={() => handleViewEvidenceImage(item.confirmId)}
                   >
-                    <span className="material-icons">Xem ảnh</span>
+                    <span className="material-icons">Xem ảnh bằng chứng</span>
                   </button>
                 )}
               </div>
