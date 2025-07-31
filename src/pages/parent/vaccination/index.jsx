@@ -320,9 +320,11 @@ const formatDate = (dateTimeString) => {
           <div className="detail-row">
             <strong>Ghi chú:</strong> {selectedRecord.notes || "Không có"}
           </div>
+        {!(selectedRecord.status === "Hoàn thành") && (
           <div className="detail-row">
-            <strong>Thời gian quan sát:</strong> {formatDateTime(selectedRecord.observation_time)}
+            <strong>Thời gian theo dõi:</strong> {formatDateTime(selectedRecord.observation_time)}
           </div>
+        )}
           <div className="detail-row">
             <strong>Triệu chứng:</strong> {selectedRecord.symptoms || "Không có"}
           </div>
@@ -330,7 +332,7 @@ const formatDate = (dateTimeString) => {
             <strong>Mức độ nghiêm trọng:</strong> {selectedRecord.severity || "Không có"}
           </div>
           <div className="detail-row">
-            <strong>Ghi chú quan sát:</strong> {selectedRecord.observation_notes || "Không có"}
+            <strong>Ghi chú theo dõi:</strong> {selectedRecord.observation_notes || "Không có"}
           </div>
           <div className="detail-row">
             <strong>Tên y tá:</strong> {selectedRecord.createNurseName || "Không rõ"}
