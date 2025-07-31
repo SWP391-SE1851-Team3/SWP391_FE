@@ -167,13 +167,17 @@ const App = () => {
       const searchLower = searchText.toLowerCase();
       const matchesSearch = searchText === '' || 
         (event.studentName && event.studentName.toLowerCase().includes(searchLower)) ||
-        (event.eventType && event.eventType.toLowerCase().includes(searchLower)) ||
+        (event.eventType && Array.isArray(event.eventType) ? 
+          event.eventType.some(type => type && type.toLowerCase && type.toLowerCase().includes(searchLower)) :
+          (event.eventType && event.eventType.toLowerCase && event.eventType.toLowerCase().includes(searchLower))) ||
         (event.time && moment(event.time).format('DD/MM/YYYY HH:mm').toLowerCase().includes(searchLower)) ||
         (event.processingStatus && event.processingStatus.toLowerCase().includes(searchLower));
 
       // Lọc theo loại sự kiện
       const matchesStatus = statusFilter === '' || 
-        (event.eventType && event.eventType.toLowerCase() === statusFilter.toLowerCase());
+        (event.eventType && Array.isArray(event.eventType) ? 
+          event.eventType.some(type => type && type.toLowerCase && type.toLowerCase() === statusFilter.toLowerCase()) :
+          (event.eventType && event.eventType.toLowerCase && event.eventType.toLowerCase() === statusFilter.toLowerCase()));
 
       // Lọc theo trạng thái
       const matchesState = stateFilter === '' ||
