@@ -54,7 +54,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
       setImageModal({ open: true, imageUrl, loading: false });
     } catch (error) {
       console.error('Error fetching evidence image:', error);
-      message.error('Chưa có ảnh bằng chứng để hiển thị');
+      message.error('Nhân viên y tế chưa gửi hình ảnh bằng chứng');
       setImageModal({ open: false, imageUrl: '', loading: false });
     }
   };
