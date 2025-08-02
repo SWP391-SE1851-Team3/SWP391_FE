@@ -162,7 +162,7 @@ const MedicalAccidentParent = () => {
         <div className="medical-events-list">
           <h3 className="events-title">Chi Tiết Sự Cố Y Tế</h3>
           {medicalEvents.map((event, index) => (
-            <div key={index} className={`medical-event-card ${event.isEmergency ? 'emergency-card' : ''}`}>
+            <div key={index} className={`medical-event-card ${event.isEmergency === 'Nặng' ? 'emergency-card' : ''}`}>
               <div className="event-main-info">
                 <div className="event-left">
                   <h4 className="event-title">
