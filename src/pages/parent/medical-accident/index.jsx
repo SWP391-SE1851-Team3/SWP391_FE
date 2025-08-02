@@ -128,7 +128,7 @@ const MedicalAccidentParent = () => {
 
   return (
     <div className="medical-events-container">
-      <h2 className="title">Thông Tin Sự Kiện Y Tế</h2>
+      <h2 className="title">Thông Tin Sự Cố Y Tế</h2>
 
       <div className="student-selector">
         <label htmlFor="student-select" className="select-label">
@@ -160,18 +160,24 @@ const MedicalAccidentParent = () => {
       {/* Hiển thị thông tin sự kiện y tế */}
       {medicalEvents.length > 0 && (
         <div className="medical-events-list">
-          <h3 className="events-title">Chi Tiết Sự Kiện Y Tế</h3>
+          <h3 className="events-title">Chi Tiết Sự Cố Y Tế</h3>
           {medicalEvents.map((event, index) => (
             <div key={index} className={`medical-event-card ${event.isEmergency ? 'emergency-card' : ''}`}>
               <div className="event-main-info">
                 <div className="event-left">
                   <h4 className="event-title">
-                    {event.isEmergency && <span className="emergency-icon">!!!</span>}
-                    Loại Sự kiện: {getEventTypeName(event)}
+                    {event.isEmergency === 'Nặng' && <span className="emergency-icon">!!!</span>}
+                    Loại Sự Cố: {getEventTypeName(event)}
                   </h4>
                   <div className="event-datetime">
                     {formatDateTime(event.eventDateTime)}
                     {console.log(event.eventDateTime)}
+                  </div>
+                  <div className="event-result">
+                    <span className="result-label">Mức độ sự cố:</span>
+                    <span className="result-value">
+                      {event.isEmergency || 'Không có thông tin'}
+                    </span>
                   </div>
                   <div className="event-result">
                     <span className="result-label">Kết quả:</span>
@@ -228,13 +234,13 @@ const MedicalAccidentParent = () => {
 
       {!selectedStudent && !loading && (
         <div className="no-selection">
-          Vui lòng chọn học sinh để xem thông tin sự kiện y tế
+          Vui lòng chọn học sinh để xem thông tin sự cố y tế
         </div>
       )}
 
       {selectedStudent && medicalEvents.length === 0 && !loading && !error && (
         <div className="no-data">
-          Không có sự kiện y tế nào cho học sinh này
+          Không có sự cố y tế nào cho học sinh này
         </div>
       )}
     </div>
