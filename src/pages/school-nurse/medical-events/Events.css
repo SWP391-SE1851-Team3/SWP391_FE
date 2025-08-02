@@ -473,3 +473,30 @@
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
 }
+
+/* Màu đỏ nhạt cho các sự kiện có mức độ nghiêm trọng "Nặng" */
+.events-table .emergency-row {
+  background-color: #fff2f0 !important;
+  border-left: 4px solid #ff4d4f !important;
+}
+
+.events-table .emergency-row:hover {
+  background-color: #ffebee !important;
+}
+
+.events-table .emergency-row .ant-table-cell {
+  background-color: #fff2f0 !important;
+}
+
+.events-table .emergency-row:hover .ant-table-cell {
+  background-color: #ffebee !important;
+}
+
+/* Thêm style cho trường hợp Ant Design override */
+.ant-table-tbody > tr.emergency-row > td {
+  background-color: #fff2f0 !important;
+}
+
+.ant-table-tbody > tr.emergency-row:hover > td {
+  background-color: #ffebee !important;
+}
