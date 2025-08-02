@@ -168,13 +168,27 @@ const App = () => {
       const searchLower = searchText.toLowerCase();
       const matchesSearch = searchText === '' ||
         (event.studentName && event.studentName.toLowerCase().includes(searchLower)) ||
-        (event.eventType && event.eventType.toLowerCase().includes(searchLower)) ||
+        (event.eventType && Array.isArray(event.eventType) &&
+         event.eventType.some(type =>
+           (typeof type === 'string' ? type : (type.typeName || type)).toLowerCase().includes(searchLower)
+         )) ||
         (event.time && moment(event.time).format('DD/MM/YYYY HH:mm').toLowerCase().includes(searchLower)) ||
         (event.processingStatus && event.processingStatus.toLowerCase().includes(searchLower));
 
       // Lọc theo loại sự kiện
       const matchesStatus = statusFilter === '' ||
-        (event.eventType && event.eventType.toLowerCase() === statusFilter.toLowerCase());
+        (
+          (event.eventTypeNames && Array.isArray(event.eventTypeNames) &&
+            event.eventTypeNames.some(type =>
+              (type.typeName || type).toLowerCase() === statusFilter.toLowerCase()
+            )
+          ) ||
+          (event.eventType && Array.isArray(event.eventType) &&
+            event.eventType.some(type =>
+              (typeof type === 'string' ? type : (type.typeName || type)).toLowerCase() === statusFilter.toLowerCase()
+            )
+          )
+        );
 
       // Lọc theo trạng thái
       const matchesState = stateFilter === '' ||
@@ -215,9 +229,6 @@ const App = () => {
         // Lấy thông tin nurse từ localStorage
         const nurseId = localStorage.getItem('userId') || '';
         const nurseName = localStorage.getItem('nurseName') || localStorage.getItem('fullName') || localStorage.getItem('email') || '';
-        // Nếu có cập nhật bởi y tá khác, có thể lấy tương tự hoặc để trống
-        const updatedByNurseId = nurseId;
-        const updatedByNurseName = nurseName;
 
         // Convert date string to proper format using moment
         const dateObj = values.date; // DatePicker returns a moment object
@@ -242,6 +253,7 @@ const App = () => {
         const eventData = {
           eventId: values?.eventId,
           usageMethod: values?.usageMethod || '',
+          isEmergency: values?.isEmergency || 'Bình thường',
           hasParentBeenInformed: values?.hasParentBeenInformed || false,
           temperature: values?.temperature || '',
           heartRate: values?.heartRate || '',
@@ -253,14 +265,11 @@ const App = () => {
           studentId: values.studentId,
           nurseId: parseInt(nurseId),
           nurseName: nurseName,
-          updatedByNurseId: parseInt(updatedByNurseId),
-          updatedByNurseName: updatedByNurseName,
           note: values?.note || '',
           result: values?.result || '',
           processingStatus: 'Chờ xử lí',
           listMedicalEventTypes,
-          medicalSupplies: mappedSupplies,
-          emergency: values?.emergency || false
+          medicalSupplies: mappedSupplies
         };
 
         await createEmergencyEvent(eventData);
@@ -310,7 +319,7 @@ const App = () => {
         // Build eventData according to the new API structure
         const eventData = {
           usageMethod: values.usageMethod || '',
-          isEmergency: values.isEmergency || false,
+          isEmergency: values.isEmergency || 'Bình thường',
           hasParentBeenInformed: values.hasParentBeenInformed || false,
           temperature: values.temperature || '',
           heartRate: values.heartRate || '',
@@ -319,7 +328,7 @@ const App = () => {
           studentId: Array.isArray(values.studentId) ? values.studentId[0] : values.studentId, // API expects a single ID
           note: values.description,
           result: values.result,
-          processingStatus: values.processingStatus,
+          processingStatus: 'Hoàn thành',
           nurseName,
           listMedicalEventTypes: (Array.isArray(values.typeName) ? values.typeName : []).map(typeName => {
             const found = eventTypeList.find(t => t.typeName === typeName);
@@ -415,7 +424,7 @@ const App = () => {
         className: selectedEvent.className,
         studentId: selectedEvent.studentId,
         typeName: preSelectedEventType ? preSelectedEventType.typeName : undefined,
-        processingStatus: selectedEvent.processingStatus,
+        processingStatus: 'Hoàn thành',
         temperature: selectedEvent.temperature,
         heartRate: selectedEvent.heartRate,
         date: eventDateTime, // DatePicker expects a moment object
@@ -545,18 +554,22 @@ const App = () => {
   const loadEvents = async () => {
     try {
       const eventsData = await getAllMedicalEvents();
+      
       // Transform the data to match the new structure for the table
-      const transformedEvents = eventsData.map(event => ({
-        key: event.eventDetailsID,
-        eventId: event.eventId,
-        eventDetailsID: event.eventDetailsID,
-        studentName: event.studentName,
-        eventType: Array.isArray(event.eventType) ? event.eventType : [event.eventType],
-        time: event.time,
-        status: event.processingStatus || 'PROCESSING',
-        processingStatus: event.processingStatus || 'PROCESSING',
-        actions: event.actions || ''
-      }));
+      const transformedEvents = eventsData.map(event => {
+        return {
+          key: event.eventDetailsID,
+          eventId: event.eventId,
+          eventDetailsID: event.eventDetailsID,
+          studentName: event.studentName,
+          eventType: Array.isArray(event.eventType) ? event.eventType : [event.eventType],
+          time: event.time,
+          status: event.processingStatus || 'PROCESSING',
+          processingStatus: event.processingStatus || 'PROCESSING',
+          isEmergency: event.isEmergency || 'Bình thường',
+          actions: event.actions || ''
+        };
+      });
 
       // Sort events by time in descending order (newest first)
       transformedEvents.sort((a, b) => {
@@ -621,6 +634,14 @@ const App = () => {
   // Thêm hàm kiểm tra ngày không cho chọn ngày trong quá khứ
   const disabledPastDate = (current) => {
     return current && current < moment().startOf('day');
+  };
+
+  // Hàm xác định className cho từng hàng dựa trên mức độ nghiêm trọng
+  const getRowClassName = (record) => {
+    if (record.isEmergency === 'Nặng') {
+      return 'emergency-row';
+    }
+    return '';
   };
 
   return (
@@ -690,6 +711,7 @@ const App = () => {
           pagination={{ pageSize: 5 }}
           className="events-table"
           rowKey={record => `${record.eventDetailsID}-${record.eventId}`}
+          rowClassName={getRowClassName}
         />
       </Card>
 
@@ -900,7 +922,7 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="emergency"
-                  label="Tình trạng khẩn cấp"
+                  label="Mức độ nghiêm trọng"
                   valuePropName="checked"
                   initialValue={false}
                 >
@@ -1090,9 +1112,13 @@ const App = () => {
                 <Typography.Text>{selectedEvent.updatedByNurseName}</Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Khẩn cấp:</Typography.Text><br />
-                <Tag color={selectedEvent.isEmergency || selectedEvent.emergency ? 'red' : 'default'}>
-                  {(selectedEvent.isEmergency || selectedEvent.emergency) ? 'Có' : 'Không'}
+                <Typography.Text type="secondary" strong>Mức độ nghiêm trọng:</Typography.Text><br />
+                <Tag color={
+                  selectedEvent.isEmergency === 'Nặng' ? 'red' : 
+                  selectedEvent.isEmergency === 'Bình thường' ? 'orange' : 
+                  selectedEvent.isEmergency === 'Nhẹ' ? 'green' : 'default'
+                }>
+                  {selectedEvent.isEmergency || 'Bình thường'}
                 </Tag>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
@@ -1249,47 +1275,6 @@ const App = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="typeName"
-                  label="Loại sự kiện"
-                  rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
-
-                >
-                  <Select
-                    mode="multiple"
-                    placeholder="Chọn loại sự kiện"
-                    allowClear
-                    value={Array.isArray(editForm.getFieldValue('typeName')) ? editForm.getFieldValue('typeName') : []}
-                    onChange={() => { }}
-                    key={selectedEvent?.eventId || 'new'}
-                    disabled
-                  >
-                    {eventTypeList.map(eventType => (
-                      <Option key={eventType.eventTypeId} value={eventType.typeName}>
-                        {eventType.typeName}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="processingStatus"
-                  label="Trạng thái xử lý"
-                  rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-                >
-                  <Select placeholder="Chọn trạng thái">
-                   
-                    <Option value="Hoàn thành">Hoàn thành</Option>
-                    <Option value="Chờ xử lí">Chờ xử lí</Option>
-                    <Option value="Đã xóa">Đã xóa</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
                   name="temperature"
                   label={<span>Nhiệt độ (°C)  {temperatureWarning && <span style={{ color: 'red', marginLeft: 8 }}>{temperatureWarning}</span>}</span>}
                   rules={[
@@ -1389,10 +1374,15 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="isEmergency"
-                  label="Khẩn cấp"
-                  valuePropName="checked"
+                  label="Mức độ nghiêm trọng"
+                  initialValue="Bình thường"
+                  rules={[{ required: true, message: 'Vui lòng chọn mức độ nghiêm trọng' }]}
                 >
-                  <Switch />
+                  <Select placeholder="Chọn mức độ nghiêm trọng">
+                    <Option value="Nhẹ">Nhẹ</Option>
+                    <Option value="Bình thường">Bình thường</Option>
+                    <Option value="Nặng">Nặng</Option>
+                  </Select>
                 </Form.Item>
               </Col>
               <Col span={12}>
