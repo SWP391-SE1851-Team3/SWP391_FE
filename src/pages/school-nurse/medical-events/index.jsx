@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {Table,
+import {
+  Table,
   Button,
   Input,
   Select,
@@ -142,16 +143,16 @@ const App = () => {
       render: (_, record) => (
         <Space size="middle">
           <Tooltip title="Xem chi tiết">
-            <Button 
-              type="text" 
-              icon={<EyeOutlined />} 
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
               onClick={() => handleViewDetails(record)}
             />
           </Tooltip>
           <Tooltip title="Chỉnh sửa">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
+            <Button
+              type="text"
+              icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
             />
           </Tooltip>
@@ -165,14 +166,14 @@ const App = () => {
     return events.filter(event => {
       // Lọc theo từ khóa tìm kiếm
       const searchLower = searchText.toLowerCase();
-      const matchesSearch = searchText === '' || 
+      const matchesSearch = searchText === '' ||
         (event.studentName && event.studentName.toLowerCase().includes(searchLower)) ||
         (event.eventType && event.eventType.toLowerCase().includes(searchLower)) ||
         (event.time && moment(event.time).format('DD/MM/YYYY HH:mm').toLowerCase().includes(searchLower)) ||
         (event.processingStatus && event.processingStatus.toLowerCase().includes(searchLower));
 
       // Lọc theo loại sự kiện
-      const matchesStatus = statusFilter === '' || 
+      const matchesStatus = statusFilter === '' ||
         (event.eventType && event.eventType.toLowerCase() === statusFilter.toLowerCase());
 
       // Lọc theo trạng thái
@@ -187,12 +188,12 @@ const App = () => {
   const getFilteredSupplies = () => {
     return medicalSupplies.filter(supply => {
       // Lọc theo từ khóa tìm kiếm
-      const matchesSearch = searchSupplyText === '' || 
+      const matchesSearch = searchSupplyText === '' ||
         supply.name.toLowerCase().includes(searchSupplyText.toLowerCase()) ||
         supply.category.toLowerCase().includes(searchSupplyText.toLowerCase());
 
       // Lọc theo loại vật tư
-      const matchesCategory = categoryFilter === '' || 
+      const matchesCategory = categoryFilter === '' ||
         supply.category === categoryFilter;
 
       return matchesSearch && matchesCategory;
@@ -300,12 +301,12 @@ const App = () => {
         // Lấy nurseId và nurseName từ localStorage
         const nurseId = localStorage.getItem('userId') || '';
         const nurseName = localStorage.getItem('fullname') || '';
-        
+
         // Convert date string to proper format using moment
         const dateObj = values.date; // DatePicker returns a moment object
         const timeObj = values.time;
         const eventDateTime = dateObj.format('YYYY-MM-DD') + 'T' + timeObj.format('HH:mm:ss.SSS') + 'Z';
-        
+
         // Build eventData according to the new API structure
         const eventData = {
           usageMethod: values.usageMethod || '',
@@ -402,8 +403,8 @@ const App = () => {
     if (isEditModalVisible && selectedEvent) {
       const eventDateTime = moment(selectedEvent.eventDateTime);
 
-      const eventTypeNameForForm = selectedEvent.eventTypeNames && selectedEvent.eventTypeNames.length > 0 
-        ? selectedEvent.eventTypeNames[0].trim() 
+      const eventTypeNameForForm = selectedEvent.eventTypeNames && selectedEvent.eventTypeNames.length > 0
+        ? selectedEvent.eventTypeNames[0].trim()
         : '';
 
       const preSelectedEventType = eventTypeList.find(type =>
@@ -413,7 +414,7 @@ const App = () => {
       const formValues = {
         className: selectedEvent.className,
         studentId: selectedEvent.studentId,
-        typeName: preSelectedEventType ? preSelectedEventType.typeName : undefined, 
+        typeName: preSelectedEventType ? preSelectedEventType.typeName : undefined,
         processingStatus: selectedEvent.processingStatus,
         temperature: selectedEvent.temperature,
         heartRate: selectedEvent.heartRate,
@@ -469,9 +470,9 @@ const App = () => {
       // Find the pre-selected student from the fetched list
       const preSelectedStudent = studentsData.find(s => s.studentID === eventDetails.studentId);
       if (preSelectedStudent) {
-          // setSelectedStudent(preSelectedStudent); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
+        // setSelectedStudent(preSelectedStudent); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
       } else {
-          // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
+        // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
       }
       // Open modal - form fields will be set by useEffect
       setIsEditModalVisible(true);
@@ -512,11 +513,11 @@ const App = () => {
   const handleClassChange = async (className) => {
     setSelectedClass(className);
     // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
-    form.setFieldsValue({ 
+    form.setFieldsValue({
       studentId: undefined,
-      parentId: undefined 
+      parentId: undefined
     });
-    
+
     if (className) {
       try {
         const studentsData = await fetchStudentsByClass(className);
@@ -626,9 +627,9 @@ const App = () => {
     <div className="medical-management-app">
       <div className="app-header">
         <Title level={2} className="app-title">Quản lý Sự kiện Y tế</Title>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
           className="create-btn"
           onClick={handleOpenCreateModal}
         >
@@ -675,7 +676,7 @@ const App = () => {
                 allowClear
               >
                 <Option value="">Tất cả trạng thái</Option>
-                <Option value="Đang xử lí">Đang xử lí</Option>
+            
                 <Option value="Hoàn thành">Hoàn thành</Option>
                 <Option value="Chờ xử lí">Chờ xử lí</Option>
               </Select>
@@ -697,13 +698,13 @@ const App = () => {
         <div className="filters-section custom-filters-section">
           <Row gutter={16} justify="space-between" align="middle">
             <Col flex="auto">
-            <Input
-              placeholder="Tìm kiếm vật tư..."
-              prefix={<SearchOutlined />}
-              value={searchSupplyText}
-              onChange={(e) => setSearchSupplyText(e.target.value)}
-              allowClear
-            />
+              <Input
+                placeholder="Tìm kiếm vật tư..."
+                prefix={<SearchOutlined />}
+                value={searchSupplyText}
+                onChange={(e) => setSearchSupplyText(e.target.value)}
+                allowClear
+              />
             </Col>
             <Col>
               <Select
@@ -714,10 +715,8 @@ const App = () => {
                 allowClear
               >
                 <Option value="">Tất cả loại vật tư</Option>
-                <Option value="Bảo hộ">Bảo hộ</Option>
-                <Option value="Dụng cụ">Dụng cụ</Option>
-                <Option value="Băng gạc">Băng gạc</Option>
-                <Option value="Khử trùng">Khử trùng</Option>
+                <Option value="Dụng cụ y tế">Dụng cụ y tế</Option>
+                <Option value="Thuốc kháng sinh">Thuốc kháng sinh</Option>
                 <Option value="Thiết bị">Thiết bị</Option>
               </Select>
             </Col>
@@ -730,13 +729,13 @@ const App = () => {
               title: 'Tên vật tư',
               dataIndex: 'name',
               key: 'name',
-              
+
             },
             {
               title: 'Số lượng',
               dataIndex: 'quantity',
               key: 'quantity',
-             
+
               render: (text, record) => (
                 <span>
                   {text} {record.unit}
@@ -747,7 +746,7 @@ const App = () => {
               title: 'Loại vật tư',
               dataIndex: 'category',
               key: 'category',
-             
+
               render: (text) => <Tag>{text}</Tag>
             },
           ]}
@@ -758,7 +757,7 @@ const App = () => {
 
       </Card>
 
-           {/* Modal tạo sự kiện mới */}
+      {/* Modal tạo sự kiện mới */}
       <Modal
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Tạo sự kiện y tế mới</span>}
         open={isModalVisible}
@@ -840,12 +839,12 @@ const App = () => {
                         if (a.className > b.className) return 1;
                         return 0;
                       }).map(student => (
-                        <Option 
+                        <Option
                           key={student.studentID}
                           value={student.studentID}
                           label={`${student.fullName} - ${student.className} `}
                         >
-                          {student.fullName} - {student.className} 
+                          {student.fullName} - {student.className}
                         </Option>
                       ))
                     ) : (
@@ -861,12 +860,12 @@ const App = () => {
               label="Loại sự kiện"
               rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
             >
-              <Select 
+              <Select
                 mode="multiple"
-                placeholder="Chọn loại sự kiện" 
+                placeholder="Chọn loại sự kiện"
                 allowClear
                 value={Array.isArray(form.getFieldValue('typeName')) ? form.getFieldValue('typeName') : []}
-                onChange={() => {}}
+                onChange={() => { }}
               >
                 {eventTypeList.map(eventType => (
                   <Option key={eventType.eventTypeId} value={eventType.typeName}>
@@ -924,7 +923,7 @@ const App = () => {
               name="usageMethod"
               label="Phương pháp xử lý"
               rules={[
-                { 
+                {
                   validator: (_, value) => {
                     if (value === undefined || value === '') return Promise.resolve();
                     if (isOnlyWhitespace(value)) return Promise.reject('Phương pháp xử lý không được để khoảng trắng đầu dòng!');
@@ -1062,12 +1061,12 @@ const App = () => {
                 <Typography.Text type="secondary" strong>Trạng thái:</Typography.Text><br />
                 <Tag color={
                   selectedEvent.processingStatus === 'Hoàn thành' ? 'success' :
-                  selectedEvent.processingStatus === 'Đang xử lí' ? 'processing' :
-                  selectedEvent.processingStatus === 'Đã xóa' ? 'default' : 'error'
+                    selectedEvent.processingStatus === 'Đang xử lí' ? 'processing' :
+                      selectedEvent.processingStatus === 'Đã xóa' ? 'default' : 'error'
                 }>
                   {selectedEvent.processingStatus === 'Hoàn thành' ? 'Hoàn thành' :
-                   selectedEvent.processingStatus === 'Đang xử lí' ? 'Đang xử lí' :
-                   selectedEvent.processingStatus === 'Đã xóa' ? 'Đã xóa' : 'Chờ xử lí'}
+                    selectedEvent.processingStatus === 'Đang xử lí' ? 'Đang xử lí' :
+                      selectedEvent.processingStatus === 'Đã xóa' ? 'Đã xóa' : 'Chờ xử lí'}
                 </Tag>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
@@ -1075,10 +1074,10 @@ const App = () => {
                 <Typography.Text>
                   {Array.isArray(selectedEvent.eventTypeNames) && selectedEvent.eventTypeNames.length > 0
                     ? selectedEvent.eventTypeNames.map((name, idx) => (
-                        <Tag color="red" key={idx} style={{ display: 'block', marginBottom: 4 }}>
-                          {name}
-                        </Tag>
-                      ))
+                      <Tag color="red" key={idx} style={{ display: 'block', marginBottom: 4 }}>
+                        {name}
+                      </Tag>
+                    ))
                     : selectedEvent.eventType}
                 </Typography.Text>
               </Col>
@@ -1231,8 +1230,8 @@ const App = () => {
                         if (a.className > b.className) return 1;
                         return 0;
                       }).map(student => (
-                        <Option 
-                          key={student.studentID} 
+                        <Option
+                          key={student.studentID}
                           value={student.studentID}
                           label={`${student.fullName} - ${student.className} - ${student.gender === 1 ? 'Nam' : 'Nữ'}`}
                         >
@@ -1253,14 +1252,14 @@ const App = () => {
                   name="typeName"
                   label="Loại sự kiện"
                   rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
-                  
+
                 >
-                  <Select 
+                  <Select
                     mode="multiple"
-                    placeholder="Chọn loại sự kiện" 
+                    placeholder="Chọn loại sự kiện"
                     allowClear
                     value={Array.isArray(editForm.getFieldValue('typeName')) ? editForm.getFieldValue('typeName') : []}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     key={selectedEvent?.eventId || 'new'}
                     disabled
                   >
@@ -1279,7 +1278,7 @@ const App = () => {
                   rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
                 >
                   <Select placeholder="Chọn trạng thái">
-                    <Option value="Đang xử lí">Đang xử lí</Option>
+                   
                     <Option value="Hoàn thành">Hoàn thành</Option>
                     <Option value="Chờ xử lí">Chờ xử lí</Option>
                     <Option value="Đã xóa">Đã xóa</Option>
@@ -1292,10 +1291,11 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="temperature"
-                  label={<span>Nhiệt độ (°C)  {temperatureWarning && <span style={{color:'red', marginLeft:8}}>{temperatureWarning}</span>}</span>}
+                  label={<span>Nhiệt độ (°C)  {temperatureWarning && <span style={{ color: 'red', marginLeft: 8 }}>{temperatureWarning}</span>}</span>}
                   rules={[
                     { required: true, message: 'Vui lòng nhập nhiệt độ' },
-                    { validator: (_, value) => {
+                    {
+                      validator: (_, value) => {
                         if (value === undefined || value === '') {
                           setTemperatureWarning('');
                           return Promise.resolve();
@@ -1328,10 +1328,11 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="heartRate"
-                  label={<span>Nhịp tim (bpm) {heartRateWarning && <span style={{color:'red', marginLeft:8}}>{heartRateWarning}</span>}</span>}
+                  label={<span>Nhịp tim (bpm) {heartRateWarning && <span style={{ color: 'red', marginLeft: 8 }}>{heartRateWarning}</span>}</span>}
                   rules={[
                     { required: true, message: 'Vui lòng nhập nhịp tim' },
-                    { validator: (_, value) => {
+                    {
+                      validator: (_, value) => {
                         if (value === undefined || value === '') {
                           setHeartRateWarning('');
                           return Promise.resolve();
@@ -1411,7 +1412,7 @@ const App = () => {
                   name="usageMethod"
                   label="Phương pháp xử lý"
                   rules={[
-                    { 
+                    {
                       validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
                         if (isOnlyWhitespace(value)) return Promise.reject('Phương pháp xử lý không được để khoảng trắng đầu dòng!');
@@ -1433,7 +1434,7 @@ const App = () => {
                   name="description"
                   label="Ghi chú"
                   rules={[
-                    { 
+                    {
                       validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
                         if (isOnlyWhitespace(value)) return Promise.reject('Ghi chú không được để khoảng trắng đầu dòng!');
@@ -1455,7 +1456,7 @@ const App = () => {
                   name="result"
                   label="Kết quả xử lý"
                   rules={[
-                    { 
+                    {
                       validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
                         if (isOnlyWhitespace(value)) return Promise.reject('Kết quả xử lý không được để khoảng trắng đầu dòng!');

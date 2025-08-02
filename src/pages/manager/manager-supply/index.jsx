@@ -30,7 +30,7 @@ const categoryOptions = [
 
 const initialForm = {
     supplyName: "",
-    categoryId: "",
+    categoryID: "",
     unit: "",
     quantityAvailable: "",
     reorderLevel: "",
@@ -102,7 +102,7 @@ const SupplyManagement = () => {
 
         form.setFieldsValue({
             supplyName: record.supplyName,
-            categoryId: String(record.categoryID || record.categoryId),
+            categoryID: record.categoryID,
             unit: record.unit,
             quantityAvailable: record.quantityAvailable,
             reorderLevel: record.reorderLevel,
@@ -129,7 +129,7 @@ const SupplyManagement = () => {
         const now = new Date().toISOString();
         const payload = {
             supplyName: values.supplyName,
-            categoryID: Number(values.categoryId),
+            categoryID: Number(values.categoryID),
             unit: values.unit,
             quantityAvailable: values.quantityAvailable || 0,
             reorderLevel: values.reorderLevel || 0,
@@ -160,8 +160,8 @@ const SupplyManagement = () => {
             dataIndex: "categoryName",
             render: (_, record) => {
                 if (record.categoryName) return record.categoryName;
-                if (record.categoryId === 1) return "Thuốc Kháng Sinh";
-                if (record.categoryId === 2) return "Dụng Cụ Y Tế";
+                if (record.categoryID === 1) return "Thuốc Kháng Sinh";
+                if (record.categoryID === 2) return "Dụng Cụ Y Tế";
                 return "";
             },
         },
@@ -288,15 +288,12 @@ const SupplyManagement = () => {
                         <Col xs={24} md={12}>
                             <Form.Item
                                 label="Danh mục"
-                                name="categoryName"
+                                name="categoryID"
                                 rules={[{ required: true, message: "Chọn danh mục!" }]}
                             >
                                 <Select placeholder="Chọn danh mục">
-                                    {categoryOptions.map((cat) => (
-                                        <Option key={cat.value} value={cat.value}>
-                                            {cat.label}
-                                        </Option>
-                                    ))}
+                                    <Option value="1">Thuốc Kháng Sinh</Option>
+                                    <Option value="2">Dụng Cụ Y Tế</Option>
                                 </Select>
                             </Form.Item>
                         </Col>

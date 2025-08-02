@@ -80,7 +80,7 @@ const UserManagement = () => {
         setEditingUser(record);
         form.setFieldsValue({
             userName: record.userName,
-            password: record.password,
+            // password: record.password,
             fullName: record.fullName,
             email: record.email,
             phone: record.phone,
@@ -107,8 +107,12 @@ const UserManagement = () => {
 
     const handleFinish = async (values) => {
         if (editingUser) {
+            const payload = {
+            ...values,
+            password: values.password ? values.password : editingUser.password,
+        };
             try {
-                await updateUser(editingUser.id, roleId, values);
+                await updateUser(editingUser.id, roleId, payload);
                 message.success("Cập nhật thành công!");
                 reloadUsers(roleId);
                 setEditingUser(null);

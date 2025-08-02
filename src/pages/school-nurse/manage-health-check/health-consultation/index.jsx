@@ -53,7 +53,7 @@ const HealthConsultation = () => {
 
   const filteredConsultations = consultations.filter(consultation => {
     const matchesSearch = consultation.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         consultation.reason.toLowerCase().includes(searchTerm.toLowerCase());
+      consultation.scheduleName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'all' || consultation.className === typeFilter;
     const matchesStatus = statusFilter === 'all' || consultation.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;

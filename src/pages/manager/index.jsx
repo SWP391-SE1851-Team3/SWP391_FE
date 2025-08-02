@@ -166,7 +166,7 @@ const fetchData = async () => {
     const healthCheckColumnData = [
         { type: 'Tổng lịch', value: healthCheckStats.totalSchedules || 0 },
         { type: 'Hoàn thành', value: healthCheckStats.completedSchedules || 0 },
-        { type: 'Đã khám', value: healthCheckStats.countRejected || 0 }
+        { type: 'Từ chối', value: healthCheckStats.countRejected || 0 }
     ];
     const healthCheckColumnConfig = {
         data: healthCheckColumnData,

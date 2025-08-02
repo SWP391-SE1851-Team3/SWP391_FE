@@ -3,7 +3,7 @@ import { SendOutlined, EyeOutlined, FilterOutlined, SearchOutlined } from '@ant-
 import { Button, Card, Input, Select, Modal, Typography, Row, Col, Tag, Space, message, Statistic, Badge, Alert } from 'antd';
 import './health-check-consent.css';
 import { formatDateTime } from '../../../../utils/formatDate';
-import {getAllHealthConsents} from '../../../../api/healthCheckAPI';
+import { getAllHealthConsents } from '../../../../api/healthCheckAPI';
 const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -32,7 +32,9 @@ const HealthCheckConsent = () => {
   const sortedConsents = [...consents].sort((a, b) => new Date(b.send_date) - new Date(a.send_date));
 
   const filteredConsents = sortedConsents.filter(consent => {
-    const matchesSearch = consent.studentName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      consent.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      consent.healthScheduleName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || consent.isAgreed === statusFilter;
     const matchesClass = classFilter === 'all' || consent.className === classFilter;
     return matchesSearch && matchesStatus && matchesClass;
@@ -75,23 +77,23 @@ const HealthCheckConsent = () => {
       </Row>
       <div className="health-check-consent-filters">
         <Input
-          placeholder="Tìm kiếm học sinh, phụ huynh..."
+          placeholder="Tìm kiếm học sinh, đợt khám..."
           prefix={<SearchOutlined />}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           style={{ width: 300 }}
           allowClear
         />
-        <Select 
-        style={{ width: 180 }} 
-        value={statusFilter} 
-        onChange={setStatusFilter} 
-        placeholder="Trạng thái">
-            <Option value="all">Tất cả trạng thái</Option>
-            <Option value="Chờ phản hồi">Chờ phản hồi</Option>
-            <Option value="Đồng ý">Đồng ý</Option>
-            <Option value="Từ chối">Từ chối</Option>
-          </Select>
+        <Select
+          style={{ width: 180 }}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          placeholder="Trạng thái">
+          <Option value="all">Tất cả trạng thái</Option>
+          <Option value="Chờ phản hồi">Chờ phản hồi</Option>
+          <Option value="Đồng ý">Đồng ý</Option>
+          <Option value="Từ chối">Từ chối</Option>
+        </Select>
         <Select
           style={{ width: 180, marginLeft: 12 }}
           value={classFilter}
@@ -111,7 +113,7 @@ const HealthCheckConsent = () => {
           <div key={consent.formID} className="health-check-consent-card">
             <div className="health-check-consent-card-header">
               <div>
-                                 <Title level={4} style={{ marginBottom: 0 }}>{consent.studentName} - {consent.healthScheduleName}</Title>
+                <Title level={4} style={{ marginBottom: 0 }}>{consent.studentName} - {consent.healthScheduleName}</Title>
                 <div style={{ marginBottom: 2 }}>
                   <Text type="secondary">Lớp: </Text><Text>{consent.className}</Text>
                 </div>
@@ -131,14 +133,14 @@ const HealthCheckConsent = () => {
               </div>
             )}
             <div className="health-check-consent-card-actions">
-              <Button 
-              icon={<EyeOutlined />} 
-              onClick={() => { setSelectedConsent(consent); setIsDetailModalOpen(true); }}
+              <Button
+                icon={<EyeOutlined />}
+                onClick={() => { setSelectedConsent(consent); setIsDetailModalOpen(true); }}
               >
                 Xem chi tiết
               </Button>
               {consent.isAgreed === 'Chờ phản hồi' && (
-                <Button 
+                <Button
                   icon={<SendOutlined />}
                   onClick={() => handleResendConsent()}
                 >

@@ -226,9 +226,9 @@ const MedicationManagement = () => {
       width: '15%',
       render: (_, record) => (
         <Space>
-          <Button 
-            icon={<EyeOutlined />} 
-            size="small" 
+          <Button
+            icon={<EyeOutlined />}
+            size="small"
             onClick={() => handleViewDetails(record)}
           >
           </Button>
@@ -263,7 +263,7 @@ const MedicationManagement = () => {
     } else {
       updateStatusForm.setFieldsValue({
         status: record.status,
-        
+
         nurseId: nurseId,
       });
     }
@@ -303,7 +303,7 @@ const MedicationManagement = () => {
         message.error('Chỉ được upload file ảnh!');
         return false;
       }
-      
+
       // Kiểm tra kích thước file (5MB)
       const isLt5M = file.size / 1024 / 1024 < 5;
       if (!isLt5M) {
@@ -328,10 +328,10 @@ const MedicationManagement = () => {
       hideLoading = message.loading('Đang tải ảnh evidence...', 0);
       const base64String = await getEvidenceImage(confirmId);
       console.log('Nhận được evidence image base64:', base64String.substring(0, 50) + '...');
-      
+
       // Đảm bảo có header data:image nếu chưa có
       let imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
-      
+
       setEvidenceImageToShow(imgSrc);
       setIsEvidenceImageModalVisible(true);
     } catch (error) {
@@ -428,7 +428,7 @@ const MedicationManagement = () => {
       const itemDate = dayjs(item.submissionDate).format('YYYY-MM-DD');
       return itemDate === dateStr;
     });
-    
+
     if (dayData.length > 0) {
       return (
         <div className="calendar-cell">
@@ -472,7 +472,7 @@ const MedicationManagement = () => {
       <div className="layout-container">
         {/* Left Column - Calendar */}
         <div className="calendar-section">
-          <Card 
+          <Card
             className="calendar-card"
             title={
               <div className="calendar-header">
@@ -496,7 +496,7 @@ const MedicationManagement = () => {
 
         {/* Right Column - Medication List */}
         <div className="medication-section">
-          <Card 
+          <Card
             className="medication-list-card"
             title={
               <div className="medication-header">
@@ -682,10 +682,10 @@ const MedicationManagement = () => {
               {detailData?.medicationDetails && Array.isArray(detailData.medicationDetails) && detailData.medicationDetails.length > 0 && (
                 <Col span={24} style={{ marginTop: 12 }}>
                   <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Chi tiết thuốc:</Typography.Text>
-                  <div style={{marginTop: 8}}>
-                    <ul style={{paddingLeft: 20}}>
+                  <div style={{ marginTop: 8 }}>
+                    <ul style={{ paddingLeft: 20 }}>
                       {detailData.medicationDetails.map((item, idx) => (
-                        <li key={item.medicationDetailId ? `med-${item.medicationDetailId}` : `idx-${idx}`} style={{marginBottom: 8}}>
+                        <li key={item.medicationDetailId ? `med-${item.medicationDetailId}` : `idx-${idx}`} style={{ marginBottom: 8 }}>
                           <div><Typography.Text type="secondary">Tên thuốc:</Typography.Text> <Typography.Text>{item.medicineName}</Typography.Text></div>
                           <div><Typography.Text type="secondary">Liều dùng:</Typography.Text> <Typography.Text>{item.dosage}</Typography.Text></div>
                           <div><Typography.Text type="secondary">Thời gian sử dụng:</Typography.Text> <Typography.Text>{item.timeToUse}</Typography.Text></div>
@@ -697,9 +697,9 @@ const MedicationManagement = () => {
                 </Col>
               )}
               {/* Ảnh thuốc */}
-                             <Col span={12} style={{ marginBottom: 6 }}>
-                 <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Ảnh thuốc:</Typography.Text><br />
-                 <Button type="primary" onClick={async () => {
+              <Col span={12} style={{ marginBottom: 6 }}>
+                <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Ảnh thuốc:</Typography.Text><br />
+                <Button type="primary" onClick={async () => {
                   let hideLoading = null;
                   try {
                     hideLoading = message.loading('Đang tải ảnh...', 0);
@@ -729,18 +729,18 @@ const MedicationManagement = () => {
               {confirmationData && (
                 <Col span={24} style={{ marginTop: 12 }}>
                   <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Thông tin xác nhận của nhân viên y tế:</Typography.Text>
-                  <div style={{marginTop: 8, marginLeft: 12}}>
-                    
+                  <div style={{ marginTop: 8, marginLeft: 12 }}>
+
                     <div><Typography.Text strong>Trạng thái:</Typography.Text> <Typography.Text>{confirmationData.status}</Typography.Text></div>
-                    
+
                     <div><Typography.Text strong>Ghi chú:</Typography.Text> <Typography.Text>{confirmationData.reason}</Typography.Text></div>
                     {/* SỬA ĐỔI: Thay text thành button xem ảnh */}
                     <div>
                       <Typography.Text strong>Bằng chứng:</Typography.Text>{' '}
                       {confirmationData.evidence ? (
-                        <Button 
-                          type="link" 
-                          icon={<PictureOutlined />} 
+                        <Button
+                          type="link"
+                          icon={<PictureOutlined />}
                           size="small"
                           onClick={() => handleViewEvidenceImage(confirmationData.confirmId)}
                         >
@@ -774,17 +774,17 @@ const MedicationManagement = () => {
       >
         {imageToShow ? (
           <div style={{ textAlign: 'center' }}>
-            <img 
-              src={imageToShow} 
-              alt="medicine" 
+            <img
+              src={imageToShow}
+              alt="medicine"
               style={{
-                maxWidth: '100%', 
-                maxHeight: '500px', 
-                display: 'block', 
+                maxWidth: '100%',
+                maxHeight: '500px',
+                display: 'block',
                 margin: '0 auto',
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-              }} 
+              }}
               onError={(e) => {
                 console.error('Image failed to load:', e);
                 message.error('Không thể hiển thị ảnh');
@@ -813,17 +813,17 @@ const MedicationManagement = () => {
       >
         {evidenceImageToShow ? (
           <div style={{ textAlign: 'center' }}>
-            <img 
-              src={evidenceImageToShow} 
-              alt="evidence" 
+            <img
+              src={evidenceImageToShow}
+              alt="evidence"
               style={{
-                maxWidth: '100%', 
-                maxHeight: '500px', 
-                display: 'block', 
+                maxWidth: '100%',
+                maxHeight: '500px',
+                display: 'block',
                 margin: '0 auto',
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-              }} 
+              }}
               onError={(e) => {
                 console.error('Evidence image failed to load:', e);
                 message.error('Không thể hiển thị ảnh bằng chứng');
@@ -846,8 +846,8 @@ const MedicationManagement = () => {
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Cập nhật tình trạng thuốc</span>}
         open={isUpdateStatusModalVisible}
         onOk={handleSubmitUpdateStatus}
-        onCancel={() => { 
-          setIsUpdateStatusModalVisible(false); 
+        onCancel={() => {
+          setIsUpdateStatusModalVisible(false);
           setEvidenceFileList([]);
         }}
         okText="Cập nhật"
@@ -855,7 +855,7 @@ const MedicationManagement = () => {
         confirmLoading={uploadingEvidence}
       >
         <Form form={updateStatusForm} layout="vertical">
-          <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}> 
+          <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}>
             <Select placeholder="Chọn trạng thái">
               <Option value="Chờ nhận thuốc">Chờ nhận thuốc</Option>
               <Option value="Đã nhận thuốc">Đã nhận thuốc</Option>
@@ -863,11 +863,14 @@ const MedicationManagement = () => {
               <Option value="Đã hủy">Đã hủy</Option>
             </Select>
           </Form.Item>
-          <Form.Item name="reason" label="Ghi chú" rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}> 
+          <Form.Item name="reason" label="Ghi chú" rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}>
             <Input.TextArea placeholder="Nhập lý do" />
           </Form.Item>
+          <Form.Item name="nurseId" hidden>
+            <Input />
+          </Form.Item>
 
-          <Form.Item label="Bằng chứng (Ảnh)"> 
+          <Form.Item label="Bằng chứng (Ảnh)">
             <Upload.Dragger {...evidenceUploadProps}>
               <p className="ant-upload-drag-icon">
                 <UploadOutlined />

@@ -66,7 +66,8 @@ const HealthCheckRecord = () => {
   }, []);
 
       const filteredRecords = records.filter(record => {
-      const matchesSearch = record.studentName.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = record.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.scheduleName.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesClass = classFilter === 'all' || record.className === classFilter;
     const matchesStatus = statusFilter === 'all' || record.status === statusFilter;
     return matchesSearch && matchesClass && matchesStatus;

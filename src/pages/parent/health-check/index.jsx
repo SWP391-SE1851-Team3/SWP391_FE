@@ -514,7 +514,7 @@ const ParentHealthCheck = () => {
           {/* Lịch sử đồng ý kiểm tra */}
           {Array.isArray(healthConsentForms) && healthConsentForms.length > 0 && (
             <div className="history-section" style={{ marginTop: '30px' }}>
-              <h3>Lịch sử đồng ý kiểm tra sức khỏe</h3>
+              <h3>Lịch Sử Phản Hồi</h3>
               <ul>
                 {renderConsentHistory()}
                 {(Array.isArray(healthConsentForms)

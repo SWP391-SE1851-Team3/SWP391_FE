@@ -125,7 +125,8 @@ const VaccinationRecords = () => {
     const displayStatus = mapStatus(record.status);
     const matchesSearch =
       (record.studentName && record.studentName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (record.vaccineName && record.vaccineName.toLowerCase().includes(searchTerm.toLowerCase()));
+      (record.vaccineName && record.vaccineName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (record.dot && record.dot.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesClass = classFilter === 'all' || record.className === classFilter;
     const matchesStatus = statusFilter === 'all' || displayStatus === statusFilter;
     return matchesSearch && matchesClass && matchesStatus;
@@ -335,7 +336,7 @@ const VaccinationRecords = () => {
                 <div>
                   <Title level={4}>{record.studentName} -  {record.dot}</Title>
                   <Text type="secondary">
-                    Lớp: {record.className} | Tên vaccine: {record.vaccineName}
+                   {record.className} | Tên vaccine: {record.vaccineName}
                   </Text>
                 </div>
                 <Badge status={badgeStatus} text={displayStatus} />

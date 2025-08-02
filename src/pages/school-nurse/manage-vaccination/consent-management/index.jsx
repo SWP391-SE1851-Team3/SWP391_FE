@@ -91,7 +91,8 @@ const ConsentManagement = () => {
   // Filter consents
   const filteredConsents = consents.filter(consent => {
     const matchesSearch = consent.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         consent.parentName.toLowerCase().includes(searchTerm.toLowerCase());
+                         consent.parentName.toLowerCase().includes(searchTerm.toLowerCase())||
+                         consent.dot.toLowerCase().includes(searchTerm.toLowerCase());
     let matchesStatus = true;
     if (statusFilter !== 'all') {
       matchesStatus = consent.isAgree === statusFilter;

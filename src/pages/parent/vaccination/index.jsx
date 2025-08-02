@@ -19,28 +19,28 @@ const ParentVaccineConfirmation = () => {
   const [form] = Form.useForm();
   const parentId = localStorage.getItem('userId');
 
-    useEffect(() => {
-      if (!parentId) {
-        message.error('Vui lòng đăng nhập!');
-        return;
-      }
-      fetchStudents();
-    }, [parentId]);
+  useEffect(() => {
+    if (!parentId) {
+      message.error('Vui lòng đăng nhập!');
+      return;
+    }
+    fetchStudents();
+  }, [parentId]);
 
-    const fetchStudents = async () => {
-      setLoadingStudents(true);
-      try {
-        const res = await getStudentsByParent(parentId);
-        const studentsData = res;
-        setStudents(studentsData);
-      } catch (error) {
-        console.error(error);
-        message.error('Không tải được danh sách học sinh');
-        setStudents([]);
-      } finally {
-        setLoadingStudents(false);
-      }
-    };
+  const fetchStudents = async () => {
+    setLoadingStudents(true);
+    try {
+      const res = await getStudentsByParent(parentId);
+      const studentsData = res;
+      setStudents(studentsData);
+    } catch (error) {
+      console.error(error);
+      message.error('Không tải được danh sách học sinh');
+      setStudents([]);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
 
   const handleViewDetails = async (student) => {
     const id = Number(student.studentID || student.studentId || student.id);
@@ -123,7 +123,7 @@ const ParentVaccineConfirmation = () => {
       let vaccinationResults = [];
       try {
         const vaccinationRes = await getVaccinationRecordByStudent(id);
-        vaccinationResults = vaccinationRes || [];  
+        vaccinationResults = vaccinationRes || [];
       } catch (error) {
         vaccinationResults = [];
       }
@@ -203,21 +203,21 @@ const ParentVaccineConfirmation = () => {
     form.resetFields();
   };
 
-const formatDate = (dateTimeString) => {
-  if (!dateTimeString) return "Chưa có dữ liệu";
-  try {
-    const date = new Date(dateTimeString);
-    return date.toLocaleString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  } catch (error) {
-    return "Không hợp lệ";
-  }
-};
+  const formatDate = (dateTimeString) => {
+    if (!dateTimeString) return "Chưa có dữ liệu";
+    try {
+      const date = new Date(dateTimeString);
+      return date.toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return "Không hợp lệ";
+    }
+  };
 
   const handleViewRecordDetails = (record) => {
     setSelectedRecord(record);
@@ -229,8 +229,8 @@ const formatDate = (dateTimeString) => {
       <h2>Thông Báo Tiêm Chủng</h2>
       {hasConsentForm && hasPendingForm ? (
         <>
-            <span><strong>Họ tên học sinh: </strong> {consentForm?.fullNameOfStudent}</span>
-            <span><strong>   -</strong> {consentForm?.className}</span>
+          <span><strong>Họ tên học sinh: </strong> {consentForm?.fullNameOfStudent}</span>
+          <span><strong>   -</strong> {consentForm?.className}</span>
           <p><strong>Vắc xin đăng ký:</strong> {consentForm?.vaccineName}</p>
           <div className="info-row">
             <span><strong>Ngày tiêm dự kiến:</strong> {formatDate(consentForm?.scheduledDate)}</span>
@@ -320,9 +320,11 @@ const formatDate = (dateTimeString) => {
           <div className="detail-row">
             <strong>Ghi chú:</strong> {selectedRecord.notes || "Không có"}
           </div>
-          <div className="detail-row">
-            <strong>Thời gian quan sát:</strong> {formatDateTime(selectedRecord.observation_time)}
-          </div>
+          {!(selectedRecord.status === "Hoàn thành") && (
+            <div className="detail-row">
+              <strong>Thời gian theo dõi:</strong> {formatDateTime(selectedRecord.observation_time)}
+            </div>
+          )}
           <div className="detail-row">
             <strong>Triệu chứng:</strong> {selectedRecord.symptoms || "Không có"}
           </div>
@@ -330,7 +332,7 @@ const formatDate = (dateTimeString) => {
             <strong>Mức độ nghiêm trọng:</strong> {selectedRecord.severity || "Không có"}
           </div>
           <div className="detail-row">
-            <strong>Ghi chú quan sát:</strong> {selectedRecord.observation_notes || "Không có"}
+            <strong>Ghi chú theo dõi:</strong> {selectedRecord.observation_notes || "Không có"}
           </div>
           <div className="detail-row">
             <strong>Tên y tá:</strong> {selectedRecord.createNurseName || "Không rõ"}
@@ -423,7 +425,7 @@ const formatDate = (dateTimeString) => {
           </div>
 
           <div className="history-section" style={{ marginTop: '40px' }}>
-            <h3>Lịch Sử Đồng Ý Tiêm Chủng</h3>
+            <h3>Lịch Sử Phản Hồi</h3>
             <ul>
               {hasConsentForm && !hasPendingForm && consentForm?.isAgree &&
                 (consentForm.isAgree === "Đồng ý" || consentForm.isAgree === "Không đồng ý") &&
@@ -445,9 +447,12 @@ const formatDate = (dateTimeString) => {
                     <div className="history-card-row">
                       <span className="history-label">Địa điểm:</span> {item.location}
                     </div>
+                    <div className="history-card-row">
+                      <span className="history-label">Ngày Tiêm:</span> {formatDate(item.scheduledDate)}
+                    </div>
                   </li>
                 ))}
-                
+
             </ul>
           </div>
 
