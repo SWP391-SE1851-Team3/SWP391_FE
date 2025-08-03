@@ -29,7 +29,8 @@ import {
   EditOutlined,
   CheckOutlined,
   AlertOutlined,
-  ShoppingCartOutlined
+  ShoppingCartOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import './Events.css';
 import moment from 'moment';
@@ -274,10 +275,8 @@ const App = () => {
 
         await createEmergencyEvent(eventData);
         message.success('Tạo sự kiện khẩn cấp thành công!');
-        // Gọi lại loadEvents để cập nhật danh sách sự kiện
-        if (typeof loadEvents === 'function') {
-          await loadEvents();
-        }
+        // Reload all events data to reflect changes from backend
+        await loadEvents();
 
         setIsModalVisible(false);
         form.resetFields();
@@ -378,24 +377,7 @@ const App = () => {
         message.success('Cập nhật sự kiện y tế thành công!');
 
         // Reload all events data to reflect changes from backend
-        try {
-          const eventsData = await getAllMedicalEvents();
-          const transformedEvents = eventsData.map(event => ({
-            key: event.eventDetailsID,
-            eventId: event.eventId,
-            eventDetailsID: event.eventDetailsID,
-            studentName: event.studentName,
-            eventType: Array.isArray(event.eventType) ? event.eventType : [event.eventType],
-            time: event.time,
-            status: event.processingStatus || 'PROCESSING',
-            processingStatus: event.processingStatus || 'PROCESSING',
-            actions: event.actions || ''
-          }));
-          setEvents(transformedEvents);
-        } catch (error) {
-          console.error('Error reloading events:', error);
-          message.error(getErrorMessage(error));
-        }
+        await loadEvents();
 
         setIsEditModalVisible(false);
         editForm.resetFields();
@@ -919,16 +901,20 @@ const App = () => {
             </Row>
 
             <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="emergency"
-                  label="Mức độ nghiêm trọng"
-                  valuePropName="checked"
-                  initialValue={false}
-                >
-                  <Switch />
-                </Form.Item>
-              </Col>
+                              <Col span={12}>
+                  <Form.Item
+                    name="isEmergency"
+                    label="Mức độ nghiêm trọng"
+                    initialValue="Bình thường"
+                    rules={[{ required: true, message: 'Vui lòng chọn mức độ nghiêm trọng' }]}
+                  >
+                    <Select placeholder="Chọn mức độ nghiêm trọng">
+                      <Option value="Nhẹ">Nhẹ</Option>
+                      <Option value="Bình thường">Bình thường</Option>
+                      <Option value="Nặng">Nặng</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
               <Col span={12}>
                 <Form.Item
                   name="hasParentBeenInformed"
