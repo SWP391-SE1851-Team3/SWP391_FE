@@ -1459,11 +1459,7 @@ const App = () => {
                     placeholder="Chọn vật tư y tế sử dụng"
                     value={Array.isArray(selectedSupplies) ? selectedSupplies.map(s => s.medicalSupplyId) : []}
                     onChange={ids => {
-                      // Lấy danh sách vật tư cũ từ selectedEvent
-                      const originalSupplies = selectedEvent && selectedEvent.listMedicalSupplies ? 
-                        selectedEvent.listMedicalSupplies.map(s => s.medicalSupplyId) : [];
-                      
-                      // Thêm các vật tư mới được chọn
+                      // Thêm mới các vật tư được chọn
                       const newSelected = ids.map(id => {
                         const existed = selectedSupplies.find(s => s.medicalSupplyId === id);
                         if (existed) return existed;
@@ -1482,19 +1478,7 @@ const App = () => {
                         if (existedOld) return existedOld;
                         return null;
                       }).filter(Boolean);
-                      
-                      // Đảm bảo các vật tư cũ vẫn được giữ lại
-                      const finalSelected = [...newSelected];
-                      originalSupplies.forEach(originalId => {
-                        if (!finalSelected.find(s => s.medicalSupplyId === originalId)) {
-                          const originalSupply = selectedSupplies.find(s => s.medicalSupplyId === originalId);
-                          if (originalSupply) {
-                            finalSelected.push(originalSupply);
-                          }
-                        }
-                      });
-                      
-                      setSelectedSupplies(finalSelected);
+                      setSelectedSupplies(newSelected);
                     }}
                     style={{ width: '100%' }}
                     optionLabelProp="label"
@@ -1524,49 +1508,26 @@ const App = () => {
                         {
                           title: 'Số lượng sử dụng',
                           dataIndex: 'quantityUsed',
-                          render: (val, record) => {
-                            // Kiểm tra xem vật tư này có phải là vật tư cũ (từ selectedEvent) hay không
-                            const isOriginalSupply = selectedEvent && selectedEvent.listMedicalSupplies && 
-                              selectedEvent.listMedicalSupplies.some(s => s.medicalSupplyId === record.medicalSupplyId);
-                            
-                            // Lấy số lượng ban đầu nếu là vật tư cũ
-                            let originalQuantity = 1;
-                            if (isOriginalSupply) {
-                              const originalSupply = selectedEvent.listMedicalSupplies.find(s => s.medicalSupplyId === record.medicalSupplyId);
-                              originalQuantity = originalSupply ? originalSupply.quantityUsed : 1;
-                            }
-                            
-                            return (
-                              <InputNumber
-                                min={isOriginalSupply ? originalQuantity : 1}
-                                value={val}
-                                onChange={v => {
-                                  setSelectedSupplies(prev => prev.map(s =>
-                                    s.medicalSupplyId === record.medicalSupplyId ? { ...s, quantityUsed: v } : s
-                                  ));
-                                }}
-                              />
-                            );
-                          }
+                          render: (val, record) => (
+                            <InputNumber
+                              min={1}
+                              value={val}
+                              onChange={v => {
+                                setSelectedSupplies(prev => prev.map(s =>
+                                  s.medicalSupplyId === record.medicalSupplyId ? { ...s, quantityUsed: v } : s
+                                ));
+                              }}
+                            />
+                          )
                         },
                         {
                           title: '',
                           key: 'remove',
-                          render: (_, record) => {
-                            // Kiểm tra xem vật tư này có phải là vật tư cũ (từ selectedEvent) hay không
-                            const isOriginalSupply = selectedEvent && selectedEvent.listMedicalSupplies && 
-                              selectedEvent.listMedicalSupplies.some(s => s.medicalSupplyId === record.medicalSupplyId);
-                            
-                            // Chỉ hiển thị nút xóa cho vật tư mới thêm vào
-                            if (!isOriginalSupply) {
-                              return (
-                                <Button type="link" danger onClick={() => {
-                                  setSelectedSupplies(prev => prev.filter(s => s.medicalSupplyId !== record.medicalSupplyId));
-                                }}>Xóa</Button>
-                              );
-                            }
-                            return null; // Không hiển thị nút xóa cho vật tư cũ
-                          }
+                          render: (_, record) => (
+                            <Button type="link" danger onClick={() => {
+                              setSelectedSupplies(prev => prev.filter(s => s.medicalSupplyId !== record.medicalSupplyId));
+                            }}>Xóa</Button>
+                          )
                         }
                       ]}
                       dataSource={selectedSupplies}
