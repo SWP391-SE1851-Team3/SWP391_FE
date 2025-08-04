@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Spin, Modal, Button, message } from 'antd';
+import { Spin, Modal, message, Tag } from 'antd';
 import { getMedicationSubmissionsByParentId, getEvidenceImage } from '../../../api/medicalSubmission';
 
-const statusClassMap = {
-  'Chờ nhận thuốc': 'pending',
-  'Đã nhận thuốc': 'submited',
-  'Đã phát thuốc': 'approved',
-  'Đã hủy': 'rejected'
+const statusColorMap = {
+  'Chờ nhận thuốc': 'orange',
+  'Đã phát thuốc': 'green',
+  'Thiếu thuốc': 'red',
+  'Đã nhận thuốc': 'blue',
+  'Đã hủy': 'default'
 };
 
 const MedicineHistory = ({ parentId, studentId, students }) => {
   const [history, setHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [detailModal, setDetailModal] = useState({ open: false, data: null });
   const [imageModal, setImageModal] = useState({ open: false, imageUrl: '', loading: false });
 
@@ -20,25 +21,55 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
       setHistory([]);
       return;
     }
-    setHistoryLoading(true);
+    setLoading(true);
+
     getMedicationSubmissionsByParentId(parentId)
       .then(res => {
-        const rawHistory = res || [];
-        const filteredHistory = rawHistory.filter(item => item.studentId === studentId);
-        setHistory(filteredHistory);
+        const raw = res || [];
+        const filtered = raw.filter(item => item.studentId === studentId);
+
+        const grouped = Object.values(
+          filtered.reduce((acc, item) => {
+            const key = item.medicationSubmissionId;
+            if (!acc[key]) {
+              acc[key] = {
+                medicationSubmissionId: key,
+                studentId: item.studentId,
+                studentName: item.studentName,
+                submissionDate: item.submissionDate,
+                confirmId: item.confirmId,
+                confirmStatus: item.confirmStatus,
+                timeStatusMap: {
+                  Sáng: null,
+                  Trưa: null,
+                  Chiều: null
+                },
+                detailsByTime: {
+                  Sáng: [],
+                  Trưa: [],
+                  Chiều: []
+                }
+              };
+            }
+            if (item.timeToUse) {
+              acc[key].timeStatusMap[item.timeToUse] = item.status;
+              acc[key].detailsByTime[item.timeToUse].push(...item.medicationDetails);
+            }
+            return acc;
+          }, {})
+        );
+
+        setHistory(grouped);
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('API Error:', error);
         setHistory([]);
       })
-      .finally(() => setHistoryLoading(false));
+      .finally(() => setLoading(false));
   }, [parentId, studentId]);
 
-  const handleViewDetail = (idx) => {
-    setDetailModal({
-      open: true,
-      data: history[idx]
-    });
+  const handleViewDetail = (groupData) => {
+    setDetailModal({ open: true, data: groupData });
   };
 
   const handleViewEvidenceImage = async (confirmId) => {
@@ -61,55 +92,44 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
 
   const formatDate = (dateString) => {
     if (!dateString) return '---';
-    const d = new Date(dateString);
-    return d.toLocaleDateString('vi-VN');
+    return new Date(dateString).toLocaleDateString('vi-VN');
   };
 
-  // Lấy tên học sinh từ students array
-  const getStudentName = (studentId) => {
-    const student = students?.find(s => s.studentID === studentId);
-    return student.fullName || '---';
+  const getStudentName = (id) => {
+    const student = students?.find(s => s.studentID === id);
+    return student?.fullName || '---';
   };
 
   return (
     <div className="medication-status-section">
-      <h2 className="section-title">
-        Trạng thái phiếu gửi thuốc
-      </h2>
+      <h2 className="section-title">Trạng thái phiếu gửi thuốc</h2>
 
-      {historyLoading ? (
-        <div className="section-card">
-          <Spin />
-        </div>
+      {loading ? (
+        <div className="section-card"><Spin /></div>
       ) : (
         <div className="status-list">
-          {history.map((item, idx) => (
+          {history.map((group, idx) => (
             <div key={idx} className="status-items">
               <div className="status-header">
                 <div className="status-info">
-                  <h3>Học sinh: {item.studentName || getStudentName(item.studentId)}</h3>
-                  <div className="status-date">
-                    Gửi ngày: {formatDate(item.submissionDate)}
-                  </div>
+                  <h3>Học sinh: {group.studentName || getStudentName(group.studentId)}</h3>
+                  <div className="status-date">Ngày gửi: {formatDate(group.submissionDate)}</div>
+                  {/* <div><b>Trạng thái:</b> <Tag color={statusColorMap[group.confirmStatus]}>{group.confirmStatus}</Tag></div> */}
                 </div>
-                <span className={`status-badge ${statusClassMap[item.status] || 'pending'}`}>
-                  {item.status || '---'}
-                </span>
+                <div>
+                  <Tag color={statusColorMap[group.confirmStatus]}>
+                    {group.confirmStatus}
+                  </Tag>
+                </div>
               </div>
 
               <div className="status-actions">
-                <button
-                  className="btn-text"
-                  onClick={() => handleViewDetail(idx)}
-                >
+                <button className="btn-text" onClick={() => handleViewDetail(group)}>
                   <span className="material-icons">Xem chi tiết</span>
                 </button>
 
-                {item.confirmId && (
-                  <button
-                    className="btn-text"
-                    onClick={() => handleViewEvidenceImage(item.confirmId)}
-                  >
+                {group.confirmId && (
+                  <button className="btn-text" onClick={() => handleViewEvidenceImage(group.confirmId)}>
                     <span className="material-icons">Xem ảnh bằng chứng</span>
                   </button>
                 )}
@@ -117,12 +137,11 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
             </div>
           ))}
 
-          {!historyLoading && history.length === 0 && (
+          {!loading && history.length === 0 && (
             <div className="section-card">
               {studentId
                 ? `Chưa có đơn thuốc nào cho ${getStudentName(studentId)}.`
-                : 'Chưa có đơn thuốc nào.'
-              }
+                : 'Chưa có đơn thuốc nào.'}
             </div>
           )}
         </div>
@@ -139,17 +158,27 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
             <div className="status-details">
               <p><b>Học sinh:</b> {detailModal.data.studentName || getStudentName(detailModal.data.studentId)}</p>
               <p><b>Ngày gửi:</b> {formatDate(detailModal.data.submissionDate)}</p>
-              <p><b>Trạng thái:</b> {detailModal.data.status || '---'}</p>
             </div>
             <hr />
-            {(detailModal.data.medicationDetails || []).map((med, idx) => (
-              <div key={med.medicationDetailId || idx} className="status-details">
-                <p><b>Thuốc {idx + 1}:</b></p>
-                <p>Tên thuốc: {med.medicineName}</p>
-                <p>Liều lượng: {med.dosage}</p>
-                <p>Thời gian sử dụng: {med.timeToUse}</p>
-                <p>Ghi chú: {med.note}</p>
-              </div>
+            {["Sáng", "Trưa", "Chiều"].map(time => (
+              detailModal.data.detailsByTime[time]?.length > 0 && (
+                <div key={time}>
+                  <div className="medicine-detail-row">
+                    <h4>Thuốc buổi {time}</h4>
+                    <Tag color={statusColorMap[detailModal.data.timeStatusMap[time]] || 'default'}>
+                      {detailModal.data.timeStatusMap[time] || '---'}
+                    </Tag>
+                  </div>
+                  {detailModal.data.detailsByTime[time].map((med, idx) => (
+                    <div key={idx} className="status-details">
+                      <p><b>Thuốc {idx + 1}:</b></p>
+                      <p>Tên thuốc: {med.medicineName}</p>
+                      <p>Liều lượng: {med.dosage}</p>
+                      <p>Ghi chú: {med.note}</p>
+                    </div>
+                  ))}
+                </div>
+              )
             ))}
           </div>
         ) : (
@@ -157,7 +186,6 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
         )}
       </Modal>
 
-      {/* Modal hiển thị hình ảnh */}
       <Modal
         open={imageModal.open}
         onCancel={() => setImageModal({ open: false, imageUrl: '', loading: false })}
@@ -187,7 +215,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
           </div>
         ) : (
           <div className="section-card">
-            Chưa có hình ảnh bằng chứng để hiên thị.
+            Chưa có hình ảnh bằng chứng để hiển thị.
           </div>
         )}
       </Modal>

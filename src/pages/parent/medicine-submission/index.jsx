@@ -83,8 +83,9 @@ const MedicineForm = () => {
       const medicationDetails = values.medicines.map(item => ({
         medicineName: item.medicineName,
         dosage: item.dosage,
-        timeToUse: item.time,
-        note: item.note || ''
+        timeToUseList: item.timeToUseList,
+        note: item.note || '',
+        status: "Chờ nhận thuốc"
       }));
 
       const medicationDate = values.medicationDate;
@@ -222,14 +223,14 @@ const MedicineForm = () => {
                         <Col span={7}>
                           <Form.Item
                             {...restField}
-                            name={[name, 'time']}
+                            name={[name, 'timeToUseList']}
                             label="Thời gian"
                             rules={[{ required: true, message: 'Chọn thời gian uống' }]}
                           >
-                            <Select placeholder="Chọn thời gian">
-                              <Option value="sang">Sáng</Option>
-                              <Option value="trua">Trưa</Option>
-                              <Option value="chieu">Chiều</Option>
+                            <Select placeholder="Chọn thời gian"  mode="multiple" allowClear>
+                              <Option value="Sáng">Sáng</Option>
+                              <Option value="Trưa">Trưa</Option>
+                              <Option value="Chiều">Chiều</Option>
                             </Select>
                           </Form.Item>
                         </Col>
