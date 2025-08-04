@@ -296,6 +296,12 @@ font-size: 16px;
   display: flex;
   flex-direction: column;
 }
+.missing-medicine {
+  background-color: #bf5e5e; /* đỏ nhạt */
+  border-left: 10px solid #ff4d4f; 
+  padding: 12px;
+  border-radius: 8px;
+}
 
 /* Individual item styling */
 .status-items {
