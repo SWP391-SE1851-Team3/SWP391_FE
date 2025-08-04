@@ -8,7 +8,6 @@ import {
   Typography,
   Space,
   Tag,
-  Timeline,
   Row,
   Col,
   Pagination,
@@ -18,8 +17,9 @@ import {
   Calendar,
   Badge,
   Empty,
-  Tabs,
-  Upload
+  Upload,
+  Divider,
+  Collapse
 } from 'antd';
 import {
   SearchOutlined,
@@ -27,15 +27,13 @@ import {
   CheckOutlined,
   CloseOutlined,
   CalendarOutlined,
-  CheckCircleTwoTone,
-  CloseCircleTwoTone,
-  ClockCircleTwoTone,
   FileTextOutlined,
   UploadOutlined,
-  DeleteOutlined,
-  PictureOutlined // ← THÊM MỚI
+  PictureOutlined,
+  ClockCircleOutlined,
+  MedicineBoxOutlined
 } from '@ant-design/icons';
-import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails, getMedicationConfirmationBySubmission, uploadEvidenceImage, getEvidenceImage } from '../../../api/medicalSubmissionNurse';
+import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails, getMedicationConfirmationBySubmission, uploadEvidenceImage, getEvidenceImage, updateScheduleStatus } from '../../../api/medicalSubmissionNurse';
 import { formatDate } from '../../../utils/formatDate';
 import './Medication.css';
 
@@ -48,7 +46,7 @@ dayjs.locale('vi');
 
 const { Title } = Typography;
 const { Option } = Select;
-const { TabPane } = Tabs;
+const { Panel } = Collapse;
 
 const MedicationManagement = () => {
   const [currentPage1, setCurrentPage1] = useState(1);
@@ -60,13 +58,11 @@ const MedicationManagement = () => {
 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [detailData, setDetailData] = useState(null);
+  const [detailData, setDetailData] = useState([]); // Thay đổi thành array để chứa nhiều schedule
   const [detailLoading, setDetailLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [selectedDateData, setSelectedDateData] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
-  const [currentCardPage, setCurrentCardPage] = useState(1);
-  const cardsPerPage = 3;
   const tablePageSize = 5;
   // Thêm state để điều khiển modal ảnh thuốc
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
@@ -81,8 +77,13 @@ const MedicationManagement = () => {
   // THÊM MỚI: State cho modal ảnh evidence
   const [isEvidenceImageModalVisible, setIsEvidenceImageModalVisible] = useState(false);
   const [evidenceImageToShow, setEvidenceImageToShow] = useState(null);
-
-  // Xóa toàn bộ mapStatusToFE, mapStatusToBE, statusViMap, statusViReverseMap, chỉ dùng giá trị tiếng Việt cho status
+  // State cho modal cập nhật trạng thái schedule
+  const [isUpdateScheduleModalVisible, setIsUpdateScheduleModalVisible] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [updateScheduleForm] = Form.useForm();
+  // State cho modal xác nhận
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const fetchMedicationSubmissions = useCallback(async () => {
     try {
@@ -91,6 +92,12 @@ const MedicationManagement = () => {
       const formattedData = submissions.map((submission, index) => {
         // Lấy thông tin từ medicationDetails đầu tiên (nếu có)
         const firstDetail = Array.isArray(submission.medicationDetails) && submission.medicationDetails.length > 0 ? submission.medicationDetails[0] : {};
+        
+        // Xử lý timeToUseList thành chuỗi
+        const timeToUseString = firstDetail.timeToUseList && Array.isArray(firstDetail.timeToUseList) 
+          ? firstDetail.timeToUseList.join(', ') 
+          : '';
+        
         return {
           key: submission.submissionId?.toString() || index.toString(),
           id: submission.submissionId, // Sử dụng submissionId từ backend
@@ -104,8 +111,10 @@ const MedicationManagement = () => {
 
           medicationDetails: submission.medicationDetails,
           dosage: firstDetail.dosage || '',
-          timeToUse: firstDetail.timeToUse || '',
+          timeToUse: timeToUseString, // Sử dụng timeToUseList đã chuyển thành chuỗi
           note: firstDetail.note || '',
+          noteSchedule: firstDetail.noteSchedule || '', // Thêm noteSchedule
+          medicationDetailId: firstDetail.medicationDetailId, // Thêm medicationDetailId
           studentId: submission.studentId,
           confirmId: submission.confirmId, // Lấy confirmId từ backend nếu có
         };
@@ -164,14 +173,12 @@ const MedicationManagement = () => {
 
   const getStatusTag = (status) => {
     switch (status) {
-      case 'Chờ nhận thuốc':
-        return <Tag color="orange">Chờ nhận thuốc</Tag>;
-      case 'Đã nhận thuốc':
-        return <Tag color="blue">Đã nhận thuốc</Tag>;
-      case 'Đã phát thuốc':
-        return <Tag color="green">Đã phát thuốc</Tag>;
-      case 'Đã hủy':
-        return <Tag color="red">Đã hủy</Tag>;
+      case 'Đang xử lí':
+        return <Tag color="processing">Đang xử lí</Tag>;
+      case 'Đã hoàn thành':
+        return <Tag color="success">Đã hoàn thành</Tag>;
+      case 'Đã Hủy':
+        return <Tag color="red">Đã Hủy</Tag>;
       default:
         return <Tag>{status}</Tag>;
     }
@@ -183,8 +190,9 @@ const MedicationManagement = () => {
 
   const getTabData = () => {
     if (activeTab === 'all') return selectedDateData;
-    if (activeTab === 'pending') return selectedDateData.filter(item => item.status === 'Chờ nhận thuốc');
-    if (activeTab === 'confirmed') return selectedDateData.filter(item => item.status === 'Đã nhận thuốc');
+    if (activeTab === 'processing') return selectedDateData.filter(item => item.status === 'Đang xử lí');
+    if (activeTab === 'completed') return selectedDateData.filter(item => item.status === 'Đã hoàn thành');
+    if (activeTab === 'cancelled') return selectedDateData.filter(item => item.status === 'Đã Hủy');
     return selectedDateData;
   };
 
@@ -231,6 +239,7 @@ const MedicationManagement = () => {
             size="small"
             onClick={() => handleViewDetails(record)}
           >
+            Xem chi tiết
           </Button>
         </Space>
       )
@@ -327,7 +336,7 @@ const MedicationManagement = () => {
     try {
       hideLoading = message.loading('Đang tải ảnh evidence...', 0);
       const base64String = await getEvidenceImage(confirmId);
-      console.log('Nhận được evidence image base64:', base64String.substring(0, 50) + '...');
+
 
       // Đảm bảo có header data:image nếu chưa có
       let imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
@@ -336,7 +345,7 @@ const MedicationManagement = () => {
       setIsEvidenceImageModalVisible(true);
     } catch (error) {
       setEvidenceImageToShow(null);
-      console.error('Lỗi khi tải ảnh evidence:', error);
+      
       if (error.response?.status === 403) {
         message.error('Bạn không có quyền xem ảnh này');
       } else if (error.response?.status === 404) {
@@ -355,17 +364,9 @@ const MedicationManagement = () => {
     setEvidenceImageToShow(null);
   };
 
-  // 3. Hàm xử lý submit cập nhật tình trạng thuốc
-  const handleSubmitUpdateStatus = async () => {
+  // Hàm xử lý submit sau khi xác nhận
+  const handleConfirmSubmit = async (values, confirmId) => {
     try {
-      const values = await updateStatusForm.validateFields();
-      // Lấy confirmId từ selectedRecord
-      const confirmId = selectedRecord?.confirmId;
-      if (!confirmId) {
-        message.error('Không tìm thấy mã xác nhận để cập nhật!');
-        return;
-      }
-
       // Nếu có file evidence, upload trước
       if (evidenceFileList.length > 0) {
         const uploadSuccess = await handleEvidenceUpload(evidenceFileList[0].originFileObj);
@@ -378,38 +379,93 @@ const MedicationManagement = () => {
       message.success('Cập nhật tình trạng thuốc thành công!');
       setIsUpdateStatusModalVisible(false);
       setEvidenceFileList([]);
+      setIsConfirmModalVisible(false);
       fetchMedicationSubmissions();
     } catch (error) {
       message.error(getErrorMessage(error));
     }
   };
 
+  // 3. Hàm xử lý submit cập nhật tình trạng thuốc
+  const handleSubmitUpdateStatus = async () => {
+    try {
+      const values = await updateStatusForm.validateFields();
+      // Lấy confirmId từ selectedRecord
+      const confirmId = selectedRecord?.confirmId;
+      if (!confirmId) {
+        message.error('Không tìm thấy mã xác nhận để cập nhật!');
+        return;
+      }
 
+      // Kiểm tra ràng buộc chuyển đổi trạng thái
+      const currentStatus = selectedRecord.status;
+      const newStatus = values.status;
+      
+      // Ràng buộc: Không được từ Hoàn thành sang Từ chối
+      if (currentStatus === 'Đã hoàn thành' && newStatus === 'Từ chối') {
+        message.error('Không thể chuyển từ trạng thái "Đã hoàn thành" sang "Từ chối"!');
+        return;
+      }
+      
+      // Ràng buộc: Không được từ Đã Hủy sang Đang xử lí hoặc Đã hoàn thành
+      if (currentStatus === 'Đã Hủy' && (newStatus === 'Đang xử lí' || newStatus === 'Đã hoàn thành')) {
+        message.error('Không thể chuyển từ trạng thái "Đã Hủy" sang "Đang xử lí" hoặc "Đã hoàn thành"!');
+        return;
+      }
+      
+      // Ràng buộc: Không được từ Đã hoàn thành chuyển sang Đã Hủy hoặc Đang xử lí
+      if (currentStatus === 'Đã hoàn thành' && (newStatus === 'Đã Hủy' || newStatus === 'Đang xử lí')) {
+        message.error('Không thể chuyển từ trạng thái "Đã hoàn thành" sang "Đã Hủy" hoặc "Đang xử lí"!');
+        return;
+      }
 
+      // Xác nhận khi chuyển sang trạng thái "Đã Hủy"
+      if (newStatus === 'Đã Hủy') {
+        setConfirmAction({
+          type: 'cancel',
+          message: 'Bạn có chắc chắn muốn hủy phiếu gửi thuốc này?',
+          description: 'Hành động này không thể hoàn tác.',
+          onConfirm: () => handleConfirmSubmit(values, confirmId)
+        });
+        setIsConfirmModalVisible(true);
+        return;
+      }
+
+      // Nếu không cần xác nhận, thực hiện ngay
+      await handleConfirmSubmit(values, confirmId);
+    } catch (error) {
+      message.error(getErrorMessage(error));
+    }
+  };
+
+  // SỬA LẠI hàm handleViewDetails để lưu toàn bộ array schedules
   const handleViewDetails = async (record) => {
     setSelectedRecord(record);
     setIsModalVisible(true);
-    setDetailData(null);
+    setDetailData([]); // Reset thành array rỗng
     setConfirmationData(null);
+    
     if (record && record.id) {
       setDetailLoading(true);
       try {
-        const details = await getMedicationSubmissionDetails(record.id);
-        // Đảm bảo detailData có đủ các trường nurseName, studentClass, medicineImage, medicationDetails, submissionDate...
-        setDetailData({
-          medicationSubmissionId: details.medicationSubmissionId,
-          parentId: details.parentId,
-          studentId: details.studentId,
-          medicineImage: details.medicineImage,
-          nurseName: details.nurseName,
-          studentClass: details.studentClass,
-          medicationDetails: details.medicationDetails,
-          submissionDate: details.submissionDate,
-        });
+        // API trả về array của các schedule
+        const detailsArray = await getMedicationSubmissionDetails(record.id);
+        
+        if (detailsArray && Array.isArray(detailsArray) && detailsArray.length > 0) {
+          // Lưu toàn bộ array để hiển thị theo từng schedule
+          setDetailData(detailsArray);
+        }
+        
         // Lấy xác nhận của nhân viên y tế
+        try {
         const confirmation = await getMedicationConfirmationBySubmission(record.id);
         setConfirmationData(confirmation);
+        } catch (confirmError) {
+          console.warn('Không thể lấy thông tin xác nhận:', confirmError);
+          setConfirmationData(null);
+        }
       } catch (error) {
+
         message.error(getErrorMessage(error));
       } finally {
         setDetailLoading(false);
@@ -439,9 +495,6 @@ const MedicationManagement = () => {
     return null;
   };
 
-  // Reset trang về 1 khi đổi tab
-  useEffect(() => { setCurrentCardPage(1); }, [activeTab, selectedDate]);
-
   // Custom header cho Calendar
   const calendarHeaderRender = ({ value, onChange }) => {
     const current = value.clone();
@@ -461,6 +514,101 @@ const MedicationManagement = () => {
     // No need to revoke URL for base64 strings
     setIsImageModalVisible(false);
     setImageToShow(null);
+  };
+
+  // Hàm xử lý mở modal cập nhật trạng thái schedule
+  const handleUpdateScheduleStatus = (schedule) => {
+    // Kiểm tra schedule có ID hợp lệ
+    if (!schedule) {
+      message.error('Lịch trình thuốc không hợp lệ!');
+      return;
+    }
+    
+    if (!schedule.medicationScheduleId || schedule.medicationScheduleId === 0) {
+      message.error(`ID lịch trình không hợp lệ: ${schedule.medicationScheduleId}`);
+      return;
+    }
+    
+    setSelectedSchedule(schedule);
+    updateScheduleForm.resetFields();
+    updateScheduleForm.setFieldsValue({
+      status: schedule.status || 'Chờ nhận thuốc',
+      noteSchedule: schedule.noteSchedule || ''
+    });
+    setIsUpdateScheduleModalVisible(true);
+  };
+
+  // Hàm xử lý submit schedule sau khi xác nhận
+  const handleConfirmScheduleSubmit = async (requestData, scheduleId) => {
+    try {
+      await updateScheduleStatus(scheduleId, requestData);
+      
+      message.success(`Cập nhật trạng thái lịch trình thành công!`);
+      setIsUpdateScheduleModalVisible(false);
+      setIsConfirmModalVisible(false);
+      
+      // Reload lại dữ liệu chi tiết
+      if (selectedRecord && selectedRecord.id) {
+        const detailsArray = await getMedicationSubmissionDetails(selectedRecord.id);
+        if (detailsArray && Array.isArray(detailsArray) && detailsArray.length > 0) {
+          setDetailData(detailsArray);
+        }
+      }
+    } catch (error) {
+      message.error(getErrorMessage(error));
+    }
+  };
+
+  // Hàm xử lý submit cập nhật trạng thái schedule
+  const handleSubmitUpdateScheduleStatus = async () => {
+    try {
+      const values = await updateScheduleForm.validateFields();
+      
+      // Đảm bảo có schedule và ID hợp lệ
+      if (!selectedSchedule) {
+        message.error('Không tìm thấy thông tin lịch trình thuốc!');
+        return;
+      }
+      
+      if (!selectedSchedule.medicationScheduleId || selectedSchedule.medicationScheduleId === 0) {
+        message.error(`ID lịch trình không hợp lệ: ${selectedSchedule.medicationScheduleId}`);
+        return;
+      }
+      
+      const scheduleId = selectedSchedule.medicationScheduleId;
+      
+      const requestData = {
+        status: values.status,
+        noteSchedule: values.noteSchedule
+      };
+      
+      // Kiểm tra ràng buộc chuyển đổi trạng thái lịch trình
+      const currentStatus = selectedSchedule.status;
+      const newStatus = values.status;
+      
+      // Ràng buộc: Không được từ "Đã phát thuốc" sang "Từ chối"
+      if (currentStatus === 'Đã phát thuốc' && newStatus === 'Từ chối') {
+        message.error('Không thể chuyển từ trạng thái "Đã phát thuốc" sang "Từ chối"!');
+        return;
+      }
+
+      // Xác nhận khi chuyển sang trạng thái "Từ chối"
+      if (newStatus === 'Từ chối') {
+        setConfirmAction({
+          type: 'reject',
+          message: 'Bạn có chắc chắn muốn từ chối lịch trình thuốc này?',
+          description: 'Hành động này sẽ ghi chú lý do từ chối.',
+          onConfirm: () => handleConfirmScheduleSubmit(requestData, scheduleId)
+        });
+        setIsConfirmModalVisible(true);
+        return;
+      }
+
+      // Nếu không cần xác nhận, thực hiện ngay
+      await handleConfirmScheduleSubmit(requestData, scheduleId);
+    } catch (error) {
+      message.error(getErrorMessage(error));
+    }
   };
 
   return (
@@ -512,8 +660,9 @@ const MedicationManagement = () => {
             {/* Tabs for filtering */}
             <div className="medication-tabs" style={{ marginBottom: 16 }}>
               <Button type={activeTab === 'all' ? 'primary' : 'default'} onClick={() => setActiveTab('all')} style={{ marginRight: 8 }}>Tất cả ({selectedDateData.length})</Button>
-              <Button type={activeTab === 'pending' ? 'primary' : 'default'} onClick={() => setActiveTab('pending')} style={{ marginRight: 8 }}>Chờ nhận thuốc ({getStatusCount('Chờ nhận thuốc')})</Button>
-              <Button type={activeTab === 'confirmed' ? 'primary' : 'default'} onClick={() => setActiveTab('confirmed')}>Đã nhận thuốc ({getStatusCount('Đã nhận thuốc')})</Button>
+              <Button type={activeTab === 'processing' ? 'primary' : 'default'} onClick={() => setActiveTab('processing')} style={{ marginRight: 8 }}>Đang xử lí ({getStatusCount('Đang xử lí')})</Button>
+              <Button type={activeTab === 'completed' ? 'primary' : 'default'} onClick={() => setActiveTab('completed')} style={{ marginRight: 8 }}>Đã hoàn thành ({getStatusCount('Đã hoàn thành')})</Button>
+              <Button type={activeTab === 'cancelled' ? 'primary' : 'default'} onClick={() => setActiveTab('cancelled')}>Đã Hủy ({getStatusCount('Đã Hủy')})</Button>
             </div>
             {/* Card list */}
             {getTabData().length === 0 ? (
@@ -530,7 +679,6 @@ const MedicationManagement = () => {
               <>
                 <div className="medication-batch-list">
                   {getTabData()
-                    .slice((currentCardPage - 1) * cardsPerPage, currentCardPage * cardsPerPage)
                     .map((item) => (
                       <div key={item.id} className="medication-batch-card">
                         <div className="medication-batch-card-header">
@@ -557,15 +705,6 @@ const MedicationManagement = () => {
                         </div>
                       </div>
                     ))}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
-                  <Pagination
-                    current={currentCardPage}
-                    total={getTabData().length}
-                    pageSize={cardsPerPage}
-                    onChange={setCurrentCardPage}
-                    showSizeChanger={false}
-                  />
                 </div>
               </>
             )}
@@ -600,10 +739,9 @@ const MedicationManagement = () => {
                 allowClear
               >
                 <Option value="">Tất cả trạng thái</Option>
-                <Option value="Chờ nhận thuốc">Chờ nhận thuốc</Option>
-                <Option value="Đã nhận thuốc">Đã nhận thuốc</Option>
-                <Option value="Đã phát thuốc">Đã phát thuốc</Option>
-                <Option value="Đã hủy">Đã hủy</Option>
+                <Option value="Đang xử lí">Đang xử lí</Option>
+                <Option value="Đã hoàn thành">Đã hoàn thành</Option>
+                <Option value="Đã Hủy">Đã Hủy</Option>
               </Select>
             </Col>
             <Col>
@@ -645,57 +783,148 @@ const MedicationManagement = () => {
         </div>
       </Card>
 
-      {/* Modals remain the same */}
+      {/* Modal hiển thị chi tiết - CẬP NHẬT THEO SCHEDULE */}
       <Modal
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết phiếu gửi thuốc</span>}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
-        styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
+        width={900}
+                centered
       >
         {selectedRecord && (
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, boxShadow: '0 2px 8px rgba(24,144,255,0.08)', border: '1px solid #e6f7ff' }}>
+          <div style={{ padding: 16 }}>
             <Row gutter={[24, 16]}>
               {/* Thông tin học sinh và lớp */}
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Học sinh:</Typography.Text><br />
-                <Typography.Text strong style={{ fontSize: 16 }}>{selectedRecord.student}</Typography.Text>
+                <Typography.Text strong style={{ fontSize: 16 }}>
+                  {detailData && detailData.length > 0 ? detailData[0].studentName : selectedRecord.student}
+                </Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Lớp học sinh:</Typography.Text><br />
-                <Typography.Text>{detailData?.studentClass}</Typography.Text>
+                <Typography.Text>
+                  {detailData && detailData.length > 0 ? detailData[0].studentClass : selectedRecord.className}
+                </Typography.Text>
               </Col>
               {/* Thời gian gửi và trạng thái */}
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Thời gian gửi:</Typography.Text><br />
-                <Typography.Text>{detailData?.submissionDate ? formatDate(detailData.submissionDate) : ''}</Typography.Text>
+                <Typography.Text>
+                  {detailData && detailData.length > 0 ? formatDate(detailData[0].submissionDate) : selectedRecord.time}
+                </Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong>Trạng thái:</Typography.Text><br />
                 <span>{getStatusTag(selectedRecord.status)}</span>
               </Col>
-              {/* Tên thuốc và chi tiết thuốc */}
-              <Col span={24} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Tên thuốc:</Typography.Text><br />
-                <Typography.Text>{selectedRecord.medication}</Typography.Text>
+              
+              {/* Chi tiết từng lịch trình thuốc */}
+              {detailData && detailData.length > 0 && (
+                <Col span={24} style={{ marginTop: 20 }}>
+                  <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>
+                    Chi tiết lịch trình thuốc:
+                  </Typography.Text>
+                  <div style={{ marginTop: 12 }}>
+                    <Collapse 
+                      accordion 
+                      bordered={false}
+                      style={{ backgroundColor: 'transparent' }}
+                    >
+                      {detailData.map((schedule) => (
+                        <Panel
+                          header={
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontWeight: 600, color: '#0056b3' }}>
+                                <ClockCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                                Lịch trình ID: {schedule.medicationScheduleId || 'N/A'} - {schedule.timeToUse || 'N/A'}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Tag color={
+                                  schedule.status === 'Đã phát thuốc' ? 'success' :
+                                  schedule.status === 'Từ chối' ? 'red' :
+                                  'geekblue'
+                                }>
+                                  {schedule.status}
+                                </Tag>
+                                <Button 
+                                  size="small" 
+                                  type="primary" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdateScheduleStatus(schedule);
+                                  }}
+                                >
+                                  Cập nhật
+                                </Button>
+                              </div>
+                            </div>
+                          }
+                          key={schedule.medicationScheduleId}
+                          style={{ 
+                            marginBottom: 8,
+                            border: '1px solid #d9d9d9',
+                            borderRadius: 6,
+                            backgroundColor: '#fff'
+                          }}
+                        >
+                          <div style={{ padding: '8px 12px' }}>
+                            {/* Thông tin lịch trình */}
+                            <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f0f8ff', borderRadius: 4, border: '1px solid #bae7ff' }}>
+                              <Row gutter={[16, 8]}>
+                                {schedule.noteSchedule && (
+                                  <Col span={24}>
+                                    <Typography.Text type="secondary" strong>Ghi chú lịch trình:</Typography.Text><br />
+                                    <Typography.Text italic style={{ color: '#666' }}>{schedule.noteSchedule}</Typography.Text>
               </Col>
-              {detailData?.medicationDetails && Array.isArray(detailData.medicationDetails) && detailData.medicationDetails.length > 0 && (
-                <Col span={24} style={{ marginTop: 12 }}>
-                  <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Chi tiết thuốc:</Typography.Text>
+                                )}
+                              </Row>
+                            </div>
+                            {/* Danh sách thuốc trong lịch trình */}
+                            <Typography.Text strong style={{ color: '#595959' }}>Danh sách thuốc:</Typography.Text>
                   <div style={{ marginTop: 8 }}>
-                    <ul style={{ paddingLeft: 20 }}>
-                      {detailData.medicationDetails.map((item, idx) => (
-                        <li key={item.medicationDetailId ? `med-${item.medicationDetailId}` : `idx-${idx}`} style={{ marginBottom: 8 }}>
-                          <div><Typography.Text type="secondary">Tên thuốc:</Typography.Text> <Typography.Text>{item.medicineName}</Typography.Text></div>
-                          <div><Typography.Text type="secondary">Liều dùng:</Typography.Text> <Typography.Text>{item.dosage}</Typography.Text></div>
-                          <div><Typography.Text type="secondary">Thời gian sử dụng:</Typography.Text> <Typography.Text>{item.timeToUse}</Typography.Text></div>
-                          <div><Typography.Text type="secondary">Ghi chú:</Typography.Text> <Typography.Text>{item.note}</Typography.Text></div>
-                        </li>
+                              {schedule.medicationDetails.map((medication, medIdx) => (
+                                <div 
+                                  key={medication.medicationDetailID || medIdx} 
+                                  style={{ 
+                                    marginBottom: 12, 
+                                    padding: 12, 
+                                    backgroundColor: '#fafafa', 
+                                    borderRadius: 4,
+                                    border: '1px solid #f0f0f0'
+                                  }}
+                                >
+                                  <Row gutter={[16, 4]}>
+                                    <Col span={12}>
+                                      <Typography.Text type="secondary">Tên thuốc:</Typography.Text><br />
+                                      <Typography.Text strong style={{ color: '#0056b3' }}>
+                                        <MedicineBoxOutlined style={{ marginRight: 6, color: '#52c41a' }} />
+                                        {medication.medicineName}
+                                      </Typography.Text>
+                                    </Col>
+                                    <Col span={12}>
+                                      <Typography.Text type="secondary">Liều dùng:</Typography.Text><br />
+                                      <Typography.Text>{medication.dosage}</Typography.Text>
+                                    </Col>
+                                    {medication.note && (
+                                      <Col span={24}>
+                                        <Typography.Text type="secondary">Ghi chú:</Typography.Text><br />
+                                        <Typography.Text italic style={{ color: '#666' }}>{medication.note}</Typography.Text>
+                                      </Col>
+                                    )}
+                                  </Row>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </Panel>
                       ))}
-                    </ul>
+                    </Collapse>
                   </div>
                 </Col>
               )}
+              
               {/* Ảnh thuốc */}
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Ảnh thuốc:</Typography.Text><br />
@@ -704,13 +933,13 @@ const MedicationManagement = () => {
                   try {
                     hideLoading = message.loading('Đang tải ảnh...', 0);
                     const base64String = await getMedicationImage(selectedRecord.id);
-                    console.log('Nhận được base64 string:', base64String.substring(0, 50) + '...');
+            
                     let imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
                     setImageToShow(imgSrc);
                     setIsImageModalVisible(true);
                   } catch (error) {
                     setImageToShow(null);
-                    console.error('Lỗi khi tải ảnh:', error);
+            
                     if (error.response?.status === 403) {
                       message.error('Bạn không có quyền xem ảnh này');
                     } else if (error.response?.status === 404) {
@@ -725,16 +954,14 @@ const MedicationManagement = () => {
                   Xem ảnh đơn thuốc
                 </Button>
               </Col>
+              
               {/* Thông tin xác nhận của nhân viên y tế */}
               {confirmationData && (
                 <Col span={24} style={{ marginTop: 12 }}>
                   <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Thông tin xác nhận của nhân viên y tế:</Typography.Text>
                   <div style={{ marginTop: 8, marginLeft: 12 }}>
-
                     <div><Typography.Text strong>Trạng thái:</Typography.Text> <Typography.Text>{confirmationData.status}</Typography.Text></div>
-
                     <div><Typography.Text strong>Ghi chú:</Typography.Text> <Typography.Text>{confirmationData.reason}</Typography.Text></div>
-                    {/* SỬA ĐỔI: Thay text thành button xem ảnh */}
                     <div>
                       <Typography.Text strong>Bằng chứng:</Typography.Text>{' '}
                       {confirmationData.evidence ? (
@@ -753,6 +980,7 @@ const MedicationManagement = () => {
                   </div>
                 </Col>
               )}
+              
               {detailLoading && (
                 <Col span={24}><Typography.Text>Đang tải chi tiết...</Typography.Text></Col>
               )}
@@ -760,8 +988,6 @@ const MedicationManagement = () => {
           </div>
         )}
       </Modal>
-
-
 
       {/* Modal hiển thị ảnh thuốc */}
       <Modal
@@ -785,13 +1011,9 @@ const MedicationManagement = () => {
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
               }}
-              onError={(e) => {
-                console.error('Image failed to load:', e);
+              onError={() => {
                 message.error('Không thể hiển thị ảnh');
                 setImageToShow(null);
-              }}
-              onLoad={() => {
-                console.log('Image loaded successfully');
               }}
             />
           </div>
@@ -824,13 +1046,9 @@ const MedicationManagement = () => {
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
               }}
-              onError={(e) => {
-                console.error('Evidence image failed to load:', e);
+              onError={() => {
                 message.error('Không thể hiển thị ảnh bằng chứng');
                 setEvidenceImageToShow(null);
-              }}
-              onLoad={() => {
-                console.log('Evidence image loaded successfully');
               }}
             />
           </div>
@@ -857,10 +1075,9 @@ const MedicationManagement = () => {
         <Form form={updateStatusForm} layout="vertical">
           <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}>
             <Select placeholder="Chọn trạng thái">
-              <Option value="Chờ nhận thuốc">Chờ nhận thuốc</Option>
-              <Option value="Đã nhận thuốc">Đã nhận thuốc</Option>
-              <Option value="Đã phát thuốc">Đã phát thuốc</Option>
-              <Option value="Đã hủy">Đã hủy</Option>
+              <Option value="Đang xử lí">Đang xử lí</Option>
+              <Option value="Đã hoàn thành">Đã hoàn thành</Option>
+              <Option value="Đã Hủy">Đã Hủy</Option>
             </Select>
           </Form.Item>
           <Form.Item name="reason" label="Ghi chú" rules={[{ required: true, message: 'Vui lòng nhập lý do' }]}>
@@ -882,6 +1099,74 @@ const MedicationManagement = () => {
             </Upload.Dragger>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Modal cập nhật trạng thái schedule */}
+      <Modal
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Cập nhật trạng thái lịch trình</span>}
+        open={isUpdateScheduleModalVisible}
+        onOk={handleSubmitUpdateScheduleStatus}
+        onCancel={() => {
+          setIsUpdateScheduleModalVisible(false);
+          updateScheduleForm.resetFields();
+        }}
+        okText="Cập nhật"
+        cancelText="Hủy"
+      >
+        {selectedSchedule && (
+          <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f6ffed', borderRadius: 4, border: '1px solid #b7eb8f' }}>
+            <Typography.Text strong>Lịch trình ID: {selectedSchedule.medicationScheduleId}</Typography.Text><br />
+            <Typography.Text type="secondary">Thời gian: {selectedSchedule.timeToUse}</Typography.Text>
+          </div>
+        )}
+        <Form form={updateScheduleForm} layout="vertical">
+          <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}>
+            <Select placeholder="Chọn trạng thái">
+              <Option value="Đã phát thuốc" style={{ color: '#52c41a' }}>Đã phát thuốc</Option>
+              <Option value="Từ chối" style={{ color: '#ff4d4f' }}>Từ chối</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="noteSchedule" label="Ghi chú lịch trình" rules={[{ required: true, message: 'Vui lòng nhập ghi chú' }]}>
+            <Input.TextArea placeholder="Nhập ghi chú cho lịch trình" rows={3} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal xác nhận */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: confirmAction?.type === 'cancel' ? '#ff4d4f' : '#faad14' }}>
+              {confirmAction?.type === 'cancel' ? '⚠️' : '❓'}
+            </span>
+            <span style={{ fontWeight: 600 }}>Xác nhận hành động</span>
+          </div>
+        }
+        open={isConfirmModalVisible}
+        onOk={() => {
+          if (confirmAction?.onConfirm) {
+            confirmAction.onConfirm();
+          }
+        }}
+        onCancel={() => {
+          setIsConfirmModalVisible(false);
+          setConfirmAction(null);
+        }}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        okButtonProps={{
+          danger: confirmAction?.type === 'cancel',
+          type: confirmAction?.type === 'cancel' ? 'primary' : 'default'
+        }}
+      >
+        <div style={{ padding: '16px 0' }}>
+          <Typography.Title level={5} style={{ marginBottom: 8 }}>
+            {confirmAction?.message}
+          </Typography.Title>
+          <Typography.Text type="secondary">
+            {confirmAction?.description}
+          </Typography.Text>
+        </div>
       </Modal>
     </div>
   );
