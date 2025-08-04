@@ -54,7 +54,7 @@ const { TextArea } = Input;
 
 const App = () => {
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [eventTypeFilter, setEventTypeFilter] = useState('');
   const [stateFilter, setStateFilter] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
@@ -71,7 +71,7 @@ const App = () => {
   const [temperatureWarning, setTemperatureWarning] = useState('');
   const [heartRateWarning, setHeartRateWarning] = useState('');
 
-  //Dự liệu mẫu cho sự kiện y tế
+  //Dự liệu mẫu cho sự cố y tế
   const [events, setEvents] = useState([]);
 
   // Dữ liệu mẫu cho vật tư y tế
@@ -84,7 +84,7 @@ const App = () => {
       key: 'studentName',
     },
     {
-      title: 'Loại sự kiện',
+      title: 'Loại sự cố',
       dataIndex: 'eventType',
       key: 'eventType',
       render: (eventType) => {
@@ -172,21 +172,15 @@ const App = () => {
         (event.eventType && Array.isArray(event.eventType) &&
          event.eventType.some(type =>
            (typeof type === 'string' ? type : (type.typeName || type)).toLowerCase().includes(searchLower)
-         )) ||
-        (event.time && moment(event.time).format('DD/MM/YYYY HH:mm').toLowerCase().includes(searchLower)) ||
-        (event.processingStatus && event.processingStatus.toLowerCase().includes(searchLower));
+         ));
 
-      // Lọc theo loại sự kiện
-      const matchesStatus = statusFilter === '' ||
+      // Lọc theo loại sự cố
+      const matchesStatus = eventTypeFilter === '' ||
         (
-          (event.eventTypeNames && Array.isArray(event.eventTypeNames) &&
-            event.eventTypeNames.some(type =>
-              (type.typeName || type).toLowerCase() === statusFilter.toLowerCase()
-            )
-          ) ||
+          
           (event.eventType && Array.isArray(event.eventType) &&
             event.eventType.some(type =>
-              (typeof type === 'string' ? type : (type.typeName || type)).toLowerCase() === statusFilter.toLowerCase()
+              (typeof type === 'string' ? type : (type.typeName || type)).toLowerCase() === eventTypeFilter.toLowerCase()
             )
           )
         );
@@ -204,8 +198,7 @@ const App = () => {
     return medicalSupplies.filter(supply => {
       // Lọc theo từ khóa tìm kiếm
       const matchesSearch = searchSupplyText === '' ||
-        supply.name.toLowerCase().includes(searchSupplyText.toLowerCase()) ||
-        supply.category.toLowerCase().includes(searchSupplyText.toLowerCase());
+        supply.name.toLowerCase().includes(searchSupplyText.toLowerCase());
 
       // Lọc theo loại vật tư
       const matchesCategory = categoryFilter === '' ||
@@ -215,18 +208,10 @@ const App = () => {
     });
   };
 
-  // Xử lý tạo sự kiện mới
+      // Xử lý tạo sự cố mới
   const handleCreateEvent = () => {
     form.validateFields().then(async values => {
       try {
-        if (!values.typeName || values.typeName.length === 0) {
-          message.error('Vui lòng chọn loại sự kiện');
-          return;
-        }
-        if (!values.studentId || values.studentId.length === 0) {
-          message.error('Vui lòng chọn học sinh');
-          return;
-        }
         // Lấy thông tin nurse từ localStorage
         const nurseId = localStorage.getItem('userId') || '';
         const nurseName = localStorage.getItem('nurseName') || localStorage.getItem('fullName') || localStorage.getItem('email') || '';
@@ -244,7 +229,7 @@ const App = () => {
           quantityUsed: supply.quantityUsed || 1
         }));
 
-        // Lấy danh sách loại sự kiện
+        // Lấy danh sách loại sự cố
         const selectedTypes = eventTypeList.filter(type => values.typeName.includes(type.typeName));
         const listMedicalEventTypes = selectedTypes.map(type => ({
           eventTypeId: type.eventTypeId,
@@ -274,7 +259,7 @@ const App = () => {
         };
 
         await createEmergencyEvent(eventData);
-        message.success('Tạo sự kiện khẩn cấp thành công!');
+                  message.success('Tạo sự cố khẩn cấp thành công!');
         // Reload all events data to reflect changes from backend
         await loadEvents();
 
@@ -287,6 +272,9 @@ const App = () => {
         console.error('Error creating emergency event:', error);
         message.error(getErrorMessage(error));
       }
+    }).catch(error => {
+      // Form validation failed - Ant Design sẽ tự động hiển thị lỗi
+      console.log('Form validation failed:', error);
     });
   };
 
@@ -302,7 +290,7 @@ const App = () => {
     }
   };
 
-  // Xử lý cập nhật sự kiện
+      // Xử lý cập nhật sự cố
   const handleUpdateEvent = () => {
     editForm.validateFields().then(async values => {
       try {
@@ -341,40 +329,15 @@ const App = () => {
           })) : []
         };
 
-        // Ensure eventId is present in eventData
-        let eventIdToUse = selectedEvent.eventId;
-        if (!eventIdToUse) {
-          // Try to get from editForm or events list
-          const formEventId = editForm.getFieldValue('eventId');
-          if (formEventId) {
-            eventIdToUse = formEventId;
-          } else {
-            // Try to find in events list by eventDetailsID
-            const found = events.find(e => e.eventDetailsID === selectedEvent.eventDetailsID);
-            if (found && found.eventId) {
-              eventIdToUse = found.eventId;
-            }
-          }
-        }
-        eventData.eventId = eventIdToUse;
-
-        // Always use the correct eventDetailsId for update
-        const eventDetailsId = selectedEvent.eventDetailsID || selectedEvent.evenDetailsId;
-        if (!eventDetailsId) {
-          message.error('Không tìm thấy eventDetailsID để cập nhật!');
+        // Sử dụng evenDetailsId để cập nhật
+        const updateId = selectedEvent.evenDetailsId || selectedEvent.eventDetailsID;
+        if (!updateId) {
+          message.error('Không tìm thấy evenDetailsId để cập nhật!');
           return;
         }
-        // Try eventId first, then fallback to eventDetailsID/evenDetailsId
-        let updateId = selectedEvent.eventId;
-        if (!updateId) {
-          updateId = selectedEvent.eventDetailsID || selectedEvent.evenDetailsId;
-        }
-        if (!updateId) {
-          message.error('Không tìm thấy ID để cập nhật!');
-          return;
-        }
+        eventData.eventId = updateId;
         await updateMedicalEvent(updateId, eventData);
-        message.success('Cập nhật sự kiện y tế thành công!');
+                  message.success('Cập nhật sự cố y tế thành công!');
 
         // Reload all events data to reflect changes from backend
         await loadEvents();
@@ -386,6 +349,9 @@ const App = () => {
         console.error('Error updating event:', error);
         message.error(getErrorMessage(error));
       }
+    }).catch(error => {
+      // Form validation failed - Ant Design sẽ tự động hiển thị lỗi
+      console.log('Form validation failed:', error);
     });
   };
 
@@ -438,12 +404,10 @@ const App = () => {
   const handleEdit = async (record) => {
     try {
       const eventDetails = await getEventDetailsByEndpoint(record.eventDetailsID);
-      // Ensure both eventDetailsID and evenDetailsId are available for compatibility
       setSelectedEvent({
         ...eventDetails,
-        eventDetailsID: eventDetails.eventDetailsID || eventDetails.evenDetailsId,
+        eventDetailsID: eventDetails.eventDetailsID,
         evenDetailsId: eventDetails.evenDetailsId || eventDetails.eventDetailsID,
-        medicalSupplies: eventDetails.medicalSupplies || eventDetails.listMedicalSupplies || [],
       });
       // Fetch students for the class associated with the event
       let studentsData = [];
@@ -458,13 +422,7 @@ const App = () => {
       } else {
         setStudents([]); // Clear students if no class
       }
-      // Find the pre-selected student from the fetched list
-      const preSelectedStudent = studentsData.find(s => s.studentID === eventDetails.studentId);
-      if (preSelectedStudent) {
-        // setSelectedStudent(preSelectedStudent); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
-      } else {
-        // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
-      }
+
       // Open modal - form fields will be set by useEffect
       setIsEditModalVisible(true);
       // Đồng bộ selectedSupplies nếu có listMedicalSupplies
@@ -489,7 +447,6 @@ const App = () => {
   const handleCancelEdit = () => {
     setIsEditModalVisible(false);
     editForm.resetFields();
-    // setSelectedEventType(null); // Reset selectedEventType on cancel
   };
 
   // Hàm xử lý khi chọn học sinh
@@ -503,7 +460,6 @@ const App = () => {
   // Hàm xử lý khi chọn lớp
   const handleClassChange = async (className) => {
     setSelectedClass(className);
-    // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
     form.setFieldsValue({
       studentId: undefined,
       parentId: undefined
@@ -522,17 +478,16 @@ const App = () => {
     }
   };
 
-  // Hàm xử lý khi mở modal tạo sự kiện mới
+  // Hàm xử lý khi mở modal tạo sự cố mới
   const handleOpenCreateModal = () => {
     setIsModalVisible(true);
     form.resetFields();
     setSelectedClass(null);
-    // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
     setStudents([]);
     setSelectedSupplies([]);
   };
 
-  // Đưa loadEvents ra ngoài để có thể gọi lại sau khi tạo sự kiện
+  // Đưa loadEvents ra ngoài để có thể gọi lại sau khi tạo sự cố
   const loadEvents = async () => {
     try {
       const eventsData = await getAllMedicalEvents();
@@ -629,24 +584,24 @@ const App = () => {
   return (
     <div className="medical-management-app">
       <div className="app-header">
-        <Title level={2} className="app-title">Quản lý Sự kiện Y tế</Title>
+        <Title level={2} className="app-title">Quản lý Sự cố Y tế</Title>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           className="create-btn"
           onClick={handleOpenCreateModal}
         >
-          Tạo sự kiện mới
+          Tạo sự cố mới
         </Button>
       </div>
 
-      {/* Sự kiện gần đây */}
-      <Card className="events-card" title="Sự kiện gần đây">
+              {/* Sự cố gần đây */}
+        <Card className="events-card" title="Sự cố gần đây">
         <div className="filters-section custom-filters-section">
           <Row gutter={16} justify="center" align="middle" wrap={false}>
             <Col>
               <Input
-                placeholder="Tìm kiếm sự kiện..."
+                placeholder="Tìm kiếm sự cố..."
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -656,13 +611,13 @@ const App = () => {
             </Col>
             <Col>
               <Select
-                placeholder="Tất cả loại sự kiện"
-                value={statusFilter}
-                onChange={setStatusFilter}
+                placeholder="Tất cả loại sự cố"
+                value={eventTypeFilter}
+                onChange={setEventTypeFilter}
                 style={{ minWidth: 170 }}
                 allowClear
               >
-                <Option value="">Tất cả loại sự kiện</Option>
+                                  <Option value="">Tất cả loại sự cố</Option>
                 {eventTypeList.map(eventType => (
                   <Option key={eventType.eventTypeId} value={eventType.typeName}>
                     {eventType.typeName}
@@ -761,14 +716,14 @@ const App = () => {
 
       </Card>
 
-      {/* Modal tạo sự kiện mới */}
+              {/* Modal tạo sự cố mới */}
       <Modal
-        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Tạo sự kiện y tế mới</span>}
+                  title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Tạo sự cố y tế mới</span>}
         open={isModalVisible}
         onOk={handleCreateEvent}
         onCancel={() => setIsModalVisible(false)}
         width={800}
-        okText="Tạo sự kiện"
+                  okText="Tạo sự cố"
         cancelText="Hủy"
         maskClosable={false}
         styles={{ background: '#f7f8fc', borderRadius: 12, padding: 24 }}
@@ -776,7 +731,6 @@ const App = () => {
           if (!visible) {
             form.resetFields();
             setSelectedClass(null);
-            // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
             setStudents([]);
             setSelectedSupplies([]);
           }
@@ -861,12 +815,12 @@ const App = () => {
 
             <Form.Item
               name="typeName"
-              label="Loại sự kiện"
-              rules={[{ required: true, message: 'Vui lòng nhập loại sự kiện' }]}
+              label="Loại sự cố"
+                              rules={[{ required: true, message: 'Vui lòng nhập loại sự cố' }]}
             >
               <Select
                 mode="multiple"
-                placeholder="Chọn loại sự kiện"
+                                  placeholder="Chọn loại sự cố"
                 allowClear
                 value={Array.isArray(form.getFieldValue('typeName')) ? form.getFieldValue('typeName') : []}
                 onChange={() => { }}
@@ -947,7 +901,7 @@ const App = () => {
 
             <Form.Item
               label="Vật tư y tế sử dụng"
-              extra="Chọn vật tư y tế đã sử dụng cho sự kiện và nhập số lượng sử dụng."
+                                extra="Chọn vật tư y tế đã sử dụng cho sự cố và nhập số lượng sử dụng."
             >
               <Select
                 mode="multiple"
@@ -1039,7 +993,7 @@ const App = () => {
 
       {/* Modal xem chi tiết */}
       <Modal
-        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết sự kiện y tế</span>}
+                  title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết sự cố y tế</span>}
         open={isViewModalVisible}
         onCancel={() => setIsViewModalVisible(false)}
         footer={null}
@@ -1078,7 +1032,7 @@ const App = () => {
                 </Tag>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Loại sự kiện:</Typography.Text><br />
+                <Typography.Text type="secondary" strong>Loại sự cố:</Typography.Text><br />
                 <Typography.Text>
                   {Array.isArray(selectedEvent.eventTypeNames) && selectedEvent.eventTypeNames.length > 0
                     ? selectedEvent.eventTypeNames.map((name, idx) => (
@@ -1090,7 +1044,7 @@ const App = () => {
                 </Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
-                <Typography.Text type="secondary" strong>Người tạo sự kiện:</Typography.Text><br />
+                <Typography.Text type="secondary" strong>Người tạo sự cố:</Typography.Text><br />
                 <Typography.Text>{selectedEvent.createdByNurseName}</Typography.Text>
               </Col>
               <Col span={12} style={{ marginBottom: 6 }}>
@@ -1162,7 +1116,7 @@ const App = () => {
 
       {/* Modal chỉnh sửa */}
       <Modal
-        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chỉnh sửa sự kiện y tế</span>}
+                  title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chỉnh sửa sự cố y tế</span>}
         open={isEditModalVisible}
         onOk={handleUpdateEvent}
         onCancel={handleCancelEdit}
@@ -1175,7 +1129,6 @@ const App = () => {
           if (!visible) {
             editForm.resetFields();
             setSelectedClass(null);
-            // setSelectedStudent(null); // XÓA TẤT CẢ các dòng gọi setSelectedStudent
             setStudents([]);
           }
         }}
@@ -1339,7 +1292,7 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="date"
-                  label="Ngày sự kiện"
+                  label="Ngày sự cố"
                   rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
                 >
                   <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" disabledDate={disabledPastDate} />
@@ -1348,7 +1301,7 @@ const App = () => {
               <Col span={12}>
                 <Form.Item
                   name="time"
-                  label="Giờ sự kiện"
+                  label="Giờ sự cố"
                   rules={[{ required: true, message: 'Vui lòng chọn giờ' }]}
                 >
                   <TimePicker style={{ width: '100%' }} format="HH:mm" />
@@ -1388,6 +1341,7 @@ const App = () => {
                   name="usageMethod"
                   label="Phương pháp xử lý"
                   rules={[
+                    { required: true, message: 'Vui lòng nhập phương pháp xử lí' },
                     {
                       validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
@@ -1452,7 +1406,7 @@ const App = () => {
               <Col span={24}>
                 <Form.Item
                   label="Vật tư y tế sử dụng"
-                  extra="Chọn vật tư y tế đã sử dụng cho sự kiện và nhập số lượng sử dụng."
+                  extra="Chọn vật tư y tế đã sử dụng cho sự cố và nhập số lượng sử dụng."
                 >
                   <Select
                     mode="multiple"

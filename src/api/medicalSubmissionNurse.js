@@ -96,3 +96,19 @@ export const getEvidenceImage = async (confirmId) => {
   }
   return response.data;
 };
+
+// Cập nhật trạng thái schedule phát thuốc
+export const updateScheduleStatus = async (scheduleId, statusData) => {
+  try {
+    const requestBody = {
+      medicationScheduleID: scheduleId,
+      ...statusData
+    };
+    
+    const response = await apiClient.put(`/medication-submission/update-schedule-status`, requestBody);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating schedule status:', error);
+    throw error;
+  }
+};
