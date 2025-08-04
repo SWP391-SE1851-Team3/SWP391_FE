@@ -34,7 +34,7 @@ const ROLE_MENUS = {
   2: [
     { key: 'home', label: 'Trang chủ', path: '/', icon: <HomeOutlined /> },
     { key: 'manage-medication', label: 'Quản lí thuốc', path: '/manage-medication', icon: <MedicineBoxOutlined /> },
-    { key: 'medical-events', label: 'Sự kiện y tế', path: '/medical-events', icon: <CalendarOutlined /> },
+    { key: 'medical-events', label: 'Sự cố y tế', path: '/medical-events', icon: <CalendarOutlined /> },
     { key: 'manage-vaccination', label: 'Tiêm Chủng', path: '/manage-vaccination', icon: <SafetyOutlined /> },
     { key: 'manage-health-check', label: 'Kiểm tra y tế', path: '/manage-health-check', icon: <HeartOutlined /> },
   ],

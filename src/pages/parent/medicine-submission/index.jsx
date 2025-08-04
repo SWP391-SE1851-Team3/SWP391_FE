@@ -85,7 +85,7 @@ const MedicineForm = () => {
         dosage: item.dosage,
         timeToUseList: item.timeToUseList,
         note: item.note || '',
-        status: "Chờ nhận thuốc"
+        status: "Đang xử lí"
       }));
 
       const medicationDate = values.medicationDate;

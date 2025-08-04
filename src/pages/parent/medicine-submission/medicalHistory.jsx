@@ -5,9 +5,12 @@ import { getMedicationSubmissionsByParentId, getEvidenceImage } from '../../../a
 const statusColorMap = {
   'Chờ nhận thuốc': 'orange',
   'Đã phát thuốc': 'green',
+  'Đã hoàn thành': 'green',
   'Thiếu thuốc': 'red',
   'Đã nhận thuốc': 'blue',
-  'Đã hủy': 'default'
+  'Đang xử lí': 'blue',
+  'Đã hủy': 'red',
+  'Từ chối': 'red'
 };
 
 const MedicineHistory = ({ parentId, studentId, students }) => {
