@@ -1386,6 +1386,7 @@ const App = () => {
                   name="result"
                   label="Kết quả xử lý"
                   rules={[
+                    { required: true, message: 'Vui lòng nhập kết quả xử lý' },
                     {
                       validator: (_, value) => {
                         if (value === undefined || value === '') return Promise.resolve();
