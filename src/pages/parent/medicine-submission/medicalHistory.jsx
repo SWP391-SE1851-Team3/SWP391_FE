@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Spin, Modal, message, Tag } from 'antd';
 import { getMedicationSubmissionsByParentId, getEvidenceImage } from '../../../api/medicalSubmission';
+import './medicineForm.css';
 
 const statusColorMap = {
   'Chờ nhận thuốc': 'orange',
@@ -9,7 +10,7 @@ const statusColorMap = {
   'Thiếu thuốc': 'red',
   'Đã nhận thuốc': 'blue',
   'Đang xử lí': 'blue',
-  'Đã hủy': 'red',
+  'Đã Hủy': 'red',
   'Từ chối': 'red'
 };
 
@@ -111,34 +112,40 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
         <div className="section-card"><Spin /></div>
       ) : (
         <div className="status-list">
-          {history.map((group, idx) => (
-            <div key={idx} className="status-items">
-              <div className="status-header">
-                <div className="status-info">
-                  <h3>Học sinh: {group.studentName || getStudentName(group.studentId)}</h3>
-                  <div className="status-date">Ngày gửi: {formatDate(group.submissionDate)}</div>
-                  {/* <div><b>Trạng thái:</b> <Tag color={statusColorMap[group.confirmStatus]}>{group.confirmStatus}</Tag></div> */}
-                </div>
-                <div>
-                  <Tag color={statusColorMap[group.confirmStatus]}>
-                    {group.confirmStatus}
-                  </Tag>
-                </div>
-              </div>
+          {history.map((group, idx) => {
+            const hasMissingMedicine = Object.values(group.timeStatusMap).includes("Từ chối");
 
-              <div className="status-actions">
-                <button className="btn-text" onClick={() => handleViewDetail(group)}>
-                  <span className="material-icons">Xem chi tiết</span>
-                </button>
+            return (
+              <div
+                key={idx}
+                className={`status-items ${hasMissingMedicine ? 'missing-medicine' : ''}`}
+              >
+                <div className="status-header">
+                  <div className="status-info">
+                    <h3>Học sinh: {group.studentName || getStudentName(group.studentId)}</h3>
+                    <div className="status-date">Ngày gửi: {formatDate(group.submissionDate)}</div>
+                  </div>
+                  <div>
+                    <Tag color={statusColorMap[group.confirmStatus]}>
+                      {group.confirmStatus}
+                    </Tag>
+                  </div>
+                </div>
 
-                {group.confirmId && (
-                  <button className="btn-text" onClick={() => handleViewEvidenceImage(group.confirmId)}>
-                    <span className="material-icons">Xem ảnh bằng chứng</span>
+                <div className="status-actions">
+                  <button className="btn-text" onClick={() => handleViewDetail(group)}>
+                    <span className="material-icons">Xem chi tiết</span>
                   </button>
-                )}
+
+                  {group.confirmId && (
+                    <button className="btn-text" onClick={() => handleViewEvidenceImage(group.confirmId)}>
+                      <span className="material-icons">Xem ảnh bằng chứng</span>
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {!loading && history.length === 0 && (
             <div className="section-card">
