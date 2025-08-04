@@ -449,6 +449,41 @@ button:hover {
   font-size: 16px !important;
 }
 
+.medicine-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 0;
+  margin-top: 18px;
+  margin-right: 100px;
+}
+
+
+.medicine-detail-row h4 {
+  margin-bottom: 0;
+  font-size: 18px;
+  font-weight: bold;
+  margin-right: 100px;
+}
+
+.medicine-detail-row .ant-tag {
+  margin-left: 0;
+  margin-right: 0;
+  /* Đảm bảo sát lề phải */
+}
+
+/* Responsive cho medicine-detail-row */
+@media screen and (max-width: 768px) {
+  .medicine-detail-row {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .medicine-detail-row h4 {
+    font-size: 16px;
+  }
+}
+
 /* Responsive: giữ nguyên max-width, KHÔNG làm rộng ra toàn bộ màn hình */
 @media screen and (max-width: 900px) {
   .medicine-form-container {

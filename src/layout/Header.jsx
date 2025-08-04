@@ -25,11 +25,11 @@ import './Header.css';
 const ROLE_MENUS = {
   1: [
     { key: 'home', label: 'Trang chủ', path: '/' },
-    { key: 'health-records', label: 'Hồ sơ sức khỏe', path: '/health-records' },
-    { key: 'medications', label: 'Gửi thuốc', path: '/medications' },
-    { key: 'health-check', label: 'Kiểm tra sức khỏe', path: '/health-check' },
-    { key: 'vaccination', label: 'Tiêm chủng', path: '/vaccination' },
-    { key: 'medical-accident', label: 'Sự Kiện Y Tế', path: '/medical-accident' },
+    { key: 'health-records', label: 'Hồ Sơ Sức Khỏe', path: '/health-records' },
+    { key: 'medications', label: 'Gửi Thuốc', path: '/medications' },
+    { key: 'health-check', label: 'Kiểm Tra Sức Khỏe', path: '/health-check' },
+    { key: 'vaccination', label: 'Tiêm Chủng', path: '/vaccination' },
+    { key: 'medical-accident', label: 'Sự Cố Y Tế', path: '/medical-accident' },
   ],
   2: [
     { key: 'home', label: 'Trang chủ', path: '/', icon: <HomeOutlined /> },
