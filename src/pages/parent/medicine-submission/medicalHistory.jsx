@@ -178,28 +178,29 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
             <hr />
             {["Sáng", "Trưa", "Chiều"].map(time => (
               detailModal.data.detailsByTime[time]?.length > 0 && (
-                <div key={time}>
-                  <div className="medicine-detail-row">
-                    <h4>Thuốc buổi {time}</h4>
+                <div key={time} className="modal-medicine-group">
+                  <div className="modal-medicine-header">
+                    <h4>Buổi {time}</h4>
                     <Tag color={statusColorMap[detailModal.data.timeStatusMap[time]] || 'default'}>
                       {detailModal.data.timeStatusMap[time] || '---'}
                     </Tag>
                   </div>
 
                   {detailModal.data.detailsByTime[time].map((med, idx) => (
-                    <div key={idx} className="status-details">
-                      <p><b>Thuốc {idx + 1}:</b></p>
+                    <div key={idx} className="modal-medicine-item">
+                      <p><b>Thuốc {idx + 1}</b></p>
                       <p>Tên thuốc: {med.medicineName}</p>
                       <p>Liều lượng: {med.dosage}</p>
                       <p>Ghi chú: {med.note}</p>
                     </div>
                   ))}
+
                   {detailModal.data.medicationScheduleIds?.[time] && (
                     <button
-                      className="btn-text"
+                      className="modal-view-image-button"
                       onClick={() => handleViewEvidenceImage(detailModal.data.medicationScheduleIds[time])}
                     >
-                      <span className="material-icons">Xem ảnh bằng chứng</span>
+                      Xem ảnh bằng chứng
                     </button>
                   )}
                 </div>
