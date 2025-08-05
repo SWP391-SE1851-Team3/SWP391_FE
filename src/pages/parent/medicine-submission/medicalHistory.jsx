@@ -43,6 +43,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                 submissionDate: item.submissionDate,
                 confirmId: item.confirmId,
                 confirmStatus: item.confirmStatus,
+                reason: item.reason,
                 timeStatusMap: {
                   Sáng: null,
                   Trưa: null,
@@ -58,6 +59,10 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
             if (item.timeToUse) {
               acc[key].timeStatusMap[item.timeToUse] = item.status;
               acc[key].detailsByTime[item.timeToUse].push(...item.medicationDetails);
+              if (!acc[key].medicationScheduleIds) {
+                acc[key].medicationScheduleIds = {};
+              }
+              acc[key].medicationScheduleIds[item.timeToUse] = item.medicationScheduleId;
             }
             return acc;
           }, {})
@@ -124,6 +129,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                   <div className="status-info">
                     <h3>Học sinh: {group.studentName || getStudentName(group.studentId)}</h3>
                     <div className="status-date">Ngày gửi: {formatDate(group.submissionDate)}</div>
+                    <div>Ghi chú của y tá:  {group.reason || '---'}</div>
                   </div>
                   <div>
                     <Tag color={statusColorMap[group.confirmStatus]}>
@@ -137,11 +143,11 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                     <span className="material-icons">Xem chi tiết</span>
                   </button>
 
-                  {group.confirmId && (
+                  {/* {group.confirmId && (
                     <button className="btn-text" onClick={() => handleViewEvidenceImage(group.confirmId)}>
                       <span className="material-icons">Xem ảnh bằng chứng</span>
                     </button>
-                  )}
+                  )} */}
                 </div>
               </div>
             );
@@ -179,6 +185,7 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                       {detailModal.data.timeStatusMap[time] || '---'}
                     </Tag>
                   </div>
+
                   {detailModal.data.detailsByTime[time].map((med, idx) => (
                     <div key={idx} className="status-details">
                       <p><b>Thuốc {idx + 1}:</b></p>
@@ -187,6 +194,14 @@ const MedicineHistory = ({ parentId, studentId, students }) => {
                       <p>Ghi chú: {med.note}</p>
                     </div>
                   ))}
+                  {detailModal.data.medicationScheduleIds?.[time] && (
+                    <button
+                      className="btn-text"
+                      onClick={() => handleViewEvidenceImage(detailModal.data.medicationScheduleIds[time])}
+                    >
+                      <span className="material-icons">Xem ảnh bằng chứng</span>
+                    </button>
+                  )}
                 </div>
               )
             ))}

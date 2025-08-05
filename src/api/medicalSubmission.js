@@ -85,14 +85,15 @@ export const getMedicationSubmissionDetails = async (submissionId) => {
   }
 };
 
-export const getEvidenceImage = async (confirmId) => {
+export const getEvidenceImage = async (medicationScheduleId) => {
   try {
-    const response = await apiClient.get(`/medication-confirmations/evidence-image/${confirmId}`);
-    console.log(`Evidence image for confirmation ${confirmId} retrieved successfully`);
-    
+    const response = await apiClient.get(`/medication-schedules/${medicationScheduleId}/evidence-image`);
+    console.log(`Evidence image for medicationSchedule ${medicationScheduleId} retrieved successfully`);
+
     return response.data;
   } catch (error) {
     console.error('Error fetching medication confirmation evidence image:', error);
     throw error;
   }
 };
+
