@@ -1,48 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Table,
-  Button,
-  Input,
-  Select,
-  Card,
-  Space,
-  Tag,
-  Pagination,
-  Typography,
-  Row,
-  Col,
-  Tooltip,
-  Badge,
-  Modal,
-  Form,
-  TimePicker,
-  DatePicker,
-  message,
-  Alert,
-  Switch,
-  InputNumber
+  Table,Button,Input,Select,Card,Space,Tag,Typography,Row,Col,
+  Tooltip,Modal,Form,TimePicker,DatePicker,message,Switch,InputNumber
 } from 'antd';
 import {
-  SearchOutlined,
-  PlusOutlined,
-  EyeOutlined,
-  EditOutlined,
-  CheckOutlined,
-  AlertOutlined,
-  ShoppingCartOutlined,
-  ReloadOutlined
+  SearchOutlined,PlusOutlined,EyeOutlined,EditOutlined
 } from '@ant-design/icons';
 import './Events.css';
 import moment from 'moment';
 import { formatDateTime } from '../../../utils/formatDate';
 import {
-  createEmergencyEvent,
-  updateMedicalEvent,
-  getAllMedicalEvents,
-  fetchStudentsByClass,
-  getEventDetailsByEndpoint,
-  getEventNames,
-  getMedicalSupplies
+  createEmergencyEvent,updateMedicalEvent,getAllMedicalEvents,
+  fetchStudentsByClass,getEventDetailsByEndpoint,getEventNames,getMedicalSupplies
 } from '/src/api/medicalEventsAPI.js';
 import { isPositiveNumber, isStringLengthInRange, hasNoSpecialCharacters, isOnlyWhitespace } from '../../../validations';
 import { isFever, isHypothermia, isTachycardia, isBradycardia } from '../../../validations';
@@ -165,7 +134,6 @@ const App = () => {
   // Hàm lọc dữ liệu
   const getFilteredEvents = () => {
     return events.filter(event => {
-      // Lọc theo từ khóa tìm kiếm
       const searchLower = searchText.toLowerCase();
       const matchesSearch = searchText === '' ||
         (event.studentName && event.studentName.toLowerCase().includes(searchLower)) ||
@@ -174,18 +142,13 @@ const App = () => {
            (typeof type === 'string' ? type : (type.typeName || type)).toLowerCase().includes(searchLower)
          ));
 
-      // Lọc theo loại sự cố
       const matchesStatus = eventTypeFilter === '' ||
-        (
-          
-          (event.eventType && Array.isArray(event.eventType) &&
-            event.eventType.some(type =>
-              (typeof type === 'string' ? type : (type.typeName || type)).toLowerCase() === eventTypeFilter.toLowerCase()
-            )
+        (event.eventType && Array.isArray(event.eventType) &&
+          event.eventType.some(type =>
+            (typeof type === 'string' ? type : (type.typeName || type)).toLowerCase() === eventTypeFilter.toLowerCase()
           )
         );
 
-      // Lọc theo trạng thái
       const matchesState = stateFilter === '' ||
         (event.processingStatus && event.processingStatus === stateFilter);
 
@@ -208,20 +171,16 @@ const App = () => {
     });
   };
 
-      // Xử lý tạo sự cố mới
   const handleCreateEvent = () => {
     form.validateFields().then(async values => {
       try {
-        // Lấy thông tin nurse từ localStorage
         const nurseId = localStorage.getItem('userId') || '';
         const nurseName = localStorage.getItem('nurseName') || localStorage.getItem('fullName') || localStorage.getItem('email') || '';
 
-        // Convert date string to proper format using moment
-        const dateObj = values.date; // DatePicker returns a moment object
+        const dateObj = values.date;
         const timeObj = values.time;
         const eventDateTime = dateObj.format('YYYY-MM-DD') + 'T' + timeObj.format('HH:mm:ss.SSS') + 'Z';
 
-        // Map selectedSupplies to API format
         const mappedSupplies = selectedSupplies.map(supply => ({
           medicalSupplyId: supply.medicalSupplyId || supply.key,
           supplyName: supply.supplyName || supply.name,
@@ -229,7 +188,6 @@ const App = () => {
           quantityUsed: supply.quantityUsed || 1
         }));
 
-        // Lấy danh sách loại sự cố
         const selectedTypes = eventTypeList.filter(type => values.typeName.includes(type.typeName));
         const listMedicalEventTypes = selectedTypes.map(type => ({
           eventTypeId: type.eventTypeId,
@@ -259,8 +217,7 @@ const App = () => {
         };
 
         await createEmergencyEvent(eventData);
-                  message.success('Tạo sự cố khẩn cấp thành công!');
-        // Reload all events data to reflect changes from backend
+        message.success('Tạo sự cố khẩn cấp thành công!');
         await loadEvents();
 
         setIsModalVisible(false);
@@ -273,7 +230,6 @@ const App = () => {
         message.error(getErrorMessage(error));
       }
     }).catch(error => {
-      // Form validation failed - Ant Design sẽ tự động hiển thị lỗi
       console.log('Form validation failed:', error);
     });
   };
@@ -290,20 +246,16 @@ const App = () => {
     }
   };
 
-      // Xử lý cập nhật sự cố
   const handleUpdateEvent = () => {
     editForm.validateFields().then(async values => {
       try {
-        // Lấy nurseId và nurseName từ localStorage
         const nurseId = localStorage.getItem('userId') || '';
         const nurseName = localStorage.getItem('fullname') || '';
 
-        // Convert date string to proper format using moment
-        const dateObj = values.date; // DatePicker returns a moment object
+        const dateObj = values.date;
         const timeObj = values.time;
         const eventDateTime = dateObj.format('YYYY-MM-DD') + 'T' + timeObj.format('HH:mm:ss.SSS') + 'Z';
 
-        // Build eventData according to the new API structure
         const eventData = {
           usageMethod: values.usageMethod || '',
           isEmergency: values.isEmergency || 'Bình thường',
@@ -312,7 +264,7 @@ const App = () => {
           heartRate: values.heartRate || '',
           eventDateTime: eventDateTime,
           nurseId,
-          studentId: Array.isArray(values.studentId) ? values.studentId[0] : values.studentId, // API expects a single ID
+          studentId: Array.isArray(values.studentId) ? values.studentId[0] : values.studentId,
           note: values.description,
           result: values.result,
           processingStatus: 'Hoàn thành',
@@ -329,7 +281,6 @@ const App = () => {
           })) : []
         };
 
-        // Sử dụng evenDetailsId để cập nhật
         const updateId = selectedEvent.evenDetailsId || selectedEvent.eventDetailsID;
         if (!updateId) {
           message.error('Không tìm thấy evenDetailsId để cập nhật!');
@@ -337,25 +288,22 @@ const App = () => {
         }
         eventData.eventId = updateId;
         await updateMedicalEvent(updateId, eventData);
-                  message.success('Cập nhật sự cố y tế thành công!');
+        message.success('Cập nhật sự cố y tế thành công!');
 
-        // Reload all events data to reflect changes from backend
         await loadEvents();
 
         setIsEditModalVisible(false);
         editForm.resetFields();
-        setSelectedEvent(null); // Reset selected event after successful update
+        setSelectedEvent(null);
       } catch (error) {
         console.error('Error updating event:', error);
         message.error(getErrorMessage(error));
       }
     }).catch(error => {
-      // Form validation failed - Ant Design sẽ tự động hiển thị lỗi
       console.log('Form validation failed:', error);
     });
   };
 
-  // UseEffect to populate edit form when modal becomes visible and data is available
   useEffect(() => {
     if (isEditModalVisible && selectedEvent) {
       const eventDateTime = moment(selectedEvent.eventDateTime);
@@ -375,7 +323,7 @@ const App = () => {
         processingStatus: 'Hoàn thành',
         temperature: selectedEvent.temperature,
         heartRate: selectedEvent.heartRate,
-        date: eventDateTime, // DatePicker expects a moment object
+        date: eventDateTime,
         time: eventDateTime,
         isEmergency: selectedEvent.isEmergency,
         hasParentBeenInformed: selectedEvent.hasParentBeenInformed,
@@ -386,7 +334,6 @@ const App = () => {
 
       editForm.setFieldsValue(formValues);
 
-      // Đồng bộ selectedSupplies nếu có listMedicalSupplies
       if (selectedEvent.listMedicalSupplies && Array.isArray(selectedEvent.listMedicalSupplies)) {
         setSelectedSupplies(selectedEvent.listMedicalSupplies.map(s => ({
           medicalSupplyId: s.medicalSupplyId,
@@ -400,7 +347,6 @@ const App = () => {
     }
   }, [isEditModalVisible, selectedEvent, eventTypeList, editForm]);
 
-  // Xử lý chỉnh sửa
   const handleEdit = async (record) => {
     try {
       const eventDetails = await getEventDetailsByEndpoint(record.eventDetailsID);
@@ -409,23 +355,22 @@ const App = () => {
         eventDetailsID: eventDetails.eventDetailsID,
         evenDetailsId: eventDetails.evenDetailsId || eventDetails.eventDetailsID,
       });
-      // Fetch students for the class associated with the event
+      
       let studentsData = [];
       if (eventDetails.className) {
         try {
           studentsData = await fetchStudentsByClass(eventDetails.className);
-          setStudents(studentsData); // Populate students for the dropdown
+          setStudents(studentsData);
         } catch (error) {
           console.error('Error fetching students for pre-selected class in edit:', error);
           message.error(getErrorMessage(error));
         }
       } else {
-        setStudents([]); // Clear students if no class
+        setStudents([]);
       }
 
-      // Open modal - form fields will be set by useEffect
       setIsEditModalVisible(true);
-      // Đồng bộ selectedSupplies nếu có listMedicalSupplies
+      
       if (eventDetails.listMedicalSupplies && Array.isArray(eventDetails.listMedicalSupplies)) {
         setSelectedSupplies(eventDetails.listMedicalSupplies.map(s => ({
           medicalSupplyId: s.medicalSupplyId,
@@ -443,21 +388,17 @@ const App = () => {
     }
   };
 
-  // Xử lý hủy chỉnh sửa
   const handleCancelEdit = () => {
     setIsEditModalVisible(false);
     editForm.resetFields();
   };
 
-  // Hàm xử lý khi chọn học sinh
   const handleStudentChange = (value) => {
-    // value là mảng studentID khi dùng mode="multiple"
     form.setFieldsValue({
       studentId: value
     });
   };
 
-  // Hàm xử lý khi chọn lớp
   const handleClassChange = async (className) => {
     setSelectedClass(className);
     form.setFieldsValue({
@@ -478,7 +419,6 @@ const App = () => {
     }
   };
 
-  // Hàm xử lý khi mở modal tạo sự cố mới
   const handleOpenCreateModal = () => {
     setIsModalVisible(true);
     form.resetFields();
@@ -487,12 +427,10 @@ const App = () => {
     setSelectedSupplies([]);
   };
 
-  // Đưa loadEvents ra ngoài để có thể gọi lại sau khi tạo sự cố
   const loadEvents = async () => {
     try {
       const eventsData = await getAllMedicalEvents();
       
-      // Transform the data to match the new structure for the table
       const transformedEvents = eventsData.map(event => {
         return {
           key: event.eventDetailsID,
@@ -508,7 +446,6 @@ const App = () => {
         };
       });
 
-      // Sort events by time in descending order (newest first)
       transformedEvents.sort((a, b) => {
         const timeA = moment(a.time);
         const timeB = moment(b.time);
@@ -541,7 +478,6 @@ const App = () => {
     const fetchSupplies = async () => {
       try {
         const supplies = await getMedicalSupplies();
-        // Khi map dữ liệu từ API, bỏ trường status:
         const mapped = supplies.map(item => ({
           key: item.medicalSupplyID,
           name: item.supplyName,
@@ -565,15 +501,12 @@ const App = () => {
     fetchSupplies();
   }, []);
 
-  // Lấy dữ liệu đã lọc
   const filteredEvents = getFilteredEvents();
 
-  // Thêm hàm kiểm tra ngày không cho chọn ngày trong quá khứ
   const disabledPastDate = (current) => {
     return current && current < moment().startOf('day');
   };
 
-  // Hàm xác định className cho từng hàng dựa trên mức độ nghiêm trọng
   const getRowClassName = (record) => {
     if (record.isEmergency === 'Nặng') {
       return 'emergency-row';
