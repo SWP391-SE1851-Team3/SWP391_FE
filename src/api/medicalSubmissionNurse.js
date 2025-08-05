@@ -72,13 +72,12 @@ export const getMedicationConfirmationBySubmission = async (submissionId) => {
 };
 
 // Upload evidence image
-export const uploadEvidenceImage = async (file, confirmId, saveAsBase64 = true) => {
+export const uploadEvidenceImage = async (file, medicationScheduleId, saveAsBase64 = true) => {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('confirmId', confirmId);
   formData.append('saveAsBase64', saveAsBase64);
 
-  const response = await apiClient.post('/medication-confirmations/evidence-image', formData, {
+  const response = await apiClient.post(`/medication-schedules/${medicationScheduleId}/evidence-image`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -86,9 +85,10 @@ export const uploadEvidenceImage = async (file, confirmId, saveAsBase64 = true) 
   return response.data;
 };
 
-// THÊM MỚI: Get evidence image
-export const getEvidenceImage = async (confirmId) => {
-  const response = await apiClient.get(`/medication-confirmations/evidence-image/${confirmId}`, {
+
+// Get evidence image by schedule ID
+export const getScheduleEvidenceImage = async (medicationScheduleId) => {
+  const response = await apiClient.get(`/medication-schedules/${medicationScheduleId}/evidence-image`, {
     responseType: 'text'
   });
   if (!response.data || response.data.length === 0) {
