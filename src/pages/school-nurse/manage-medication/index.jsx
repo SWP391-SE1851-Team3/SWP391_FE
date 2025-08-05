@@ -1,42 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Table,
-  Input,
-  Select,
-  Button,
-  Card,
-  Typography,
-  Space,
-  Tag,
-  Row,
-  Col,
-  Pagination,
-  Modal,
-  Form,
-  message,
-  Calendar,
-  Badge,
-  Empty,
-  Upload,
-  Divider,
-  Collapse
+  Table, Input, Select, Button, Card, Typography, Space, Tag, Row, Col, Modal,
+    Form, message, Calendar, Badge , Empty, Upload, Collapse
 } from 'antd';
 import {
-  SearchOutlined,
-  EyeOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  CalendarOutlined,
-  FileTextOutlined,
-  UploadOutlined,
-  PictureOutlined,
-  ClockCircleOutlined,
-  MedicineBoxOutlined
+  SearchOutlined, EyeOutlined, CheckOutlined, CalendarOutlined, FileTextOutlined,
+  UploadOutlined, PictureOutlined, ClockCircleOutlined, MedicineBoxOutlined
 } from '@ant-design/icons';
-import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails, getMedicationConfirmationBySubmission, uploadEvidenceImage, getEvidenceImage, updateScheduleStatus } from '../../../api/medicalSubmissionNurse';
+import { getMedicationSubmissions, updateMedicationStatus, getMedicationSubmissionDetails, 
+  getMedicationConfirmationBySubmission, uploadEvidenceImage, getScheduleEvidenceImage, updateScheduleStatus } from '../../../api/medicalSubmissionNurse';
 import { formatDate } from '../../../utils/formatDate';
 import './Medication.css';
-
 import { getErrorMessage } from '../../../utils/getErrorMessage';
 import { getMedicationImage } from '../../../api/medicalSubmissionNurse';
 import dayjs from 'dayjs';
@@ -48,113 +22,126 @@ const { Title } = Typography;
 const { Option } = Select;
 const { Panel } = Collapse;
 
+// Constants
+const STATUS_CONFIG = {
+  'Đang xử lí': { color: 'processing', label: 'Đang xử lí' },
+  'Đã hoàn thành': { color: 'success', label: 'Đã hoàn thành' },
+  'Đã Hủy': { color: 'red', label: 'Đã Hủy' },
+  'Đã phát thuốc': { color: 'success', label: 'Đã phát thuốc' },
+  'Từ chối': { color: 'red', label: 'Từ chối' }
+};
+
+const CLASS_OPTIONS = [
+  { value: 'Lớp 5A', label: 'Lớp 5A' },
+  { value: 'Lớp 4B', label: 'Lớp 4B' },
+  { value: 'Lớp 3C', label: 'Lớp 3C' },
+  { value: 'Lớp 2A', label: 'Lớp 2A' },
+  { value: 'Lớp 1B', label: 'Lớp 1B' }
+];
+
 const MedicationManagement = () => {
-  const [currentPage1, setCurrentPage1] = useState(1);
+  // State management
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [classFilter, setClassFilter] = useState('');
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [detailData, setDetailData] = useState([]); // Thay đổi thành array để chứa nhiều schedule
-  const [detailLoading, setDetailLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [selectedDateData, setSelectedDateData] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
-  const tablePageSize = 5;
-  // Thêm state để điều khiển modal ảnh thuốc
+  const [scheduleStatusMap, setScheduleStatusMap] = useState({}); // Lưu trạng thái schedule của mỗi submission
+
+  // Modal states
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [detailData, setDetailData] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [confirmationData, setConfirmationData] = useState(null);
+
+  // Image modal states
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [imageToShow, setImageToShow] = useState(null);
-  // 1. Thêm state cho modal cập nhật tình trạng thuốc
+  const [isScheduleEvidenceModalVisible, setIsScheduleEvidenceModalVisible] = useState(false);
+  const [scheduleEvidenceImageToShow, setScheduleEvidenceImageToShow] = useState(null);
+  const [currentScheduleId, setCurrentScheduleId] = useState(null);
+
+  // Form states
   const [isUpdateStatusModalVisible, setIsUpdateStatusModalVisible] = useState(false);
   const [updateStatusForm] = Form.useForm();
-  const [confirmationData, setConfirmationData] = useState(null);
-  // Thêm state cho upload evidence image
-  const [evidenceFileList, setEvidenceFileList] = useState([]);
-  const [uploadingEvidence, setUploadingEvidence] = useState(false);
-  // THÊM MỚI: State cho modal ảnh evidence
-  const [isEvidenceImageModalVisible, setIsEvidenceImageModalVisible] = useState(false);
-  const [evidenceImageToShow, setEvidenceImageToShow] = useState(null);
-  // State cho modal cập nhật trạng thái schedule
+
+  // Schedule modal states
   const [isUpdateScheduleModalVisible, setIsUpdateScheduleModalVisible] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [updateScheduleForm] = Form.useForm();
-  // State cho modal xác nhận
+  const [scheduleEvidenceFileList, setScheduleEvidenceFileList] = useState([]);
+  const [uploadingScheduleEvidence, setUploadingScheduleEvidence] = useState(false);
+
+  // Confirmation modal states
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
-  const fetchMedicationSubmissions = useCallback(async () => {
-    try {
-      setLoading(true);
-      const submissions = await getMedicationSubmissions();
-      const formattedData = submissions.map((submission, index) => {
-        // Lấy thông tin từ medicationDetails đầu tiên (nếu có)
-        const firstDetail = Array.isArray(submission.medicationDetails) && submission.medicationDetails.length > 0 ? submission.medicationDetails[0] : {};
-        
-        // Xử lý timeToUseList thành chuỗi
+  // Utility functions
+  const getStatusTag = (status) => {
+    const config = STATUS_CONFIG[status] || { color: 'default', label: status };
+    return <Tag color={config.color}>{config.label}</Tag>;
+  };
+
+  const handleApiError = (error, customMessage) => {
+    message.error(customMessage || getErrorMessage(error));
+  };
+
+  // Data processing functions
+  const formatSubmissionData = (submissions) => {
+    return submissions.map((submission, index) => {
+      const firstDetail = Array.isArray(submission.medicationDetails) && submission.medicationDetails.length > 0 
+        ? submission.medicationDetails[0] 
+        : {};
+      
         const timeToUseString = firstDetail.timeToUseList && Array.isArray(firstDetail.timeToUseList) 
           ? firstDetail.timeToUseList.join(', ') 
           : '';
         
         return {
           key: submission.submissionId?.toString() || index.toString(),
-          id: submission.submissionId, // Sử dụng submissionId từ backend
+        id: submission.submissionId,
           student: submission.studentName,
           className: submission.className || '',
-          medication: Array.isArray(submission.medicationDetails) ? submission.medicationDetails.map(m => m.medicineName).join(', ') : '',
-          status: submission.status, // Lấy trạng thái từ backend
+        medication: Array.isArray(submission.medicationDetails) 
+          ? submission.medicationDetails.map(m => m.medicineName).join(', ') 
+          : '',
+        status: submission.status,
           time: formatDate(submission.submissionDate),
           submissionDate: submission.submissionDate,
-          actions: submission.status === 'Chờ nhận thuốc' ? ['view', 'confirm'] : ['view'],
-
           medicationDetails: submission.medicationDetails,
           dosage: firstDetail.dosage || '',
-          timeToUse: timeToUseString, // Sử dụng timeToUseList đã chuyển thành chuỗi
+        timeToUse: timeToUseString,
           note: firstDetail.note || '',
-          noteSchedule: firstDetail.noteSchedule || '', // Thêm noteSchedule
-          medicationDetailId: firstDetail.medicationDetailId, // Thêm medicationDetailId
+        noteSchedule: firstDetail.noteSchedule || '',
+        medicationDetailId: firstDetail.medicationDetailId,
           studentId: submission.studentId,
-          confirmId: submission.confirmId, // Lấy confirmId từ backend nếu có
-        };
-      });
-      formattedData.sort((a, b) => {
-        const dateA = new Date(a.submissionDate);
-        const dateB = new Date(b.submissionDate);
-        return dateB - dateA;
-      });
-      setData(formattedData);
-      updateSelectedDateData(formattedData, selectedDate);
-    } catch (error) {
-      message.error(getErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedDate]);
+        confirmId: submission.confirmId,
+      };
+    }).sort((a, b) => new Date(b.submissionDate) - new Date(a.submissionDate));
+  };
 
-  const updateSelectedDateData = (allData, date) => {
+  const updateSelectedDateData = useCallback((allData, date) => {
     const selectedDateStr = date.format('YYYY-MM-DD');
     const filteredData = allData.filter(item => {
       const itemDate = dayjs(item.submissionDate).format('YYYY-MM-DD');
       return itemDate === selectedDateStr;
     });
     setSelectedDateData(filteredData);
-  };
+  }, []);
 
-  useEffect(() => {
-    fetchMedicationSubmissions();
-  }, [fetchMedicationSubmissions]);
-
-  // Filtered data for the table
-  const getFilteredData = () => {
+  const getFilteredData = useCallback(() => {
     let filtered = data;
 
     if (searchText) {
+      const searchLower = searchText.toLowerCase();
       filtered = filtered.filter(
         (item) =>
-          item.student.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.medication.toLowerCase().includes(searchText.toLowerCase())
+          item.student.toLowerCase().includes(searchLower) ||
+          item.medication.toLowerCase().includes(searchLower)
       );
     }
 
@@ -167,35 +154,395 @@ const MedicationManagement = () => {
     }
 
     return filtered;
-  };
+  }, [data, searchText, statusFilter, classFilter]);
 
-  const displayedData = getFilteredData();
+  const getStatusCount = useCallback((status) => {
+    return selectedDateData.filter(item => item.status === status).length;
+  }, [selectedDateData]);
 
-  const getStatusTag = (status) => {
-    switch (status) {
-      case 'Đang xử lí':
-        return <Tag color="processing">Đang xử lí</Tag>;
-      case 'Đã hoàn thành':
-        return <Tag color="success">Đã hoàn thành</Tag>;
-      case 'Đã Hủy':
-        return <Tag color="red">Đã Hủy</Tag>;
-      default:
-        return <Tag>{status}</Tag>;
+  const getTabData = useCallback(() => {
+    if (activeTab === 'all') return selectedDateData;
+    const statusMap = {
+      'processing': 'Đang xử lí',
+      'completed': 'Đã hoàn thành',
+      'cancelled': 'Đã Hủy'
+    };
+    const targetStatus = statusMap[activeTab];
+    return targetStatus ? selectedDateData.filter(item => item.status === targetStatus) : selectedDateData;
+  }, [selectedDateData, activeTab]);
+
+  // API functions
+  const fetchMedicationSubmissions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const submissions = await getMedicationSubmissions();
+      const formattedData = formatSubmissionData(submissions);
+      setData(formattedData);
+      updateSelectedDateData(formattedData, selectedDate);
+      
+      // Tải trước thông tin schedule cho tất cả submissions
+      const schedulePromises = formattedData.map(async (submission) => {
+        try {
+          const detailsArray = await getMedicationSubmissionDetails(submission.id);
+          return { id: submission.id, details: detailsArray };
+        } catch (error) {
+          console.warn(`Không thể tải schedule cho submission ${submission.id}:`, error);
+          return { id: submission.id, details: [] };
+        }
+      });
+      
+      const scheduleResults = await Promise.allSettled(schedulePromises);
+      const newScheduleStatusMap = {};
+      
+      scheduleResults.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value) {
+          newScheduleStatusMap[result.value.id] = result.value.details;
+        }
+      });
+      
+      setScheduleStatusMap(newScheduleStatusMap);
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedDate, updateSelectedDateData]);
+
+  // Hàm kiểm tra có schedule nào bị từ chối không
+  const hasRejectedSchedule = useCallback((submissionId) => {
+    return scheduleStatusMap[submissionId]?.some(schedule => schedule.status === 'Từ chối') || false;
+  }, [scheduleStatusMap]);
+
+  const handleViewDetails = async (record) => {
+    setSelectedRecord(record);
+    setIsModalVisible(true);
+    setDetailData([]);
+    setConfirmationData(null);
+    
+    if (record?.id) {
+      setDetailLoading(true);
+      try {
+        const [detailsArray, confirmation] = await Promise.allSettled([
+          getMedicationSubmissionDetails(record.id),
+          getMedicationConfirmationBySubmission(record.id)
+        ]);
+        
+        if (detailsArray.status === 'fulfilled' && detailsArray.value) {
+          setDetailData(detailsArray.value);
+          // Lưu trạng thái schedule vào map
+          setScheduleStatusMap(prev => ({
+            ...prev,
+            [record.id]: detailsArray.value
+          }));
+        }
+        
+        if (confirmation.status === 'fulfilled') {
+          setConfirmationData(confirmation.value);
+        }
+      } catch (error) {
+        handleApiError(error);
+      } finally {
+        setDetailLoading(false);
+      }
     }
   };
 
-  const getStatusCount = (status) => {
-    return selectedDateData.filter(item => item.status === status).length;
+  const handleUpdateStatus = async (record) => {
+    updateStatusForm.resetFields();
+    const nurseId = localStorage.getItem('userId') || '';
+    
+    try {
+      const confirmation = await getMedicationConfirmationBySubmission(record.id);
+      setConfirmationData(confirmation);
+    setSelectedRecord({ ...record, confirmId: confirmation?.confirmId || record.confirmId });
+      
+      updateStatusForm.setFieldsValue({
+        status: confirmation?.status || record.status,
+        reason: confirmation?.reason || '',
+        nurseId: nurseId,
+      });
+    } catch (error) {
+      setConfirmationData(null);
+      setSelectedRecord({ ...record, confirmId: record.confirmId });
+      updateStatusForm.setFieldsValue({
+        status: record.status,
+        nurseId: nurseId,
+      });
+    }
+    
+    setIsUpdateStatusModalVisible(true);
   };
 
-  const getTabData = () => {
-    if (activeTab === 'all') return selectedDateData;
-    if (activeTab === 'processing') return selectedDateData.filter(item => item.status === 'Đang xử lí');
-    if (activeTab === 'completed') return selectedDateData.filter(item => item.status === 'Đã hoàn thành');
-    if (activeTab === 'cancelled') return selectedDateData.filter(item => item.status === 'Đã Hủy');
-    return selectedDateData;
+
+
+  const handleScheduleEvidenceUpload = async (file) => {
+    const medicationScheduleId = selectedSchedule?.medicationScheduleId;
+    if (!medicationScheduleId) {
+      message.error('Không tìm thấy mã lịch trình để upload ảnh!');
+      return false;
+    }
+
+    try {
+      setUploadingScheduleEvidence(true);
+      await uploadEvidenceImage(file, medicationScheduleId);
+      message.success('Upload ảnh bằng chứng thành công!');
+      return true;
+    } catch (error) {
+      handleApiError(error, 'Lỗi khi upload ảnh: ' + getErrorMessage(error));
+      return false;
+    } finally {
+      setUploadingScheduleEvidence(false);
+    }
   };
 
+  const handleViewMedicationImage = async () => {
+    let hideLoading = null;
+    try {
+      hideLoading = message.loading('Đang tải ảnh...', 0);
+      const base64String = await getMedicationImage(selectedRecord.id);
+      const imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
+      setImageToShow(imgSrc);
+      setIsImageModalVisible(true);
+    } catch (error) {
+      setImageToShow(null);
+      if (error.response?.status === 403) {
+        message.error('Bạn không có quyền xem ảnh này');
+      } else if (error.response?.status === 404) {
+        message.error('Không tìm thấy ảnh thuốc cho phiếu này');
+      } else {
+        message.error('Không thể tải ảnh: ' + getErrorMessage(error));
+      }
+    } finally {
+      if (hideLoading) hideLoading();
+    }
+  };
+
+  const handleViewScheduleEvidenceImage = async (medicationScheduleId) => {
+    let hideLoading = null;
+    try {
+      hideLoading = message.loading('Đang tải ảnh bằng chứng...', 0);
+      const base64String = await getScheduleEvidenceImage(medicationScheduleId);
+      const imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
+      setScheduleEvidenceImageToShow(imgSrc);
+      setCurrentScheduleId(medicationScheduleId);
+      setIsScheduleEvidenceModalVisible(true);
+    } catch (error) {
+      setScheduleEvidenceImageToShow(null);
+      if (error.response?.status === 403) {
+        message.error('Bạn không có quyền xem ảnh này');
+      } else if (error.response?.status === 404) {
+        message.error('Nhân viên y tế chưa cập nhật ảnh bằng chứng');
+      } else {
+        message.error('Không thể tải ảnh bằng chứng: ' + getErrorMessage(error));
+      }
+    } finally {
+      if (hideLoading) hideLoading();
+    }
+  };
+
+
+
+  const handleConfirmSubmit = async (values, confirmId) => {
+    try {
+      await updateMedicationStatus(confirmId, values);
+      message.success('Cập nhật tình trạng thuốc thành công!');
+      setIsUpdateStatusModalVisible(false);
+      setIsConfirmModalVisible(false);
+      fetchMedicationSubmissions();
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const validateStatusTransition = (currentStatus, newStatus) => {
+    const invalidTransitions = {
+      'Đã hoàn thành': ['Từ chối'],
+      'Đã Hủy': ['Đang xử lí', 'Đã hoàn thành'],
+      'Đã phát thuốc': ['Từ chối']
+    };
+    const invalidTargets = invalidTransitions[currentStatus];
+    if (invalidTargets?.includes(newStatus)) {
+      message.error(`Không thể chuyển từ trạng thái "${currentStatus}" sang "${newStatus}"!`);
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmitUpdateStatus = async () => {
+    try {
+      const values = await updateStatusForm.validateFields();
+      const confirmId = selectedRecord?.confirmId;
+      
+      if (!confirmId) {
+        message.error('Không tìm thấy mã xác nhận để cập nhật!');
+        return;
+      }
+
+      if (!validateStatusTransition(selectedRecord.status, values.status)) {
+        return;
+      }
+      
+      if (values.status === 'Đã Hủy') {
+        setConfirmAction({
+          type: 'cancel',
+          message: 'Bạn có chắc chắn muốn hủy phiếu gửi thuốc này?',
+          description: 'Hành động này không thể hoàn tác.',
+          onConfirm: () => handleConfirmSubmit(values, confirmId)
+        });
+        setIsConfirmModalVisible(true);
+        return;
+      }
+
+      await handleConfirmSubmit(values, confirmId);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const handleUpdateScheduleStatus = (schedule) => {
+    if (!schedule?.medicationScheduleId || schedule.medicationScheduleId === 0) {
+      message.error('Lịch trình thuốc không hợp lệ!');
+      return;
+    }
+    
+    setSelectedSchedule(schedule);
+    updateScheduleForm.resetFields();
+    updateScheduleForm.setFieldsValue({
+      status: schedule.status || 'Chờ nhận thuốc',
+      noteSchedule: schedule.noteSchedule || ''
+    });
+    setIsUpdateScheduleModalVisible(true);
+  };
+
+  const handleConfirmScheduleSubmit = async (requestData, scheduleId) => {
+    try {
+      if (scheduleEvidenceFileList.length > 0) {
+        const uploadSuccess = await handleScheduleEvidenceUpload(scheduleEvidenceFileList[0].originFileObj);
+        if (!uploadSuccess) return;
+      }
+
+      await updateScheduleStatus(scheduleId, requestData);
+      message.success('Cập nhật trạng thái lịch trình thành công!');
+      setIsUpdateScheduleModalVisible(false);
+      setIsConfirmModalVisible(false);
+      setScheduleEvidenceFileList([]);
+      
+      if (selectedRecord?.id) {
+        const detailsArray = await getMedicationSubmissionDetails(selectedRecord.id);
+        if (detailsArray) {
+          setDetailData(detailsArray);
+          // Cập nhật lại schedule status map
+          setScheduleStatusMap(prev => ({
+            ...prev,
+            [selectedRecord.id]: detailsArray
+          }));
+        }
+      }
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const handleSubmitUpdateScheduleStatus = async () => {
+    try {
+      const values = await updateScheduleForm.validateFields();
+      
+      if (!selectedSchedule?.medicationScheduleId || selectedSchedule.medicationScheduleId === 0) {
+        message.error('Không tìm thấy thông tin lịch trình thuốc!');
+        return;
+      }
+      
+      const requestData = {
+        status: values.status,
+        noteSchedule: values.noteSchedule
+      };
+      
+      if (!validateStatusTransition(selectedSchedule.status, values.status)) {
+        return;
+      }
+
+      if (values.status === 'Từ chối') {
+        setConfirmAction({
+          type: 'reject',
+          message: 'Bạn có chắc chắn muốn từ chối lịch trình thuốc này?',
+          description: 'Hành động này sẽ ghi chú lý do từ chối.',
+          onConfirm: () => handleConfirmScheduleSubmit(requestData, selectedSchedule.medicationScheduleId)
+        });
+        setIsConfirmModalVisible(true);
+        return;
+      }
+
+      await handleConfirmScheduleSubmit(requestData, selectedSchedule.medicationScheduleId);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  // Event handlers
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    updateSelectedDateData(data, date);
+  };
+
+  const handleCloseImageModal = () => {
+    setIsImageModalVisible(false);
+    setImageToShow(null);
+  };
+
+  const handleCloseScheduleEvidenceModal = () => {
+    setIsScheduleEvidenceModalVisible(false);
+    setScheduleEvidenceImageToShow(null);
+    setCurrentScheduleId(null);
+  };
+
+
+
+  // Calendar render functions
+  const dateCellRender = (value) => {
+    const dateStr = value.format('YYYY-MM-DD');
+    const dayData = data.filter(item => dayjs(item.submissionDate).format('YYYY-MM-DD') === dateStr);
+    return dayData.length > 0 ? (
+      <div className="calendar-cell">
+        <Badge count={dayData.length} size="small" />
+      </div>
+    ) : null;
+  };
+
+  const calendarHeaderRender = ({ value, onChange }) => {
+    const current = value.clone();
+    return (
+      <div className="calendar-custom-header">
+        <div className="calendar-header-left">
+          <button className="calendar-nav-btn" onClick={() => onChange(current.clone().subtract(1, 'month'))}>{'<'}</button>
+          <span className="calendar-header-label">{current.format('MMMM YYYY')}</span>
+          <button className="calendar-nav-btn" onClick={() => onChange(current.clone().add(1, 'month'))}>{'>'}</button>
+        </div>
+        <button className="calendar-today-btn" onClick={() => onChange(dayjs())}>Hôm nay</button>
+      </div>
+    );
+  };
+
+  // Upload props
+  const scheduleEvidenceUploadProps = {
+    name: 'file',
+    multiple: false,
+    fileList: scheduleEvidenceFileList,
+    beforeUpload: (file) => {
+      if (!file.type.startsWith('image/')) {
+        message.error('Chỉ được upload file ảnh!');
+        return false;
+      }
+      if (file.size / 1024 / 1024 >= 5) {
+        message.error('Kích thước file phải nhỏ hơn 5MB!');
+        return false;
+      }
+      return false;
+    },
+    onChange: (info) => setScheduleEvidenceFileList(info.fileList.slice(-1)),
+    onRemove: () => setScheduleEvidenceFileList([])
+  };
+
+  // Table columns
   const columns = [
     {
       title: 'Học sinh',
@@ -246,370 +593,12 @@ const MedicationManagement = () => {
     }
   ];
 
-  // 2. Sửa lại handleUpdateStatus để luôn lấy confirmationData khi cập nhật tình trạng
-  const handleUpdateStatus = async (record) => {
-    updateStatusForm.resetFields();
-    setEvidenceFileList([]);
-    // Lấy nurseId từ localStorage
-    const nurseId = localStorage.getItem('userId') || '';
-    let confirmation = null;
-    try {
-      confirmation = await getMedicationConfirmationBySubmission(record.id);
-      setConfirmationData(confirmation);
-    } catch (error) {
-      confirmation = null;
-      setConfirmationData(null);
-    }
-    // Lưu confirmId vào selectedRecord để dùng khi submit
-    setSelectedRecord({ ...record, confirmId: confirmation?.confirmId || record.confirmId });
-    // Nếu có dữ liệu xác nhận, điền các field từ confirmation
-    if (confirmation) {
-      updateStatusForm.setFieldsValue({
-        status: confirmation.status,
-        reason: confirmation.reason,
-        nurseId: nurseId,
-      });
-    } else {
-      updateStatusForm.setFieldsValue({
-        status: record.status,
+  // Effects
+  useEffect(() => {
+    fetchMedicationSubmissions();
+  }, [fetchMedicationSubmissions]);
 
-        nurseId: nurseId,
-      });
-    }
-    setIsUpdateStatusModalVisible(true);
-  };
-
-  // Hàm xử lý upload evidence image
-  const handleEvidenceUpload = async (file) => {
-    const confirmId = selectedRecord?.confirmId;
-    if (!confirmId) {
-      message.error('Không tìm thấy mã xác nhận để upload ảnh!');
-      return false;
-    }
-
-    try {
-      setUploadingEvidence(true);
-      await uploadEvidenceImage(file, confirmId);
-      message.success('Upload ảnh bằng chứng thành công!');
-      return true;
-    } catch (error) {
-      message.error('Lỗi khi upload ảnh: ' + getErrorMessage(error));
-      return false;
-    } finally {
-      setUploadingEvidence(false);
-    }
-  };
-
-  // Props cho Upload component
-  const evidenceUploadProps = {
-    name: 'file',
-    multiple: false,
-    fileList: evidenceFileList,
-    beforeUpload: (file) => {
-      // Kiểm tra định dạng file
-      const isImage = file.type.startsWith('image/');
-      if (!isImage) {
-        message.error('Chỉ được upload file ảnh!');
-        return false;
-      }
-
-      // Kiểm tra kích thước file (5MB)
-      const isLt5M = file.size / 1024 / 1024 < 5;
-      if (!isLt5M) {
-        message.error('Kích thước file phải nhỏ hơn 5MB!');
-        return false;
-      }
-
-      return false; // Prevent automatic upload
-    },
-    onChange: (info) => {
-      setEvidenceFileList(info.fileList.slice(-1)); // Chỉ giữ 1 file
-    },
-    onRemove: () => {
-      setEvidenceFileList([]);
-    }
-  };
-
-  // THÊM MỚI: Hàm xử lý xem ảnh evidence
-  const handleViewEvidenceImage = async (confirmId) => {
-    let hideLoading = null;
-    try {
-      hideLoading = message.loading('Đang tải ảnh evidence...', 0);
-      const base64String = await getEvidenceImage(confirmId);
-
-
-      // Đảm bảo có header data:image nếu chưa có
-      let imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
-
-      setEvidenceImageToShow(imgSrc);
-      setIsEvidenceImageModalVisible(true);
-    } catch (error) {
-      setEvidenceImageToShow(null);
-      
-      if (error.response?.status === 403) {
-        message.error('Bạn không có quyền xem ảnh này');
-      } else if (error.response?.status === 404) {
-        message.error('Không tìm thấy ảnh evidence cho xác nhận này');
-      } else {
-        message.error('Không thể tải ảnh evidence: ' + getErrorMessage(error));
-      }
-    } finally {
-      if (hideLoading) hideLoading();
-    }
-  };
-
-  // THÊM MỚI: Hàm đóng modal ảnh evidence
-  const handleCloseEvidenceImageModal = () => {
-    setIsEvidenceImageModalVisible(false);
-    setEvidenceImageToShow(null);
-  };
-
-  // Hàm xử lý submit sau khi xác nhận
-  const handleConfirmSubmit = async (values, confirmId) => {
-    try {
-      // Nếu có file evidence, upload trước
-      if (evidenceFileList.length > 0) {
-        const uploadSuccess = await handleEvidenceUpload(evidenceFileList[0].originFileObj);
-        if (!uploadSuccess) {
-          return;
-        }
-      }
-
-      await updateMedicationStatus(confirmId, values);
-      message.success('Cập nhật tình trạng thuốc thành công!');
-      setIsUpdateStatusModalVisible(false);
-      setEvidenceFileList([]);
-      setIsConfirmModalVisible(false);
-      fetchMedicationSubmissions();
-    } catch (error) {
-      message.error(getErrorMessage(error));
-    }
-  };
-
-  // 3. Hàm xử lý submit cập nhật tình trạng thuốc
-  const handleSubmitUpdateStatus = async () => {
-    try {
-      const values = await updateStatusForm.validateFields();
-      // Lấy confirmId từ selectedRecord
-      const confirmId = selectedRecord?.confirmId;
-      if (!confirmId) {
-        message.error('Không tìm thấy mã xác nhận để cập nhật!');
-        return;
-      }
-
-      // Kiểm tra ràng buộc chuyển đổi trạng thái
-      const currentStatus = selectedRecord.status;
-      const newStatus = values.status;
-      
-      // Ràng buộc: Không được từ Hoàn thành sang Từ chối
-      if (currentStatus === 'Đã hoàn thành' && newStatus === 'Từ chối') {
-        message.error('Không thể chuyển từ trạng thái "Đã hoàn thành" sang "Từ chối"!');
-        return;
-      }
-      
-      // Ràng buộc: Không được từ Đã Hủy sang Đang xử lí hoặc Đã hoàn thành
-      if (currentStatus === 'Đã Hủy' && (newStatus === 'Đang xử lí' || newStatus === 'Đã hoàn thành')) {
-        message.error('Không thể chuyển từ trạng thái "Đã Hủy" sang "Đang xử lí" hoặc "Đã hoàn thành"!');
-        return;
-      }
-      
-      // Ràng buộc: Không được từ Đã hoàn thành chuyển sang Đã Hủy hoặc Đang xử lí
-      if (currentStatus === 'Đã hoàn thành' && (newStatus === 'Đã Hủy' || newStatus === 'Đang xử lí')) {
-        message.error('Không thể chuyển từ trạng thái "Đã hoàn thành" sang "Đã Hủy" hoặc "Đang xử lí"!');
-        return;
-      }
-
-      // Xác nhận khi chuyển sang trạng thái "Đã Hủy"
-      if (newStatus === 'Đã Hủy') {
-        setConfirmAction({
-          type: 'cancel',
-          message: 'Bạn có chắc chắn muốn hủy phiếu gửi thuốc này?',
-          description: 'Hành động này không thể hoàn tác.',
-          onConfirm: () => handleConfirmSubmit(values, confirmId)
-        });
-        setIsConfirmModalVisible(true);
-        return;
-      }
-
-      // Nếu không cần xác nhận, thực hiện ngay
-      await handleConfirmSubmit(values, confirmId);
-    } catch (error) {
-      message.error(getErrorMessage(error));
-    }
-  };
-
-  // SỬA LẠI hàm handleViewDetails để lưu toàn bộ array schedules
-  const handleViewDetails = async (record) => {
-    setSelectedRecord(record);
-    setIsModalVisible(true);
-    setDetailData([]); // Reset thành array rỗng
-    setConfirmationData(null);
-    
-    if (record && record.id) {
-      setDetailLoading(true);
-      try {
-        // API trả về array của các schedule
-        const detailsArray = await getMedicationSubmissionDetails(record.id);
-        
-        if (detailsArray && Array.isArray(detailsArray) && detailsArray.length > 0) {
-          // Lưu toàn bộ array để hiển thị theo từng schedule
-          setDetailData(detailsArray);
-        }
-        
-        // Lấy xác nhận của nhân viên y tế
-        try {
-        const confirmation = await getMedicationConfirmationBySubmission(record.id);
-        setConfirmationData(confirmation);
-        } catch (confirmError) {
-          console.warn('Không thể lấy thông tin xác nhận:', confirmError);
-          setConfirmationData(null);
-        }
-      } catch (error) {
-
-        message.error(getErrorMessage(error));
-      } finally {
-        setDetailLoading(false);
-      }
-    }
-  };
-
-  const handleDateSelect = (date) => {
-    setSelectedDate(date);
-    updateSelectedDateData(data, date);
-  };
-
-  const dateCellRender = (value) => {
-    const dateStr = value.format('YYYY-MM-DD');
-    const dayData = data.filter(item => {
-      const itemDate = dayjs(item.submissionDate).format('YYYY-MM-DD');
-      return itemDate === dateStr;
-    });
-
-    if (dayData.length > 0) {
-      return (
-        <div className="calendar-cell">
-          <Badge count={dayData.length} size="small" />
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // Custom header cho Calendar
-  const calendarHeaderRender = ({ value, onChange }) => {
-    const current = value.clone();
-    return (
-      <div className="calendar-custom-header">
-        <div className="calendar-header-left">
-          <button className="calendar-nav-btn" onClick={() => onChange(current.clone().subtract(1, 'month'))}>{'<'}</button>
-          <span className="calendar-header-label">{current.format('MMMM YYYY')}</span>
-          <button className="calendar-nav-btn" onClick={() => onChange(current.clone().add(1, 'month'))}>{'>'}</button>
-        </div>
-        <button className="calendar-today-btn" onClick={() => onChange(dayjs())}>Hôm nay</button>
-      </div>
-    );
-  };
-
-  const handleCloseImageModal = () => {
-    // No need to revoke URL for base64 strings
-    setIsImageModalVisible(false);
-    setImageToShow(null);
-  };
-
-  // Hàm xử lý mở modal cập nhật trạng thái schedule
-  const handleUpdateScheduleStatus = (schedule) => {
-    // Kiểm tra schedule có ID hợp lệ
-    if (!schedule) {
-      message.error('Lịch trình thuốc không hợp lệ!');
-      return;
-    }
-    
-    if (!schedule.medicationScheduleId || schedule.medicationScheduleId === 0) {
-      message.error(`ID lịch trình không hợp lệ: ${schedule.medicationScheduleId}`);
-      return;
-    }
-    
-    setSelectedSchedule(schedule);
-    updateScheduleForm.resetFields();
-    updateScheduleForm.setFieldsValue({
-      status: schedule.status || 'Chờ nhận thuốc',
-      noteSchedule: schedule.noteSchedule || ''
-    });
-    setIsUpdateScheduleModalVisible(true);
-  };
-
-  // Hàm xử lý submit schedule sau khi xác nhận
-  const handleConfirmScheduleSubmit = async (requestData, scheduleId) => {
-    try {
-      await updateScheduleStatus(scheduleId, requestData);
-      
-      message.success(`Cập nhật trạng thái lịch trình thành công!`);
-      setIsUpdateScheduleModalVisible(false);
-      setIsConfirmModalVisible(false);
-      
-      // Reload lại dữ liệu chi tiết
-      if (selectedRecord && selectedRecord.id) {
-        const detailsArray = await getMedicationSubmissionDetails(selectedRecord.id);
-        if (detailsArray && Array.isArray(detailsArray) && detailsArray.length > 0) {
-          setDetailData(detailsArray);
-        }
-      }
-    } catch (error) {
-      message.error(getErrorMessage(error));
-    }
-  };
-
-  // Hàm xử lý submit cập nhật trạng thái schedule
-  const handleSubmitUpdateScheduleStatus = async () => {
-    try {
-      const values = await updateScheduleForm.validateFields();
-      
-      // Đảm bảo có schedule và ID hợp lệ
-      if (!selectedSchedule) {
-        message.error('Không tìm thấy thông tin lịch trình thuốc!');
-        return;
-      }
-      
-      if (!selectedSchedule.medicationScheduleId || selectedSchedule.medicationScheduleId === 0) {
-        message.error(`ID lịch trình không hợp lệ: ${selectedSchedule.medicationScheduleId}`);
-        return;
-      }
-      
-      const scheduleId = selectedSchedule.medicationScheduleId;
-      
-      const requestData = {
-        status: values.status,
-        noteSchedule: values.noteSchedule
-      };
-      
-      // Kiểm tra ràng buộc chuyển đổi trạng thái lịch trình
-      const currentStatus = selectedSchedule.status;
-      const newStatus = values.status;
-      
-      // Ràng buộc: Không được từ "Đã phát thuốc" sang "Từ chối"
-      if (currentStatus === 'Đã phát thuốc' && newStatus === 'Từ chối') {
-        message.error('Không thể chuyển từ trạng thái "Đã phát thuốc" sang "Từ chối"!');
-        return;
-      }
-
-      // Xác nhận khi chuyển sang trạng thái "Từ chối"
-      if (newStatus === 'Từ chối') {
-        setConfirmAction({
-          type: 'reject',
-          message: 'Bạn có chắc chắn muốn từ chối lịch trình thuốc này?',
-          description: 'Hành động này sẽ ghi chú lý do từ chối.',
-          onConfirm: () => handleConfirmScheduleSubmit(requestData, scheduleId)
-        });
-        setIsConfirmModalVisible(true);
-        return;
-      }
-
-      // Nếu không cần xác nhận, thực hiện ngay
-      await handleConfirmScheduleSubmit(requestData, scheduleId);
-    } catch (error) {
-      message.error(getErrorMessage(error));
-    }
-  };
+  const displayedData = getFilteredData();
 
   return (
     <div className="medical-management-app">
@@ -680,10 +669,15 @@ const MedicationManagement = () => {
                 <div className="medication-batch-list">
                   {getTabData()
                     .map((item) => (
-                      <div key={item.id} className="medication-batch-card">
+                      <div 
+                        key={item.id} 
+                        className={`medication-batch-card ${item.status === 'Từ chối' || hasRejectedSchedule(item.id) ? 'rejected' : ''}`}
+                      >
                         <div className="medication-batch-card-header">
                           <div>
-                            <Typography.Title level={4} style={{ margin: 0, fontWeight: 600, color: '#0056b3' }}>Học sinh: {item.student} - {item.className}</Typography.Title>
+                            <Typography.Title level={4} style={{ margin: 0, fontWeight: 600 }}>
+                              Học sinh: {item.student} - {item.className}
+                            </Typography.Title>
                           </div>
                           {getStatusTag(item.status)}
                         </div>
@@ -700,7 +694,7 @@ const MedicationManagement = () => {
                             Xem chi tiết
                           </Button>
                           <Button type="primary" size="small" icon={<CheckOutlined />} onClick={() => handleUpdateStatus(item)}>
-                            Cập nhật tình trạng
+                            Tình trạng đơn thuốc
                           </Button>
                         </div>
                       </div>
@@ -753,11 +747,9 @@ const MedicationManagement = () => {
                 allowClear
               >
                 <Option value="">Tất cả lớp</Option>
-                <Option value="Lớp 5A">Lớp 5A</Option>
-                <Option value="Lớp 4B">Lớp 4B</Option>
-                <Option value="Lớp 3C">Lớp 3C</Option>
-                <Option value="Lớp 2A">Lớp 2A</Option>
-                <Option value="Lớp 1B">Lớp 1B</Option>
+                {CLASS_OPTIONS.map(option => (
+                  <Option key={option.value} value={option.value}>{option.label}</Option>
+                ))}
               </Select>
             </Col>
           </Row>
@@ -765,25 +757,14 @@ const MedicationManagement = () => {
 
         <Table
           columns={columns}
-          dataSource={displayedData.slice((currentPage1 - 1) * tablePageSize, currentPage1 * tablePageSize)}
-          pagination={false}
+          dataSource={displayedData}
+          pagination={{ pageSize: 5 }}
           className="events-table"
           loading={loading}
         />
-
-        <div className="pagination-section">
-          <Pagination
-            current={currentPage1}
-            total={displayedData.length}
-            pageSize={tablePageSize}
-            onChange={(page) => setCurrentPage1(page)}
-            showSizeChanger={false}
-            showQuickJumper={false}
-          />
-        </div>
       </Card>
 
-      {/* Modal hiển thị chi tiết - CẬP NHẬT THEO SCHEDULE */}
+      {/* Modal hiển thị chi tiết */}
       <Modal
         title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Chi tiết phiếu gửi thuốc</span>}
         open={isModalVisible}
@@ -836,8 +817,14 @@ const MedicationManagement = () => {
                         <Panel
                           header={
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <span style={{ fontWeight: 600, color: '#0056b3' }}>
-                                <ClockCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />
+                              <span style={{ 
+                                fontWeight: 600, 
+                                color: schedule.status === 'Từ chối' ? '#ff4d4f' : '#0056b3' 
+                              }}>
+                                <ClockCircleOutlined style={{ 
+                                  marginRight: 8, 
+                                  color: schedule.status === 'Từ chối' ? '#ff4d4f' : '#52c41a' 
+                                }} />
                                 Lịch trình ID: {schedule.medicationScheduleId || 'N/A'} - {schedule.timeToUse || 'N/A'}
                               </span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -864,26 +851,34 @@ const MedicationManagement = () => {
                           key={schedule.medicationScheduleId}
                           style={{ 
                             marginBottom: 8,
-                            border: '1px solid #d9d9d9',
+                            border: schedule.status === 'Từ chối' ? '1px solid #ff4d4f' : '1px solid #d9d9d9',
                             borderRadius: 6,
-                            backgroundColor: '#fff'
+                            backgroundColor: schedule.status === 'Từ chối' ? '#fff2f0' : '#fff'
                           }}
                         >
                           <div style={{ padding: '8px 12px' }}>
                             {/* Thông tin lịch trình */}
-                            <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f0f8ff', borderRadius: 4, border: '1px solid #bae7ff' }}>
+                            <div style={{ 
+                              marginBottom: 16, 
+                              padding: 12, 
+                              backgroundColor: schedule.status === 'Từ chối' ? '#fff2f0' : '#f0f8ff', 
+                              borderRadius: 4, 
+                              border: schedule.status === 'Từ chối' ? '1px solid #ffccc7' : '1px solid #bae7ff' 
+                            }}>
                               <Row gutter={[16, 8]}>
                                 {schedule.noteSchedule && (
                                   <Col span={24}>
                                     <Typography.Text type="secondary" strong>Ghi chú lịch trình:</Typography.Text><br />
-                                    <Typography.Text italic style={{ color: '#666' }}>{schedule.noteSchedule}</Typography.Text>
+                                    <Typography.Text italic style={{ 
+                                      color: schedule.status === 'Từ chối' ? '#cf1322' : '#666' 
+                                    }}>{schedule.noteSchedule}</Typography.Text>
               </Col>
                                 )}
                               </Row>
                             </div>
                             {/* Danh sách thuốc trong lịch trình */}
                             <Typography.Text strong style={{ color: '#595959' }}>Danh sách thuốc:</Typography.Text>
-                  <div style={{ marginTop: 8 }}>
+                            <div style={{ marginTop: 8 }}>
                               {schedule.medicationDetails.map((medication, medIdx) => (
                                 <div 
                                   key={medication.medicationDetailID || medIdx} 
@@ -917,6 +912,24 @@ const MedicationManagement = () => {
                                 </div>
                               ))}
                             </div>
+                            
+                            {/* Bằng chứng ảnh cho lịch trình */}
+                            <div style={{ marginTop: 16, padding: 12, backgroundColor: '#f6ffed', borderRadius: 4, border: '1px solid #b7eb8f' }}>
+                              <Typography.Text strong style={{ color: '#52c41a' }}>Bằng chứng ảnh:</Typography.Text>
+                              <div style={{ marginTop: 8 }}>
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  icon={<PictureOutlined />}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewScheduleEvidenceImage(schedule.medicationScheduleId);
+                                  }}
+                                >
+                                  Xem ảnh bằng chứng
+                                </Button>
+                              </div>
+                            </div>
                           </div>
                         </Panel>
                       ))}
@@ -928,29 +941,7 @@ const MedicationManagement = () => {
               {/* Ảnh thuốc */}
               <Col span={12} style={{ marginBottom: 6 }}>
                 <Typography.Text type="secondary" strong style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff' }}>Ảnh thuốc:</Typography.Text><br />
-                <Button type="primary" onClick={async () => {
-                  let hideLoading = null;
-                  try {
-                    hideLoading = message.loading('Đang tải ảnh...', 0);
-                    const base64String = await getMedicationImage(selectedRecord.id);
-            
-                    let imgSrc = base64String.startsWith('data:image') ? base64String : `data:image/png;base64,${base64String}`;
-                    setImageToShow(imgSrc);
-                    setIsImageModalVisible(true);
-                  } catch (error) {
-                    setImageToShow(null);
-            
-                    if (error.response?.status === 403) {
-                      message.error('Bạn không có quyền xem ảnh này');
-                    } else if (error.response?.status === 404) {
-                      message.error('Không tìm thấy ảnh thuốc cho phiếu này');
-                    } else {
-                      message.error('Không thể tải ảnh: ' + getErrorMessage(error));
-                    }
-                  } finally {
-                    if (hideLoading) hideLoading();
-                  }
-                }}>
+                <Button type="primary" onClick={handleViewMedicationImage}>
                   Xem ảnh đơn thuốc
                 </Button>
               </Col>
@@ -962,21 +953,6 @@ const MedicationManagement = () => {
                   <div style={{ marginTop: 8, marginLeft: 12 }}>
                     <div><Typography.Text strong>Trạng thái:</Typography.Text> <Typography.Text>{confirmationData.status}</Typography.Text></div>
                     <div><Typography.Text strong>Ghi chú:</Typography.Text> <Typography.Text>{confirmationData.reason}</Typography.Text></div>
-                    <div>
-                      <Typography.Text strong>Bằng chứng:</Typography.Text>{' '}
-                      {confirmationData.evidence ? (
-                        <Button
-                          type="link"
-                          icon={<PictureOutlined />}
-                          size="small"
-                          onClick={() => handleViewEvidenceImage(confirmationData.confirmId)}
-                        >
-                          Xem ảnh bằng chứng
-                        </Button>
-                      ) : (
-                        <Typography.Text type="secondary">Chưa có ảnh bằng chứng</Typography.Text>
-                      )}
-                    </div>
                   </div>
                 </Col>
               )}
@@ -1024,20 +1000,20 @@ const MedicationManagement = () => {
         )}
       </Modal>
 
-      {/* THÊM MỚI: Modal hiển thị ảnh evidence */}
+      {/* Modal hiển thị ảnh bằng chứng lịch trình */}
       <Modal
-        open={isEvidenceImageModalVisible}
-        onCancel={handleCloseEvidenceImageModal}
+        open={isScheduleEvidenceModalVisible}
+        onCancel={handleCloseScheduleEvidenceModal}
         footer={null}
-        title="Ảnh bằng chứng"
+        title={`Ảnh bằng chứng - Lịch trình ID: ${currentScheduleId}`}
         centered
         width={600}
       >
-        {evidenceImageToShow ? (
+        {scheduleEvidenceImageToShow ? (
           <div style={{ textAlign: 'center' }}>
             <img
-              src={evidenceImageToShow}
-              alt="evidence"
+              src={scheduleEvidenceImageToShow}
+              alt="schedule evidence"
               style={{
                 maxWidth: '100%',
                 maxHeight: '500px',
@@ -1048,29 +1024,29 @@ const MedicationManagement = () => {
               }}
               onError={() => {
                 message.error('Không thể hiển thị ảnh bằng chứng');
-                setEvidenceImageToShow(null);
+                setScheduleEvidenceImageToShow(null);
               }}
             />
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '50px' }}>
-            <Typography.Text type="secondary">Không có ảnh bằng chứng</Typography.Text>
+            <Typography.Text type="secondary">Không có ảnh bằng chứng cho lịch trình này</Typography.Text>
           </div>
         )}
       </Modal>
 
+
+
       {/* Modal cập nhật tình trạng thuốc */}
       <Modal
-        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Cập nhật tình trạng thuốc</span>}
+        title={<span style={{ fontWeight: 700, fontSize: 20, color: '#69CD32' }}>Tình trạng đơn thuốc</span>}
         open={isUpdateStatusModalVisible}
         onOk={handleSubmitUpdateStatus}
         onCancel={() => {
           setIsUpdateStatusModalVisible(false);
-          setEvidenceFileList([]);
-        }}
+        }}  
         okText="Cập nhật"
         cancelText="Hủy"
-        confirmLoading={uploadingEvidence}
       >
         <Form form={updateStatusForm} layout="vertical">
           <Form.Item name="status" label="Trạng thái" rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}>
@@ -1086,18 +1062,6 @@ const MedicationManagement = () => {
           <Form.Item name="nurseId" hidden>
             <Input />
           </Form.Item>
-
-          <Form.Item label="Bằng chứng (Ảnh)">
-            <Upload.Dragger {...evidenceUploadProps}>
-              <p className="ant-upload-drag-icon">
-                <UploadOutlined />
-              </p>
-              <p className="ant-upload-text">Nhấn hoặc kéo thả file vào đây để upload</p>
-              <p className="ant-upload-hint">
-                Hỗ trợ upload file ảnh. Kích thước tối đa 5MB.
-              </p>
-            </Upload.Dragger>
-          </Form.Item>
         </Form>
       </Modal>
 
@@ -1109,9 +1073,11 @@ const MedicationManagement = () => {
         onCancel={() => {
           setIsUpdateScheduleModalVisible(false);
           updateScheduleForm.resetFields();
+          setScheduleEvidenceFileList([]);
         }}
         okText="Cập nhật"
         cancelText="Hủy"
+        confirmLoading={uploadingScheduleEvidence}
       >
         {selectedSchedule && (
           <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f6ffed', borderRadius: 4, border: '1px solid #b7eb8f' }}>
@@ -1128,6 +1094,18 @@ const MedicationManagement = () => {
           </Form.Item>
           <Form.Item name="noteSchedule" label="Ghi chú lịch trình" rules={[{ required: true, message: 'Vui lòng nhập ghi chú' }]}>
             <Input.TextArea placeholder="Nhập ghi chú cho lịch trình" rows={3} />
+          </Form.Item>
+
+          <Form.Item label="Bằng chứng (Ảnh)">
+            <Upload.Dragger {...scheduleEvidenceUploadProps}>
+              <p className="ant-upload-drag-icon">
+                <UploadOutlined />
+              </p>
+              <p className="ant-upload-text">Nhấn hoặc kéo thả file vào đây để upload</p>
+              <p className="ant-upload-hint">
+                Hỗ trợ upload file ảnh. Kích thước tối đa 5MB.
+              </p>
+            </Upload.Dragger>
           </Form.Item>
         </Form>
       </Modal>
